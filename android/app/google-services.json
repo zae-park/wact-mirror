@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "65461336274",
+    "project_id": "wact-43f5d",
+    "storage_bucket": "wact-43f5d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:65461336274:android:6ba746fcea0edac0c3d50b",
+        "android_client_info": {
+          "package_name": "com.example.wact"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_Wq81p53EEOYCF0m-ZmvkU1y3MJbf4qg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
