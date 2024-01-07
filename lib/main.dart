@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/theme/app_theme.dart';
 import 'package:wact/pages/account_page.dart';
@@ -8,6 +8,14 @@ import 'package:wact/pages/splash_page.dart';
 import 'package:wact/root_layout.dart';
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 카톡 캄피-TEST 키
+  KakaoSdk.init(
+    nativeAppKey: '5d4cef15a6813674d5a8e4fd5907ac4f',
+    javaScriptAppKey: '9f1a4a118913974e699835637ce11dca',
+  );
+
   await Supabase.initialize(
     url: 'https://etfbbbxdyfyuwtzuwivl.supabase.co',
     anonKey:
@@ -23,6 +31,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Supabase Flutter',
       theme: appTheme,
       initialRoute: '/',
@@ -30,6 +39,7 @@ class MyApp extends StatelessWidget {
         '/': (_) => const SplashPage(),
         '/login': (_) => const LoginPage(),
         '/account': (_) => const AccountPage(),
+        '/home': (_) => const RootLayout(),
       },
     );
   }

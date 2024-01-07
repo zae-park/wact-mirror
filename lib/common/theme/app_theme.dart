@@ -8,6 +8,7 @@ final ThemeData appTheme = ThemeData(
     indicatorColor: Colors.transparent, // 밑줄 없애기
   ),
   appBarTheme: const AppBarTheme(
+    surfaceTintColor: Colors.white,
     systemOverlayStyle: SystemUiOverlayStyle(
       // 상태 표시줄 스타일 설정
       statusBarColor: Colors.white, // 상태 표시줄 배경색

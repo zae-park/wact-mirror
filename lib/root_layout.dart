@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:wact/pages/home/home_page.dart';
+import 'package:wact/pages/my/my_page.dart';
 
 class RootLayout extends StatefulWidget {
   const RootLayout({super.key});
@@ -13,8 +15,8 @@ class _RootLayoutState extends State<RootLayout> {
 
   // 화면 리스트
   final List<Widget> _screens = [
-    Container(),
-    Container(),
+    HomePage(),
+    MyPage(),
   ];
 
   @override

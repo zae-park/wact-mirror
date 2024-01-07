@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:wact/common/const/color.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,6 +20,14 @@ class _LoginPageState extends State<LoginPage> {
   late final StreamSubscription<AuthState> _authStateSubscription;
 
   Future<void> _signIn() async {
+    final prefs = await SharedPreferences.getInstance();
+    bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+
+    if (isLoggedIn) {
+      Navigator.of(context).pushReplacementNamed('/home');
+      return;
+    }
+
     try {
       setState(() {
         _isLoading = true;
@@ -28,11 +37,10 @@ class _LoginPageState extends State<LoginPage> {
         OAuthProvider.kakao,
         redirectTo: kIsWeb
             ? 'http://localhost:3000'
-            : 'io.supabase.calmpy://login-callback/',
+            : 'io.supabase.wact://login-callback/',
       );
 
       // 로그인 성공 시 로컬 스토리지에 상태 저장
-      final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);
 
       if (mounted) {
@@ -81,20 +89,56 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign In')),
-      body: Column(
-        children: [
-          GestureDetector(
-            onTap: _isLoading ? null : _signIn,
-            child: SizedBox(
-                width: 54,
-                height: 54,
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        leading: const IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white), // 흰색 뒤로가기 아이콘
+          onPressed: null, // 비활성화
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 127,
+                height: 64,
                 child: Image.asset(
-                  'assets/imgs/logo/sns/kakao.png',
-                  fit: BoxFit.contain,
-                )),
-          ), //
-        ],
+                  'assets/imgs/logo/actlogo.png',
+                ),
+              ),
+              const SizedBox(
+                height: 190,
+              ),
+              const Text(
+                'SNS 계정 가입',
+                style: TextStyle(color: bg_90, fontSize: 12),
+              ),
+              const SizedBox(
+                height: 16,
+              ),
+              const SizedBox(height: 16),
+              // 카톡 로그인
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: _isLoading ? null : _signIn,
+                    child: SizedBox(
+                        width: 54,
+                        height: 54,
+                        child: Image.asset(
+                          'assets/imgs/logo/sns/kakao.png',
+                          fit: BoxFit.contain,
+                        )),
+                  ), //
+                ],
+              ),
+            ]),
       ),
     );
   }
