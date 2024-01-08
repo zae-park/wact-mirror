@@ -38,6 +38,8 @@ dependencies:
   font_awesome_flutter: ^10.5.0
   flutter_image_compress: ^2.1.0
   image: ^4.1.3
+  cached_network_image: ^3.3.1
+  
 
 
 
@@ -49,6 +51,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.13.1
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -107,7 +110,7 @@ flutter:
 
 
 flutter_icons:
-  image_path: "assets/imgs/logo/calmpy_applogo.jpg"
+  image_path: "assets/imgs/logo/act_launcher_logo.jpg"
   android: true
   ios: true
 

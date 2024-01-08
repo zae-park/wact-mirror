@@ -105,10 +105,10 @@ class _LoginPageState extends State<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(
-                width: 127,
-                height: 64,
+                width: 90,
+                height: 90,
                 child: Image.asset(
-                  'assets/imgs/logo/actlogo.png',
+                  'assets/imgs/logo/actlogo.jpg',
                 ),
               ),
               const SizedBox(
@@ -118,10 +118,7 @@ class _LoginPageState extends State<LoginPage> {
                 'SNS 계정 가입',
                 style: TextStyle(color: bg_90, fontSize: 12),
               ),
-              const SizedBox(
-                height: 16,
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
               // 카톡 로그인
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

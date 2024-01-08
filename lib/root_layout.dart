@@ -15,8 +15,8 @@ class _RootLayoutState extends State<RootLayout> {
 
   // 화면 리스트
   final List<Widget> _screens = [
-    HomePage(),
-    MyPage(),
+    const HomePage(),
+    const MyPage(),
   ];
 
   @override
@@ -38,7 +38,7 @@ class _RootLayoutState extends State<RootLayout> {
       body: _screens[_selectedIndex], // 선택된 인덱스에 따른 화면 보여주기
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
-        items: <BottomNavigationBarItem>[
+        items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: '홈',

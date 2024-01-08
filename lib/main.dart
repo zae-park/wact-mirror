@@ -22,12 +22,14 @@ Future<void> main() async {
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0ZmJiYnhkeWZ5dXd0enV3aXZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDQwOTY0MTMsImV4cCI6MjAxOTY3MjQxM30.D3P4SfiJ4DIQZXYrgpFNuVmn3e8T4-w77BzOurVSDkQ',
   );
 
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 final supabase = Supabase.instance.client;
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

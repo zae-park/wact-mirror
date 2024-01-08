@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>calmpy</string>
+	<string>서액트</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -60,7 +60,7 @@
       		<string>Editor</string>
       		<key>CFBundleURLSchemes</key>
       		<array>
-        		<string>io.supabase.calmpy</string>
+        		<string>io.supabase.wact</string>
       		</array>
     	</dict>
   	</array>

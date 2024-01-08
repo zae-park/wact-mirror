@@ -74,14 +74,14 @@ class _MyPageState extends State<MyPage> {
           future: _usernameFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Text('');
+              return const Text('');
             }
             if (snapshot.hasError) {
-              return Text('X');
+              return const Text('X');
             }
             return Text(
               snapshot.data ?? '',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w600,
                 color: Colors.black,
@@ -121,7 +121,7 @@ class _MyPageState extends State<MyPage> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                    child: Container(
+                    child: SizedBox(
                       width: MediaQuery.of(context).size.width - 40,
                       height: 90,
                       child: Row(
@@ -139,7 +139,7 @@ class _MyPageState extends State<MyPage> {
                               children: [
                                 Text(
                                   post['title'],
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w600),
                                 ),
@@ -147,9 +147,9 @@ class _MyPageState extends State<MyPage> {
                                   post['content'],
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(fontSize: 14),
+                                  style: const TextStyle(fontSize: 14),
                                 ),
-                                SizedBox(
+                                const SizedBox(
                                   height: 3,
                                 ),
                                 Row(
@@ -161,30 +161,30 @@ class _MyPageState extends State<MyPage> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.center,
                                         children: [
-                                          Icon(
+                                          const Icon(
                                             FontAwesomeIcons.comment,
                                             color: Colors.black,
                                             size: 6,
                                           ),
-                                          SizedBox(
+                                          const SizedBox(
                                             width: 1.5,
                                           ),
                                           Text(
                                             '$commentCount',
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                                 fontSize: 8, color: bg_90),
                                           ),
-                                          SizedBox(
+                                          const SizedBox(
                                             width: 3,
                                           ),
-                                          Center(
+                                          const Center(
                                             child: Text(
                                               'ㅣ',
                                               style: TextStyle(
                                                   fontSize: 8, color: bg_90),
                                             ),
                                           ),
-                                          SizedBox(
+                                          const SizedBox(
                                             width: 3,
                                           ),
                                         ],
@@ -192,23 +192,23 @@ class _MyPageState extends State<MyPage> {
                                     Text(
                                       formattedDate,
                                       style:
-                                          TextStyle(fontSize: 8, color: bg_70),
+                                          const TextStyle(fontSize: 8, color: bg_70),
                                     ),
-                                    SizedBox(
+                                    const SizedBox(
                                       width: 3,
                                     ),
-                                    Text(
+                                    const Text(
                                       'ㅣ',
                                       style:
                                           TextStyle(fontSize: 8, color: bg_70),
                                     ),
-                                    SizedBox(
+                                    const SizedBox(
                                       width: 3,
                                     ),
                                     Text(
                                       post['author'],
                                       style:
-                                          TextStyle(fontSize: 9, color: bg_90),
+                                          const TextStyle(fontSize: 9, color: bg_90),
                                     ),
                                   ],
                                 )
@@ -233,8 +233,8 @@ class _MyPageState extends State<MyPage> {
                       ),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(20, 0, 20, 0),
                     child: Divider(
                       color: bg_10,
                       height: 1,
@@ -248,7 +248,7 @@ class _MyPageState extends State<MyPage> {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.black,
-        child: Center(
+        child: const Center(
           child: Icon(
             Icons.add,
             color: Colors.white,

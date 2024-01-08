@@ -122,7 +122,14 @@ class _AccountPageState extends State<AccountPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('프로필')),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text(
+          '프로필',
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: Colors.white,
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -139,11 +146,27 @@ class _AccountPageState extends State<AccountPage> {
                 ),
                 const SizedBox(height: 18),
                 ElevatedButton(
+                  style: ButtonStyle(
+                    backgroundColor:
+                        MaterialStateProperty.all<Color>(Colors.black),
+                  ),
                   onPressed: _loading ? null : _updateProfile,
-                  child: Text(_loading ? '저장중...' : '입장'),
+                  child: Text(
+                    _loading ? '저장중...' : '입장',
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.w700),
+                  ),
                 ),
                 const SizedBox(height: 18),
-                TextButton(onPressed: _signOut, child: const Text('Sign Out')),
+                TextButton(
+                  onPressed: _signOut,
+                  child: const Text(
+                    '로그아웃',
+                    style: TextStyle(
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
               ],
             ),
     );

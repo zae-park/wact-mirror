@@ -30,8 +30,8 @@ class _AddPostPageState extends State<AddPostPage> {
 
     // 현재 이미지 수와 새로 선택된 이미지 수의 합이 6을 초과하는지 확인
     if (_currentImages.length + pickedFiles.length > 6) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('최대 6장의 이미지만 선택할 수 있습니다.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('최대 6장의 이미지만 선택할 수 있습니다.')));
     } else {
       setState(() {
         _currentImages.addAll(pickedFiles);
@@ -39,8 +39,9 @@ class _AddPostPageState extends State<AddPostPage> {
     }
   }
 
+  // 이미지 없이 업로드 가능
   Future<void> _uploadPost() async {
-    if (_isLoading || _currentImages.isEmpty) return;
+    if (_isLoading) return;
 
     try {
       setState(() => _isLoading = true);
@@ -49,10 +50,10 @@ class _AddPostPageState extends State<AddPostPage> {
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
-          return AlertDialog(
+          return const AlertDialog(
             content: Column(
               mainAxisSize: MainAxisSize.min,
-              children: const [Text('작품을 저장중입니다.')],
+              children: [Text('작품을 저장중입니다.')],
             ),
           );
         },
@@ -61,44 +62,49 @@ class _AddPostPageState extends State<AddPostPage> {
       final user = supabase.auth.currentUser;
       if (user == null) throw Exception('User not found');
 
-      // 파일 경로 리스트 생성
-      List<String> filePaths = _currentImages.map((imageFile) {
-        final fileExt = imageFile.path.split('.').last;
-        final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
-        return 'user.id/$fileName';
-      }).toList();
-
       List<String> imageUrls = [];
 
-      // 이미지 업로드
-      for (int i = 0; i < _currentImages.length; i++) {
-        var imageFile = _currentImages[i];
-        var filePath = filePaths[i];
-        final imageBytes = await imageFile.readAsBytes();
-        final fileExt = imageFile.path.split('.').last;
+      // 이미지가 있을 경우에만 업로드 로직 실행
+      if (_currentImages.isNotEmpty) {
+        // 파일 경로 리스트 생성
+        List<String> filePaths = _currentImages.map((imageFile) {
+          final fileExt = imageFile.path.split('.').last;
+          final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
+          return 'user.id/$fileName';
+        }).toList();
 
-        await supabase.storage.from('post_photo').uploadBinary(
-            filePath, imageBytes,
-            fileOptions: FileOptions(contentType: 'image/$fileExt'));
+        // 이미지 업로드
+        for (int i = 0; i < _currentImages.length; i++) {
+          var imageFile = _currentImages[i];
+          var filePath = filePaths[i];
+          final imageBytes = await imageFile.readAsBytes();
+          final fileExt = imageFile.path.split('.').last;
+
+          await supabase.storage.from('post_photo').uploadBinary(
+              filePath, imageBytes,
+              fileOptions: FileOptions(contentType: 'image/$fileExt'));
+        }
+
+        // 이미지 업로드 후 서명된 URL 생성
+        List<SignedUrl> signedUrls = await supabase.storage
+            .from('post_photo')
+            .createSignedUrls(filePaths, 60 * 60 * 24 * 365 * 10);
+
+        // 서명된 URL 추출 및 저장
+        imageUrls.addAll(signedUrls.map((e) => e.signedUrl));
       }
-
-      // 이미지 업로드 후 서명된 URL 생성
-      List<SignedUrl> signedUrls = await supabase.storage
-          .from('post_photo')
-          .createSignedUrls(filePaths, 60 * 60 * 24 * 365 * 10);
-
-      // 서명된 URL 추출 및 저장
-      imageUrls.addAll(signedUrls.map((e) => e.signedUrl));
 
       final profileResponse = await supabase
           .from('profiles')
           .select('username')
-          .eq('id', user.id)
-          .single();
+          .match({'id': user.id}).single();
+
+      print('유저: $profileResponse');
 
       final username = profileResponse['username'] as String?;
+      print('유저 이름: $username');
 
-      final postResponse = await supabase.from('posts').insert({
+      await supabase.from('posts').insert({
         'author_id': user.id,
         'author': username,
         'title': _titleEditingController.text,
@@ -106,39 +112,8 @@ class _AddPostPageState extends State<AddPostPage> {
         'image_urls': imageUrls,
       });
 
-      print('Response: $postResponse');
-
-      if (postResponse.error != null) {
-        throw Exception('Error uploading post: ${postResponse.error}');
-      }
-
       widget.onUpload(imageUrls);
-// 업로드 성공 후 대화상자 닫기
-      if (mounted) {
-        Navigator.pop(context, true);
-      }
 
-      // 성공 메시지 표시
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('업로드 완료'),
-          ),
-        );
-        Navigator.pop(context, true);
-      }
-
-      // 성공 후 페이지 닫기
-    } catch (e) {
-      // 에러 메시지 먼저 표시
-      if (mounted) {
-        print('오류 발생: $e');
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(content: Text('오류 발생: $e')),
-        // );
-      }
-
-      // 그 후 대화상자 닫기
       if (mounted) {
         Navigator.pop(context, true);
       }
@@ -174,13 +149,13 @@ class _AddPostPageState extends State<AddPostPage> {
   @override
   Widget build(BuildContext context) {
     // 이미지 표시 부분
-    Widget _buildImageGrid() {
+    Widget buildImageGrid() {
       return Padding(
         padding: const EdgeInsets.all(20.0),
         child: GridView.builder(
           shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
             mainAxisSpacing: 8.0,
             crossAxisSpacing: 8.0,
@@ -191,16 +166,24 @@ class _AddPostPageState extends State<AddPostPage> {
               return DragTarget<XFile>(
                 onWillAccept: (data) => true,
                 onAccept: (data) {
-                  // 이미지 위치 변경 로직
                   setState(() {
                     final oldIndex = _currentImages.indexOf(data);
                     _currentImages.remove(data);
-                    _currentImages.insert(index, data);
+                    if (index > oldIndex) {
+                      _currentImages.insert(index - 1, data);
+                    } else {
+                      _currentImages.insert(index, data);
+                    }
                   });
                 },
                 builder: (context, candidateData, rejectedData) {
                   return LongPressDraggable<XFile>(
                     data: _currentImages[index],
+                    feedback: Material(
+                      child: Image.file(File(_currentImages[index].path),
+                          fit: BoxFit.cover, width: 100, height: 100),
+                    ),
+                    childWhenDragging: Container(),
                     child: Stack(
                       children: [
                         Positioned.fill(
@@ -226,11 +209,6 @@ class _AddPostPageState extends State<AddPostPage> {
                         ),
                       ],
                     ),
-                    feedback: Material(
-                      child: Image.file(File(_currentImages[index].path),
-                          fit: BoxFit.cover, width: 100, height: 100),
-                    ),
-                    childWhenDragging: Container(),
                   );
                 },
               );
@@ -242,7 +220,7 @@ class _AddPostPageState extends State<AddPostPage> {
                     border: Border.all(color: Colors.grey),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.add),
+                  child: const Icon(Icons.add),
                 ),
               );
             } else {
@@ -306,7 +284,8 @@ class _AddPostPageState extends State<AddPostPage> {
                 },
                 child: Container(
                   decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(19), color: primary),
+                      borderRadius: BorderRadius.circular(19),
+                      color: Colors.black),
                   child: const Center(
                     child: Text(
                       '게시',
@@ -326,7 +305,7 @@ class _AddPostPageState extends State<AddPostPage> {
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
-            _buildImageGrid(),
+            buildImageGrid(),
 
 // 작품명과 작품 설명 입력
             Padding(
