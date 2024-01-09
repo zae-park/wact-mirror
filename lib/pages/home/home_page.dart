@@ -126,6 +126,9 @@ class _HomePageState extends State<HomePage> {
                                           fontSize: 18,
                                           fontWeight: FontWeight.w600),
                                     ),
+                                    SizedBox(
+                                      height: 2,
+                                    ),
                                     Text(
                                       post['content'],
                                       maxLines: 1,
@@ -133,7 +136,7 @@ class _HomePageState extends State<HomePage> {
                                       style: const TextStyle(fontSize: 14),
                                     ),
                                     const SizedBox(
-                                      height: 3,
+                                      height: 5,
                                     ),
                                     Row(
                                       children: [
@@ -147,15 +150,15 @@ class _HomePageState extends State<HomePage> {
                                               const Icon(
                                                 FontAwesomeIcons.comment,
                                                 color: Colors.black,
-                                                size: 6,
+                                                size: 9,
                                               ),
                                               const SizedBox(
-                                                width: 1.5,
+                                                width: 3,
                                               ),
                                               Text(
                                                 '$commentCount',
                                                 style: const TextStyle(
-                                                    fontSize: 8, color: bg_90),
+                                                    fontSize: 9, color: bg_90),
                                               ),
                                               const SizedBox(
                                                 width: 3,

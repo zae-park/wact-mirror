@@ -2,85 +2,170 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 import 'package:wact/common/const/color.dart';
 
-class HomePostPage extends StatelessWidget {
+class HomePostPage extends StatefulWidget {
   final Map<String, dynamic> post;
 
   const HomePostPage({Key? key, required this.post}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final user = Supabase.instance.client.auth.currentUser;
-    final isAuthor = user?.id == post['author_id'];
+  State<HomePostPage> createState() => _HomePostPageState();
+}
 
-// 댓글 작성
-    TextEditingController commentController = TextEditingController();
+class _HomePostPageState extends State<HomePostPage> {
+  late TextEditingController commentController;
+  late User? user;
+  late bool isAuthor;
+  List<dynamic>? imageUrls;
 
-// 댓글 추가 함수
-    Future<void> addComment(
-        String content, String userId, BuildContext context) async {
-      // 기존 댓글 목록 불러오기
-      var existingComments = post['comments'] as List<dynamic>? ?? [];
+  @override
+  void initState() {
+    super.initState();
+    commentController = TextEditingController();
+    user = Supabase.instance.client.auth.currentUser;
+    updateAuthorStatus();
+    isAuthor = user?.id == widget.post['author_id'];
+    imageUrls = widget.post['image_urls'];
 
-      // 새 댓글 추가
-      existingComments.add({
-        'author_id': userId,
-        'author': post['author'],
-        'content': content,
-        'created_at': DateTime.now().toIso8601String()
-      });
+    // 로그 출력
+    print('User ID: ${user?.id}');
+    print('Author ID: ${widget.post['author_id']}');
+  }
 
-      // posts 테이블에 업데이트
-      final response = await Supabase.instance.client
-          .from('posts')
-          .update({'comments': existingComments}).eq('id', post['id']);
+  void updateAuthorStatus() {
+    setState(() {
+      isAuthor = user?.id == widget.post['author_id'];
+    });
+  }
 
-      if (response != null) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('댓글 작성됐습니다.')));
-      } else {
-        print('댓글 작성에 실패했습니다');
-        // 페이지 갱신 로직 필요
-      }
-    }
+  @override
+  void dispose() {
+    commentController.dispose();
+    super.dispose();
+  }
+
+  // 게시글 삭제 함수
+  Future<void> deletePost() async {
+    final response = await Supabase.instance.client
+        .from('posts')
+        .delete()
+        .match({'id': widget.post['id']}).select();
+    print('supabase 삭제: $response');
+    // 삭제 성공
+    Navigator.of(context).pop(); // 삭제 후 이전 화면으로 돌아감
+  }
+
+  // 댓글 추가 함수
+  Future<void> addComment(String content, BuildContext context) async {
+    var existingComments = List<Map<String, dynamic>>.from(
+        widget.post['comments'] as List<dynamic>? ?? []);
+    var uuid = Uuid();
+
+    // 새 댓글에 고유 ID 할당
+    existingComments.add({
+      'id': uuid.v4(), // UUID 생성
+      'author_id': user?.id,
+      'author': widget.post['author'],
+      'content': content,
+      'created_at': DateTime.now().toIso8601String()
+    });
+
+    // 'posts' 테이블에 업데이트
+    final response = await Supabase.instance.client
+        .from('posts')
+        .update({'comments': existingComments}).eq('id', widget.post['id']);
+
+    // 키보드 숨기기
+    FocusScope.of(context).unfocus();
+
+    setState(() {
+      widget.post['comments'] = existingComments;
+    });
+  }
 
 // 댓글 삭제 함수
-    Future<void> deleteComment(int commentIndex, BuildContext context) async {
-      // 기존 댓글 목록 불러오기
-      var existingComments = post['comments'] as List<dynamic>? ?? [];
+  Future<void> deleteComment(String commentId, BuildContext context) async {
+    var existingComments = List<Map<String, dynamic>>.from(
+        widget.post['comments'] as List<dynamic>? ?? []);
 
-      // 해당 댓글 삭제
-      existingComments.removeAt(commentIndex);
+    // 삭제할 댓글을 찾아 목록에서 제거
+    existingComments.removeWhere((comment) => comment['id'] == commentId);
 
-      // posts 테이블에 업데이트
-      final response = await Supabase.instance.client
-          .from('posts')
-          .update({'comments': existingComments}).eq('id', post['id']);
-      if (response.error != null) {
-        print('댓글 삭제에 실패했습니다.');
-      } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('댓글이 삭제되었습니다.')));
-        // 페이지 갱신 로직 필요
+    // 'posts' 테이블에 업데이트
+    final response = await Supabase.instance.client
+        .from('posts')
+        .update({'comments': existingComments}).eq('id', widget.post['id']);
+
+    setState(() {
+      widget.post['comments'] = existingComments;
+    });
+  }
+
+  // 대댓글 추가 함수
+  Future<void> addReply(
+      String commentId, String content, BuildContext context) async {
+    // 기존 댓글 목록 복사
+    var existingComments = List<Map<String, dynamic>>.from(
+        widget.post['comments'] as List<dynamic>? ?? []);
+    var uuid = Uuid();
+
+    // 대댓글 생성
+    Map<String, dynamic> newReply = {
+      'id': uuid.v4(), // UUID 생성
+      'author_id': user?.id,
+      'author': user?.email, // 또는 다른 사용자 식별자
+      'content': content,
+      'created_at': DateTime.now().toIso8601String(),
+      'replies': []
+    };
+
+    // 특정 댓글 찾아 대댓글 추가
+    for (var comment in existingComments) {
+      if (comment['id'] == commentId) {
+        (comment['replies'] as List<dynamic>).add(newReply);
+        break;
       }
     }
 
-    final createdAt =
-        DateFormat('MM/dd').format(DateTime.parse(post['created_at']));
-    // 이미지 URL 리스트
-    List<dynamic>? imageUrls = post['image_urls'];
+    // 'posts' 테이블에 업데이트
+    await Supabase.instance.client
+        .from('posts')
+        .update({'comments': existingComments}).eq('id', widget.post['id']);
+    setState(() => widget.post['comments'] = existingComments);
+  }
 
-    // 게시글 삭제 함수
-    Future<void> deletePost() async {
-      final response = await Supabase.instance.client
-          .from('posts')
-          .delete()
-          .match({'id': post['id']}).select();
-      print('supabase 삭제: $response');
-      // 삭제 성공
-      Navigator.of(context).pop(); // 삭제 후 이전 화면으로 돌아감
+// 대댓글 삭제 함수
+  Future<void> deleteReply(
+      String commentId, String replyId, BuildContext context) async {
+    // 기존 댓글 목록 복사
+    var existingComments = List<Map<String, dynamic>>.from(
+        widget.post['comments'] as List<dynamic>? ?? []);
+
+    // 특정 댓글의 대댓글 목록에서 대댓글 삭제
+    for (var comment in existingComments) {
+      if (comment['id'] == commentId) {
+        (comment['replies'] as List<dynamic>)
+            .removeWhere((reply) => reply['id'] == replyId);
+        break;
+      }
     }
+
+    // 'posts' 테이블에 업데이트
+    await Supabase.instance.client
+        .from('posts')
+        .update({'comments': existingComments}).eq('id', widget.post['id']);
+    setState(() => widget.post['comments'] = existingComments);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    print('Is Author: $isAuthor');
+
+    final createdAt =
+        DateFormat('MM/dd').format(DateTime.parse(widget.post['created_at']));
+    // 이미지 URL 리스트
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -89,12 +174,23 @@ class HomePostPage extends StatelessWidget {
         title: const Text(''),
         actions: isAuthor
             ? [
-                IconButton(
+                PopupMenuButton(
+                  onSelected: (value) {
+                    if (value == 'delete') {
+                      deletePost();
+                    }
+                  },
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: ListTile(
+                        title: Text('삭제'),
+                      ),
+                    ),
+                  ],
                   icon: const Icon(
-                    Icons.delete_outline,
-                    size: 16,
+                    Icons.more_vert,
                   ),
-                  onPressed: deletePost,
                 ),
               ]
             : null,
@@ -112,7 +208,7 @@ class HomePostPage extends StatelessWidget {
                   Column(
                     children: [
                       Text(
-                        post['title'],
+                        widget.post['title'],
                         style: const TextStyle(
                             fontSize: 22, fontWeight: FontWeight.w600),
                       ),
@@ -124,7 +220,7 @@ class HomePostPage extends StatelessWidget {
                   Column(
                     children: [
                       Text(
-                        '${post['author']}',
+                        '${widget.post['author']}',
                         style: const TextStyle(
                             fontSize: 10, fontWeight: FontWeight.w600),
                       ),
@@ -142,7 +238,7 @@ class HomePostPage extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(left: 20, right: 20),
               child: Text(
-                post['content'],
+                widget.post['content'],
                 style: const TextStyle(
                   fontSize: 14,
                 ),
@@ -153,20 +249,20 @@ class HomePostPage extends StatelessWidget {
             ),
             // 이미지 리스트 표시
 // 이미지 리스트 표시
-            if (imageUrls != null && imageUrls.isNotEmpty)
+            if (imageUrls != null && imageUrls!.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
                 child: ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: imageUrls.length,
+                  itemCount: imageUrls!.length,
                   itemBuilder: (context, index) {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: GestureDetector(
                         onTap: () {},
                         child: Image.network(
-                          imageUrls[index],
+                          imageUrls![index],
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -178,9 +274,9 @@ class HomePostPage extends StatelessWidget {
             // 댓글 목록
             Column(
               children: List.generate(
-                (post['comments'] as List<dynamic>?)?.length ?? 0,
+                (widget.post['comments'] as List<dynamic>?)?.length ?? 0,
                 (index) {
-                  var comment = post['comments'][index];
+                  var comment = widget.post['comments'][index];
                   bool isCommentAuthor = user?.id == comment['author_id'];
 
                   // 날짜 형식 변환
@@ -220,14 +316,12 @@ class HomePostPage extends StatelessWidget {
                           ),
                           trailing: isCommentAuthor
                               ? IconButton(
-                                  icon: Icon(
-                                    Icons.delete_outline,
-                                    size: 16,
-                                  ),
-                                  onPressed: () => comment['id'] != null
-                                      ? deleteComment(comment['id'], context)
-                                      : null,
-                                )
+                                  icon: Icon(Icons.delete_outline, size: 16),
+                                  onPressed: () {
+                                    if (comment['id'] != null) {
+                                      deleteComment(comment['id'], context);
+                                    }
+                                  })
                               : null,
                         ),
                       ),
@@ -247,11 +341,14 @@ class HomePostPage extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.only(left: 10.0, right: 10.0, bottom: 10.0),
+        padding: EdgeInsets.only(
+            left: 10.0,
+            right: 10.0,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 10),
         child: TextField(
           controller: commentController,
           decoration: InputDecoration(
-            labelText: '댓글 작성',
+            hintText: '댓글 작성',
             filled: true, // 배경색 채우기 활성화
             fillColor: bg_10, // 배경색 지정
             suffixIcon: IconButton(
@@ -261,7 +358,7 @@ class HomePostPage extends StatelessWidget {
               ),
               onPressed: () {
                 if (commentController.text.isNotEmpty && user != null) {
-                  addComment(commentController.text, user.id, context);
+                  addComment(commentController.text, context);
                   commentController.clear();
                 }
               },
