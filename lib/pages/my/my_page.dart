@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
@@ -104,10 +106,20 @@ class _MyPageState extends State<MyPage> {
             itemCount: posts.length,
             itemBuilder: (context, index) {
               final post = posts[index];
-              final imageUrls = post['image_urls'] as List<dynamic>?;
-              final imageUrl = imageUrls != null && imageUrls.isNotEmpty
-                  ? imageUrls[0]
-                  : null;
+              // 이미지 URL 처리
+              List<dynamic> imageUrls = [];
+              if (post['compressed_image_urls'] != null) {
+                // JSON 문자열을 List<dynamic>으로 변환
+                String imageUrlString = post['compressed_image_urls'];
+                imageUrls = json.decode(imageUrlString);
+              }
+
+              // 첫 번째 이미지 URL 추출
+              final imageUrl = imageUrls.isNotEmpty ? imageUrls[0] : null;
+
+              if (imageUrl != null) {
+                precacheImage(NetworkImage(imageUrl), context);
+              }
 
               // 댓글 개수 처리
               final commentCount =
@@ -191,8 +203,8 @@ class _MyPageState extends State<MyPage> {
                                       ),
                                     Text(
                                       formattedDate,
-                                      style:
-                                          const TextStyle(fontSize: 8, color: bg_70),
+                                      style: const TextStyle(
+                                          fontSize: 8, color: bg_70),
                                     ),
                                     const SizedBox(
                                       width: 3,
@@ -207,8 +219,8 @@ class _MyPageState extends State<MyPage> {
                                     ),
                                     Text(
                                       post['author'],
-                                      style:
-                                          const TextStyle(fontSize: 9, color: bg_90),
+                                      style: const TextStyle(
+                                          fontSize: 9, color: bg_90),
                                     ),
                                   ],
                                 )

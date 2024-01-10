@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -74,10 +76,16 @@ class _HomePageState extends State<HomePage> {
               itemCount: posts.length,
               itemBuilder: (context, index) {
                 final post = posts[index];
-                final imageUrls = post['image_urls'] as List<dynamic>?;
-                final imageUrl = imageUrls != null && imageUrls.isNotEmpty
-                    ? imageUrls[0]
-                    : null;
+                // 이미지 URL 처리
+                List<dynamic> imageUrls = [];
+                if (post['compressed_image_urls'] != null) {
+                  // JSON 문자열을 List<dynamic>으로 변환
+                  String imageUrlString = post['compressed_image_urls'];
+                  imageUrls = json.decode(imageUrlString);
+                }
+
+                // 첫 번째 이미지 URL 추출
+                final imageUrl = imageUrls.isNotEmpty ? imageUrls[0] : null;
 
                 if (imageUrl != null) {
                   precacheImage(NetworkImage(imageUrl), context);
@@ -91,7 +99,7 @@ class _HomePageState extends State<HomePage> {
                 final createdAt = DateTime.parse(post['created_at']);
                 final formattedDate = DateFormat('MM/dd').format(createdAt);
 
-                return GestureDetector(
+                return InkWell(
                   onTap: () {
                     Navigator.push(
                       context,
@@ -107,116 +115,128 @@ class _HomePageState extends State<HomePage> {
                         child: SizedBox(
                           width: MediaQuery.of(context).size.width - 40,
                           height: 90,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              SizedBox(
-                                width: MediaQuery.of(context).size.width -
-                                    40 -
-                                    60 -
-                                    10,
-                                height: 90,
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      post['title'],
-                                      style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w600),
-                                    ),
-                                    SizedBox(
-                                      height: 2,
-                                    ),
-                                    Text(
-                                      post['content'],
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 14),
-                                    ),
-                                    const SizedBox(
-                                      height: 5,
-                                    ),
-                                    Row(
-                                      children: [
-                                        if (commentCount > 0)
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              const Icon(
-                                                FontAwesomeIcons.comment,
-                                                color: Colors.black,
-                                                size: 9,
-                                              ),
-                                              const SizedBox(
-                                                width: 3,
-                                              ),
-                                              Text(
-                                                '$commentCount',
-                                                style: const TextStyle(
-                                                    fontSize: 9, color: bg_90),
-                                              ),
-                                              const SizedBox(
-                                                width: 3,
-                                              ),
-                                              const Center(
-                                                child: Text(
-                                                  'ㅣ',
-                                                  style: TextStyle(
-                                                      fontSize: 8,
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        HomePostPage(post: posts[index])),
+                              );
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                SizedBox(
+                                  width: MediaQuery.of(context).size.width -
+                                      40 -
+                                      60 -
+                                      10,
+                                  height: 90,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        post['title'],
+                                        style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600),
+                                      ),
+                                      SizedBox(
+                                        height: 2,
+                                      ),
+                                      Text(
+                                        post['content'],
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(fontSize: 14),
+                                      ),
+                                      const SizedBox(
+                                        height: 5,
+                                      ),
+                                      Row(
+                                        children: [
+                                          if (commentCount > 0)
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                const Icon(
+                                                  FontAwesomeIcons.comment,
+                                                  color: Colors.black,
+                                                  size: 9,
+                                                ),
+                                                const SizedBox(
+                                                  width: 3,
+                                                ),
+                                                Text(
+                                                  '$commentCount',
+                                                  style: const TextStyle(
+                                                      fontSize: 9,
                                                       color: bg_90),
                                                 ),
-                                              ),
-                                              const SizedBox(
-                                                width: 3,
-                                              ),
-                                            ],
+                                                const SizedBox(
+                                                  width: 3,
+                                                ),
+                                                const Center(
+                                                  child: Text(
+                                                    'ㅣ',
+                                                    style: TextStyle(
+                                                        fontSize: 8,
+                                                        color: bg_90),
+                                                  ),
+                                                ),
+                                                const SizedBox(
+                                                  width: 3,
+                                                ),
+                                              ],
+                                            ),
+                                          Text(
+                                            formattedDate,
+                                            style: const TextStyle(
+                                                fontSize: 9, color: bg_70),
                                           ),
-                                        Text(
-                                          formattedDate,
-                                          style: const TextStyle(
-                                              fontSize: 9, color: bg_70),
-                                        ),
-                                        const SizedBox(
-                                          width: 3,
-                                        ),
-                                        const Text(
-                                          'ㅣ',
-                                          style: TextStyle(
-                                              fontSize: 8, color: bg_70),
-                                        ),
-                                        const SizedBox(
-                                          width: 3,
-                                        ),
-                                        Text(
-                                          post['author'],
-                                          style: const TextStyle(
-                                              fontSize: 9, color: bg_90),
-                                        ),
-                                      ],
-                                    )
-                                  ],
-                                ),
-                              ),
-                              if (imageUrl != null)
-                                SizedBox(
-                                  width: 60,
-                                  height: 60,
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: CachedNetworkImage(
-                                      imageUrl: imageUrl,
-                                      width: 60,
-                                      height: 60,
-                                      fit: BoxFit.cover,
-                                    ),
+                                          const SizedBox(
+                                            width: 3,
+                                          ),
+                                          const Text(
+                                            'ㅣ',
+                                            style: TextStyle(
+                                                fontSize: 8, color: bg_70),
+                                          ),
+                                          const SizedBox(
+                                            width: 3,
+                                          ),
+                                          Text(
+                                            post['author'],
+                                            style: const TextStyle(
+                                                fontSize: 9, color: bg_90),
+                                          ),
+                                        ],
+                                      )
+                                    ],
                                   ),
                                 ),
-                            ],
+                                if (imageUrl != null)
+                                  SizedBox(
+                                    width: 60,
+                                    height: 60,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(20),
+                                      child: CachedNetworkImage(
+                                        imageUrl: imageUrl,
+                                        width: 60,
+                                        height: 60,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
                       ),

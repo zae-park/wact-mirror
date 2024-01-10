@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:flutter/material.dart';
@@ -63,6 +64,8 @@ class _AddPostPageState extends State<AddPostPage> {
       if (user == null) throw Exception('User not found');
 
       List<String> imageUrls = [];
+      // 압축된 이미지의 URL 리스트
+      List<String> compressedImageUrls = [];
 
       // 이미지가 있을 경우에만 업로드 로직 실행
       if (_currentImages.isNotEmpty) {
@@ -73,15 +76,37 @@ class _AddPostPageState extends State<AddPostPage> {
           return 'user.id/$fileName';
         }).toList();
 
+        // 압축된 이미지의 경로 리스트 생성
+        List<String> compressedFilePaths = _currentImages.map((imageFile) {
+          final fileExt = imageFile.path.split('.').last;
+          final fileName =
+              '${DateTime.now().toIso8601String()}_compressed.$fileExt';
+          return '${user.id}/$fileName';
+        }).toList();
+
         // 이미지 업로드
         for (int i = 0; i < _currentImages.length; i++) {
           var imageFile = _currentImages[i];
           var filePath = filePaths[i];
+          var compressedFilePath = compressedFilePaths[i];
+
           final imageBytes = await imageFile.readAsBytes();
           final fileExt = imageFile.path.split('.').last;
 
+          // 이미지 압축
+          final compressedImageBytes =
+              await FlutterImageCompress.compressWithList(
+            imageBytes,
+            quality: 30, // 30% 품질로 압축
+          );
+
           await supabase.storage.from('post_photo').uploadBinary(
               filePath, imageBytes,
+              fileOptions: FileOptions(contentType: 'image/$fileExt'));
+
+          // 압축된 이미지 업로드
+          await supabase.storage.from('post_photo').uploadBinary(
+              compressedFilePath, compressedImageBytes,
               fileOptions: FileOptions(contentType: 'image/$fileExt'));
         }
 
@@ -92,6 +117,14 @@ class _AddPostPageState extends State<AddPostPage> {
 
         // 서명된 URL 추출 및 저장
         imageUrls.addAll(signedUrls.map((e) => e.signedUrl));
+
+        // 압축된 이미지의 서명된 URL 생성
+        List<SignedUrl> compressedSignedUrls = await supabase.storage
+            .from('post_photo')
+            .createSignedUrls(compressedFilePaths, 60 * 60 * 24 * 365 * 10);
+
+        compressedImageUrls
+            .addAll(compressedSignedUrls.map((e) => e.signedUrl));
       }
 
       final profileResponse = await supabase
@@ -110,6 +143,7 @@ class _AddPostPageState extends State<AddPostPage> {
         'title': _titleEditingController.text,
         'content': _contentEditingController.text,
         'image_urls': imageUrls,
+        'compressed_image_urls': compressedImageUrls,
       });
 
       widget.onUpload(imageUrls);

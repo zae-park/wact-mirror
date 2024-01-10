@@ -6,18 +6,17 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:wact/common/const/color.dart';
-import 'package:wact/main.dart';
 
-class HomePostPage extends StatefulWidget {
+class MyPostPage extends StatefulWidget {
   final Map<String, dynamic> post;
 
-  const HomePostPage({Key? key, required this.post}) : super(key: key);
+  const MyPostPage({Key? key, required this.post}) : super(key: key);
 
   @override
-  State<HomePostPage> createState() => _HomePostPageState();
+  State<MyPostPage> createState() => _MyPostPageState();
 }
 
-class _HomePostPageState extends State<HomePostPage> {
+class _MyPostPageState extends State<MyPostPage> {
   late TextEditingController commentController;
   late User? user;
   late bool isAuthor;
@@ -63,16 +62,6 @@ class _HomePostPageState extends State<HomePostPage> {
 
   // 댓글 추가 함수
   Future<void> addComment(String content, BuildContext context) async {
-    final profileResponse = await supabase
-        .from('profiles')
-        .select('username')
-        .match({'id': user!.id}).single();
-
-    print('유저: $profileResponse');
-
-    final username = profileResponse['username'] as String?;
-    print('유저 이름: $username');
-
     var existingComments = List<Map<String, dynamic>>.from(
         widget.post['comments'] as List<dynamic>? ?? []);
     var uuid = Uuid();
@@ -81,16 +70,15 @@ class _HomePostPageState extends State<HomePostPage> {
     existingComments.add({
       'id': uuid.v4(), // UUID 생성
       'author_id': user?.id,
-      'author': username,
+      'author': widget.post['author'],
       'content': content,
       'created_at': DateTime.now().toIso8601String()
     });
 
-    print('새 댓글: $existingComments');
-
     // 'posts' 테이블에 업데이트
-    await Supabase.instance.client.from('posts').update(
-        {'comments': existingComments}).match({'id': widget.post['id']});
+    final response = await Supabase.instance.client
+        .from('posts')
+        .update({'comments': existingComments}).eq('id', widget.post['id']);
 
     // 키보드 숨기기
     FocusScope.of(context).unfocus();
@@ -116,6 +104,62 @@ class _HomePostPageState extends State<HomePostPage> {
     setState(() {
       widget.post['comments'] = existingComments;
     });
+  }
+
+  // 대댓글 추가 함수
+  Future<void> addReply(
+      String commentId, String content, BuildContext context) async {
+    // 기존 댓글 목록 복사
+    var existingComments = List<Map<String, dynamic>>.from(
+        widget.post['comments'] as List<dynamic>? ?? []);
+    var uuid = Uuid();
+
+    // 대댓글 생성
+    Map<String, dynamic> newReply = {
+      'id': uuid.v4(), // UUID 생성
+      'author_id': user?.id,
+      'author': user?.email, // 또는 다른 사용자 식별자
+      'content': content,
+      'created_at': DateTime.now().toIso8601String(),
+      'replies': []
+    };
+
+    // 특정 댓글 찾아 대댓글 추가
+    for (var comment in existingComments) {
+      if (comment['id'] == commentId) {
+        (comment['replies'] as List<dynamic>).add(newReply);
+        break;
+      }
+    }
+
+    // 'posts' 테이블에 업데이트
+    await Supabase.instance.client
+        .from('posts')
+        .update({'comments': existingComments}).eq('id', widget.post['id']);
+    setState(() => widget.post['comments'] = existingComments);
+  }
+
+// 대댓글 삭제 함수
+  Future<void> deleteReply(
+      String commentId, String replyId, BuildContext context) async {
+    // 기존 댓글 목록 복사
+    var existingComments = List<Map<String, dynamic>>.from(
+        widget.post['comments'] as List<dynamic>? ?? []);
+
+    // 특정 댓글의 대댓글 목록에서 대댓글 삭제
+    for (var comment in existingComments) {
+      if (comment['id'] == commentId) {
+        (comment['replies'] as List<dynamic>)
+            .removeWhere((reply) => reply['id'] == replyId);
+        break;
+      }
+    }
+
+    // 'posts' 테이블에 업데이트
+    await Supabase.instance.client
+        .from('posts')
+        .update({'comments': existingComments}).eq('id', widget.post['id']);
+    setState(() => widget.post['comments'] = existingComments);
   }
 
   @override
