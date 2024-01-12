@@ -97,7 +97,7 @@ class _AddPostPageState extends State<AddPostPage> {
           final compressedImageBytes =
               await FlutterImageCompress.compressWithList(
             imageBytes,
-            quality: 30, // 30% 품질로 압축
+            quality: 70, // 70% 품질로 압축
           );
 
           await supabase.storage.from('post_photo').uploadBinary(
