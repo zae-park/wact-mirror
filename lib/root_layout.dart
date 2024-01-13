@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:wact/pages/home/home_page.dart';
 import 'package:wact/pages/my/my_page.dart';
+import 'package:wact/pages/qtroom/qtroom_page.dart';
 
 class RootLayout extends StatefulWidget {
   const RootLayout({super.key});
@@ -16,6 +18,7 @@ class _RootLayoutState extends State<RootLayout> {
   // 화면 리스트
   final List<Widget> _screens = [
     const HomePage(),
+    QTRoom(),
     const MyPage(),
   ];
 
@@ -40,11 +43,24 @@ class _RootLayoutState extends State<RootLayout> {
         backgroundColor: Colors.white,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+            icon: Icon(
+              FontAwesomeIcons.house,
+              size: 16,
+            ),
             label: '홈',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
+            icon: Icon(
+              FontAwesomeIcons.bookBible,
+              size: 16,
+            ),
+            label: '말묵방',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(
+              FontAwesomeIcons.userLarge,
+              size: 16,
+            ),
             label: '마이페이지',
           ),
         ],

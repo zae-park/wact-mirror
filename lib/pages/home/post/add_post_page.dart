@@ -52,9 +52,10 @@ class _AddPostPageState extends State<AddPostPage> {
         barrierDismissible: false,
         builder: (BuildContext context) {
           return const AlertDialog(
+            backgroundColor: bg_50,
             content: Column(
               mainAxisSize: MainAxisSize.min,
-              children: [Text('작품을 저장중입니다.')],
+              children: [Text('게시글을 저장중입니다.')],
             ),
           );
         },
@@ -284,7 +285,7 @@ class _AddPostPageState extends State<AddPostPage> {
           ),
         ),
         title: const Text(
-          '후기 작성',
+          '글쓰기',
           style: TextStyle(
             color: Colors.black,
             fontSize: 20,
@@ -342,7 +343,7 @@ class _AddPostPageState extends State<AddPostPage> {
           children: <Widget>[
             buildImageGrid(),
 
-// 작품명과 작품 설명 입력
+            // 제목과 내용 입력
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: SizedBox(

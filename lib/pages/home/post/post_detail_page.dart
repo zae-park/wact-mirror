@@ -8,16 +8,16 @@ import 'package:uuid/uuid.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:wact/main.dart';
 
-class HomePostPage extends StatefulWidget {
+class PostDetailPage extends StatefulWidget {
   final Map<String, dynamic> post;
 
-  const HomePostPage({Key? key, required this.post}) : super(key: key);
+  const PostDetailPage({Key? key, required this.post}) : super(key: key);
 
   @override
-  State<HomePostPage> createState() => _HomePostPageState();
+  State<PostDetailPage> createState() => _PostDetailPageState();
 }
 
-class _HomePostPageState extends State<HomePostPage> {
+class _PostDetailPageState extends State<PostDetailPage> {
   late TextEditingController commentController;
   late User? user;
   late bool isAuthor;

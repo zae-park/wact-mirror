@@ -5,7 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/const/color.dart';
-import 'package:wact/pages/add_post_page.dart';
+import 'package:wact/pages/home/post/add_post_page.dart';
 import 'package:wact/pages/my/my_post_page.dart';
 
 class MyPage extends StatefulWidget {
@@ -36,7 +36,7 @@ class _MyPageState extends State<MyPage> {
     final userId = Supabase.instance.client.auth.currentUser!.id;
     final response = await Supabase.instance.client
         .from('profiles')
-        .select()
+        .select('username')
         .eq('id', userId)
         .single();
 
