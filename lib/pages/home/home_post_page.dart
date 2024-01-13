@@ -30,8 +30,17 @@ class _HomePostPageState extends State<HomePostPage> {
     user = Supabase.instance.client.auth.currentUser;
     updateAuthorStatus();
     isAuthor = user?.id == widget.post['author_id'];
-    String jsonString = widget.post['compressed_image_urls'];
-    imageUrls = json.decode(jsonString);
+    // 타입 확인 및 처리
+    if (widget.post['compressed_image_urls'] is String) {
+      String jsonString = widget.post['compressed_image_urls'];
+      imageUrls = json.decode(jsonString);
+    } else if (widget.post['compressed_image_urls'] is List) {
+      // 이미 List<dynamic> 타입인 경우 직접 할당
+      imageUrls = widget.post['compressed_image_urls'];
+    } else {
+      // null 또는 다른 타입인 경우 빈 리스트 할당
+      imageUrls = [];
+    }
 
     // 로그 출력
     print('User ID: ${user?.id}');

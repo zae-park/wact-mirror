@@ -29,8 +29,17 @@ class _MyPostPageState extends State<MyPostPage> {
     user = Supabase.instance.client.auth.currentUser;
     updateAuthorStatus();
     isAuthor = user?.id == widget.post['author_id'];
-    String jsonString = widget.post['compressed_image_urls'];
-    imageUrls = json.decode(jsonString);
+    // 타입 확인 및 처리
+    if (widget.post['compressed_image_urls'] is String) {
+      String jsonString = widget.post['compressed_image_urls'];
+      imageUrls = json.decode(jsonString);
+    } else if (widget.post['compressed_image_urls'] is List) {
+      // 이미 List<dynamic> 타입인 경우 직접 할당
+      imageUrls = widget.post['compressed_image_urls'];
+    } else {
+      // null 또는 다른 타입인 경우 빈 리스트 할당
+      imageUrls = [];
+    }
 
     // 로그 출력
     print('User ID: ${user?.id}');
@@ -75,10 +84,11 @@ class _MyPostPageState extends State<MyPostPage> {
       'created_at': DateTime.now().toIso8601String()
     });
 
+    print('새 댓글: $existingComments');
+
     // 'posts' 테이블에 업데이트
-    final response = await Supabase.instance.client
-        .from('posts')
-        .update({'comments': existingComments}).eq('id', widget.post['id']);
+    await Supabase.instance.client.from('posts').update(
+        {'comments': existingComments}).match({'id': widget.post['id']});
 
     // 키보드 숨기기
     FocusScope.of(context).unfocus();

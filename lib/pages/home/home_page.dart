@@ -78,8 +78,12 @@ class _HomePageState extends State<HomePage> {
                 final post = posts[index];
                 // 이미지 URL 처리
                 List<dynamic> imageUrls = [];
-                if (post['compressed_image_urls'] != null) {
-                  // JSON 문자열을 List<dynamic>으로 변환
+                // post['compressed_image_urls']가 List<dynamic>이면 직접 사용
+                if (post['compressed_image_urls'] is List<dynamic>) {
+                  imageUrls = post['compressed_image_urls'];
+                }
+// post['compressed_image_urls']가 String이면 JSON 파싱
+                else if (post['compressed_image_urls'] is String) {
                   String imageUrlString = post['compressed_image_urls'];
                   imageUrls = json.decode(imageUrlString);
                 }

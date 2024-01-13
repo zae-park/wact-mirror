@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:wact/pages/add_post_page.dart';
+import 'package:wact/pages/my/my_post_page.dart';
 
 class MyPage extends StatefulWidget {
   const MyPage({
@@ -17,7 +18,7 @@ class MyPage extends StatefulWidget {
 }
 
 class _MyPageState extends State<MyPage> {
-  late Future<List<Map<String, dynamic>>> _future;
+  late Future<List<Map<String, dynamic>>>? _future;
   late Future<String> _usernameFuture;
 
   late ScrollController controller;
@@ -26,6 +27,7 @@ class _MyPageState extends State<MyPage> {
   void initState() {
     super.initState();
     controller = ScrollController(); // ScrollController 초기화
+
     _usernameFuture = _getUsername();
     _loadData();
   }
@@ -34,7 +36,7 @@ class _MyPageState extends State<MyPage> {
     final userId = Supabase.instance.client.auth.currentUser!.id;
     final response = await Supabase.instance.client
         .from('profiles')
-        .select('username')
+        .select()
         .eq('id', userId)
         .single();
 
@@ -108,12 +110,15 @@ class _MyPageState extends State<MyPage> {
               final post = posts[index];
               // 이미지 URL 처리
               List<dynamic> imageUrls = [];
-              if (post['compressed_image_urls'] != null) {
-                // JSON 문자열을 List<dynamic>으로 변환
+              // post['compressed_image_urls']가 List<dynamic>이면 직접 사용
+              if (post['compressed_image_urls'] is List<dynamic>) {
+                imageUrls = post['compressed_image_urls'];
+              }
+// post['compressed_image_urls']가 String이면 JSON 파싱
+              else if (post['compressed_image_urls'] is String) {
                 String imageUrlString = post['compressed_image_urls'];
                 imageUrls = json.decode(imageUrlString);
               }
-
               // 첫 번째 이미지 URL 추출
               final imageUrl = imageUrls.isNotEmpty ? imageUrls[0] : null;
 
@@ -129,130 +134,139 @@ class _MyPageState extends State<MyPage> {
               final createdAt = DateTime.parse(post['created_at']);
               final formattedDate = DateFormat('MM/dd').format(createdAt);
 
-              return Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                    child: SizedBox(
-                      width: MediaQuery.of(context).size.width - 40,
-                      height: 90,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width -
-                                40 -
-                                60 -
-                                10,
-                            height: 90,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  post['title'],
-                                  style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600),
-                                ),
-                                Text(
-                                  post['content'],
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontSize: 14),
-                                ),
-                                const SizedBox(
-                                  height: 3,
-                                ),
-                                Row(
-                                  children: [
-                                    if (commentCount > 0)
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          const Icon(
-                                            FontAwesomeIcons.comment,
-                                            color: Colors.black,
-                                            size: 6,
-                                          ),
-                                          const SizedBox(
-                                            width: 1.5,
-                                          ),
-                                          Text(
-                                            '$commentCount',
-                                            style: const TextStyle(
-                                                fontSize: 8, color: bg_90),
-                                          ),
-                                          const SizedBox(
-                                            width: 3,
-                                          ),
-                                          const Center(
-                                            child: Text(
-                                              'ㅣ',
-                                              style: TextStyle(
-                                                  fontSize: 8, color: bg_90),
-                                            ),
-                                          ),
-                                          const SizedBox(
-                                            width: 3,
-                                          ),
-                                        ],
-                                      ),
-                                    Text(
-                                      formattedDate,
-                                      style: const TextStyle(
-                                          fontSize: 8, color: bg_70),
-                                    ),
-                                    const SizedBox(
-                                      width: 3,
-                                    ),
-                                    const Text(
-                                      'ㅣ',
-                                      style:
-                                          TextStyle(fontSize: 8, color: bg_70),
-                                    ),
-                                    const SizedBox(
-                                      width: 3,
-                                    ),
-                                    Text(
-                                      post['author'],
-                                      style: const TextStyle(
-                                          fontSize: 9, color: bg_90),
-                                    ),
-                                  ],
-                                )
-                              ],
-                            ),
-                          ),
-                          if (imageUrl != null)
+              return InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => MyPostPage(post: posts[index])),
+                  );
+                },
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width - 40,
+                        height: 90,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
                             SizedBox(
-                              width: 60,
-                              height: 60,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(20),
-                                child: Image.network(
-                                  imageUrl,
-                                  width: 60,
-                                  height: 60,
-                                  fit: BoxFit.cover,
-                                ),
+                              width: MediaQuery.of(context).size.width -
+                                  40 -
+                                  60 -
+                                  10,
+                              height: 90,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    post['title'],
+                                    style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                  Text(
+                                    post['content'],
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                  const SizedBox(
+                                    height: 3,
+                                  ),
+                                  Row(
+                                    children: [
+                                      if (commentCount > 0)
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            const Icon(
+                                              FontAwesomeIcons.comment,
+                                              color: Colors.black,
+                                              size: 9,
+                                            ),
+                                            const SizedBox(
+                                              width: 3,
+                                            ),
+                                            Text(
+                                              '$commentCount',
+                                              style: const TextStyle(
+                                                  fontSize: 9, color: bg_90),
+                                            ),
+                                            const SizedBox(
+                                              width: 3,
+                                            ),
+                                            const Center(
+                                              child: Text(
+                                                'ㅣ',
+                                                style: TextStyle(
+                                                    fontSize: 8, color: bg_90),
+                                              ),
+                                            ),
+                                            const SizedBox(
+                                              width: 3,
+                                            ),
+                                          ],
+                                        ),
+                                      Text(
+                                        formattedDate,
+                                        style: const TextStyle(
+                                            fontSize: 9, color: bg_70),
+                                      ),
+                                      const SizedBox(
+                                        width: 3,
+                                      ),
+                                      const Text(
+                                        'ㅣ',
+                                        style: TextStyle(
+                                            fontSize: 8, color: bg_70),
+                                      ),
+                                      const SizedBox(
+                                        width: 3,
+                                      ),
+                                      Text(
+                                        post['author'],
+                                        style: const TextStyle(
+                                            fontSize: 9, color: bg_90),
+                                      ),
+                                    ],
+                                  )
+                                ],
                               ),
                             ),
-                        ],
+                            if (imageUrl != null)
+                              SizedBox(
+                                width: 60,
+                                height: 60,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Image.network(
+                                    imageUrl,
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(20, 0, 20, 0),
-                    child: Divider(
-                      color: bg_10,
-                      height: 1,
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(20, 0, 20, 0),
+                      child: Divider(
+                        color: bg_10,
+                        height: 1,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               );
             },
           );

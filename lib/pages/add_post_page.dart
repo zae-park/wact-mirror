@@ -73,7 +73,7 @@ class _AddPostPageState extends State<AddPostPage> {
         List<String> filePaths = _currentImages.map((imageFile) {
           final fileExt = imageFile.path.split('.').last;
           final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
-          return 'user.id/$fileName';
+          return '${user.id}/$fileName';
         }).toList();
 
         // 압축된 이미지의 경로 리스트 생성
@@ -97,7 +97,7 @@ class _AddPostPageState extends State<AddPostPage> {
           final compressedImageBytes =
               await FlutterImageCompress.compressWithList(
             imageBytes,
-            quality: 70, // 70% 품질로 압축
+            quality: 80, // 70% 품질로 압축
           );
 
           await supabase.storage.from('post_photo').uploadBinary(
@@ -105,9 +105,10 @@ class _AddPostPageState extends State<AddPostPage> {
               fileOptions: FileOptions(contentType: 'image/$fileExt'));
 
           // 압축된 이미지 업로드
-          await supabase.storage.from('post_photo').uploadBinary(
+          await supabase.storage.from('post_compressed_photo').uploadBinary(
               compressedFilePath, compressedImageBytes,
-              fileOptions: FileOptions(contentType: 'image/$fileExt'));
+              fileOptions:
+                  FileOptions(contentType: 'compressedImage/$fileExt'));
         }
 
         // 이미지 업로드 후 서명된 URL 생성
@@ -120,7 +121,7 @@ class _AddPostPageState extends State<AddPostPage> {
 
         // 압축된 이미지의 서명된 URL 생성
         List<SignedUrl> compressedSignedUrls = await supabase.storage
-            .from('post_photo')
+            .from('post_compressed_photo')
             .createSignedUrls(compressedFilePaths, 60 * 60 * 24 * 365 * 10);
 
         compressedImageUrls

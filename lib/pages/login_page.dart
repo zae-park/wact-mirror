@@ -37,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
         OAuthProvider.kakao,
         redirectTo: kIsWeb
             ? 'http://localhost:3000'
-            : 'io.supabase.wact://login-callback/',
+            : 'io.supabase.actapp://login-callback/',
       );
 
       // 로그인 성공 시 로컬 스토리지에 상태 저장
