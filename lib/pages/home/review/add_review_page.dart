@@ -26,6 +26,8 @@ class _AddReviewPageState extends State<AddReviewPage> {
   final _memberEditingController = TextEditingController();
   final _contentEditingController = TextEditingController();
   final _teamController = TextEditingController();
+  final _bibleController = TextEditingController();
+  DateTime _selectedDate = DateTime.now();
   String? _selectedTeam;
 
   List<XFile> _currentImages = [];
@@ -43,6 +45,30 @@ class _AddReviewPageState extends State<AddReviewPage> {
         _currentImages.addAll(pickedFiles);
       });
     }
+  }
+
+  // 날짜 선택
+  Future<DateTime?> _selectDate() async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+      locale: const Locale('ko', 'KR'),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            primaryColor: primary,
+            colorScheme: const ColorScheme.light(primary: secondary),
+            buttonTheme:
+                const ButtonThemeData(textTheme: ButtonTextTheme.primary),
+            dialogBackgroundColor: Colors.grey[200],
+          ),
+          child: child!,
+        );
+      },
+    );
+    return pickedDate;
   }
 
   // 이미지 없이 업로드 가능
@@ -144,9 +170,14 @@ class _AddReviewPageState extends State<AddReviewPage> {
       final username = profileResponse['username'] as String?;
       print('유저 이름: $username');
 
-      await supabase.from('posts').insert({
+      await supabase.from('reviews').insert({
         'author_id': user.id,
         'author': username,
+        'team': _teamController.text,
+        'meet_date': _selectedDate.toIso8601String(),
+        'place': _placeEditingController.text,
+        'member': _memberEditingController.text,
+        'bible': _bibleController.text,
         'title': _titleEditingController.text,
         'content': _contentEditingController.text,
         'image_urls': imageUrls,
@@ -190,6 +221,10 @@ class _AddReviewPageState extends State<AddReviewPage> {
     _contentEditingController.addListener(() {
       setState(() {});
     });
+
+    _bibleController.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -199,6 +234,7 @@ class _AddReviewPageState extends State<AddReviewPage> {
     _placeEditingController.dispose();
     _memberEditingController.dispose();
     _contentEditingController.dispose();
+    _bibleController.dispose();
     super.dispose();
   }
 
@@ -367,12 +403,13 @@ class _AddReviewPageState extends State<AddReviewPage> {
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: SizedBox(
-                height: (MediaQuery.of(context).size.height * 0.65 - 56),
+                height: (MediaQuery.of(context).size.height),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // 지부 & 날짜 선택
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         DropdownButton<String>(
                           style: TextStyle(color: Colors.black),
@@ -406,6 +443,54 @@ class _AddReviewPageState extends State<AddReviewPage> {
                             );
                           }).toList(),
                         ),
+
+                        // 날짜 선택
+                        Align(
+                          alignment: Alignment.topLeft,
+                          child: InkWell(
+                            onTap: () async {
+                              DateTime? pickedDate = await _selectDate();
+                              if (pickedDate != null &&
+                                  pickedDate != _selectedDate) {
+                                setState(() {
+                                  _selectedDate = pickedDate;
+                                });
+                              }
+                            },
+                            child: Row(
+                              children: [
+                                Text(
+                                  '모임 날짜: ',
+                                  style: const TextStyle(
+                                      fontSize: 15,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                // 날짜 표시
+                                _selectedDate != DateTime.now() // 날짜가 선택되었는지 확인
+                                    ? Text(
+                                        "${_selectedDate.year}년 ${_selectedDate.month}월 ${_selectedDate.day}일",
+                                        style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w500),
+                                      )
+                                    : const Text(
+                                        "날짜 선택",
+                                        style: TextStyle(color: secondary),
+                                      ),
+                                // 수정 아이콘 추가
+                                const SizedBox(width: 4),
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: Image.asset(
+                                      'assets/imgs/icon/icon_calendar.png'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(
@@ -425,7 +510,7 @@ class _AddReviewPageState extends State<AddReviewPage> {
                           ),
                         ),
                         Text(
-                          '${_placeEditingController.text.length}/15',
+                          '',
                           style: const TextStyle(
                             color: bg_90,
                             fontSize: 12,
@@ -437,10 +522,104 @@ class _AddReviewPageState extends State<AddReviewPage> {
                     TextFormField(
                       controller: _placeEditingController,
                       maxLines: 1,
-                      maxLength: 15,
+                      maxLength: 100,
                       cursorColor: primary,
                       decoration: const InputDecoration(
                         hintText: '모임 장소를 적어주세요.',
+                        hintStyle: TextStyle(
+                          color: bg_70,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 15,
+                        ),
+                        border: InputBorder.none,
+                        counterText: '',
+                      ),
+                    ),
+                    // 색상 정보 복사 버튼과 사진 정보 복사 버튼
+                    const Divider(
+                      color: bg_30,
+                    ),
+                    const SizedBox(
+                      height: 16,
+                    ),
+
+                    // 참가자 작성
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          '참석',
+                          style: TextStyle(
+                            color: bg_90,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        Text(
+                          '',
+                          // '${_memberEditingController.text.length}',
+                          style: const TextStyle(
+                            color: bg_90,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                    TextFormField(
+                      controller: _memberEditingController,
+                      maxLines: 1,
+                      maxLength: 100,
+                      cursorColor: primary,
+                      decoration: const InputDecoration(
+                        hintText: '참석한 사람을 적어주세요.',
+                        hintStyle: TextStyle(
+                          color: bg_70,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 15,
+                        ),
+                        border: InputBorder.none,
+                        counterText: '',
+                      ),
+                    ),
+                    // 색상 정보 복사 버튼과 사진 정보 복사 버튼
+                    const Divider(
+                      color: bg_30,
+                    ),
+                    const SizedBox(
+                      height: 16,
+                    ),
+
+                    // 말씀 본문 작성
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          '말씀',
+                          style: TextStyle(
+                            color: bg_90,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        Text(
+                          '',
+                          // '${_memberEditingController.text.length}',
+                          style: const TextStyle(
+                            color: bg_90,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                    TextFormField(
+                      controller: _bibleController,
+                      maxLines: 1,
+                      maxLength: 100,
+                      cursorColor: primary,
+                      decoration: const InputDecoration(
+                        hintText: '말씀 묵상 범위를 적어주세요.',
                         hintStyle: TextStyle(
                           color: bg_70,
                           fontWeight: FontWeight.w500,
@@ -544,6 +723,9 @@ class _AddReviewPageState extends State<AddReviewPage> {
                           focusColor: primary,
                         ),
                       ),
+                    ),
+                    const SizedBox(
+                      height: 32,
                     ),
                   ],
                 ),

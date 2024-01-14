@@ -37,27 +37,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           elevation: 0,
           backgroundColor: Colors.transparent,
           title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // SizedBox(
+              //   width: 84,
+              //   height: 42,
+              //   child: GestureDetector(
+              //     onTap: () {},
+              //     child: Image.asset(
+              //       'assets/imgs/logo/actlogo.jpg',
+              //       alignment: Alignment.topLeft,
+              //       fit: BoxFit.contain,
+              //     ),
+              //   ),
+              // ),
               SizedBox(
-                width: 84,
-                height: 42,
-                child: GestureDetector(
-                  onTap: () {},
-                  child: Image.asset(
-                    'assets/imgs/logo/actlogo.jpg',
-                    alignment: Alignment.topLeft,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-              SizedBox(
-                width: 168,
+                width: 180,
                 height: 42,
                 child: Container(
                   decoration: const BoxDecoration(
                       borderRadius: BorderRadius.all(
-                        Radius.circular(21),
+                        Radius.circular(29),
                       ),
                       color: bg_10),
                   child: TabBar(
@@ -68,14 +68,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     labelPadding: const EdgeInsets.all(2),
                     indicator: BoxDecoration(
                       borderRadius: const BorderRadius.all(
-                        Radius.circular(19),
+                        Radius.circular(25),
                       ),
                       color: Colors.black,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.5),
+                          color: Colors.black.withOpacity(0.4),
                           offset: const Offset(3, 3),
-                          blurRadius: 6,
+                          blurRadius: 4,
                           spreadRadius: 0,
                         ),
                       ],

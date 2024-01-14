@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 final ThemeData appTheme = ThemeData(
+  datePickerTheme: DatePickerThemeData(),
   popupMenuTheme: PopupMenuThemeData(color: bg_10),
   tabBarTheme: const TabBarTheme(
     unselectedLabelColor: Color.fromRGBO(0, 0, 0, 0),
@@ -16,7 +17,7 @@ final ThemeData appTheme = ThemeData(
       statusBarIconBrightness: Brightness.dark, // 아이콘 및 글씨 색상
     ),
   ),
-  splashColor: Colors.white,
+  splashColor: Colors.transparent,
   highlightColor: Colors.white,
   floatingActionButtonTheme: const FloatingActionButtonThemeData(
     elevation: 0,
