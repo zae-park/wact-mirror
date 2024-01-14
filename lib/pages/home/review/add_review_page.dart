@@ -169,11 +169,12 @@ class _AddReviewPageState extends State<AddReviewPage> {
 
       final username = profileResponse['username'] as String?;
       print('유저 이름: $username');
+      final team = _selectedTeam ?? '';
 
       await supabase.from('reviews').insert({
         'author_id': user.id,
         'author': username,
-        'team': _teamController.text,
+        'team': team,
         'meet_date': _selectedDate.toIso8601String(),
         'place': _placeEditingController.text,
         'member': _memberEditingController.text,

@@ -94,6 +94,12 @@ class _ReviewPageState extends State<ReviewPage> {
                   final createdAt = DateTime.parse(review['created_at']);
                   final formattedDate = DateFormat('MM/dd').format(createdAt);
 
+                  DateTime parsedDate = DateTime.parse(review['meet_date']);
+                  String formattedMonth = DateFormat('MMM').format(parsedDate);
+                  String formattedDayOfWeek =
+                      DateFormat('E', 'ko').format(parsedDate);
+                  String formattedDay = DateFormat('d').format(parsedDate);
+
                   return InkWell(
                     onTap: () {
                       // Navigator.push(
@@ -116,97 +122,34 @@ class _ReviewPageState extends State<ReviewPage> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   SizedBox(
-                                    width: MediaQuery.of(context).size.width -
-                                        40 -
-                                        60 -
-                                        10,
+                                    width: 50,
                                     height: 90,
                                     child: Column(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                          CrossAxisAlignment.center,
                                       children: [
                                         Text(
-                                          review['title'],
+                                          review['team'],
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                           style: const TextStyle(
-                                              fontSize: 18,
+                                              fontSize: 16,
                                               fontWeight: FontWeight.w600),
                                         ),
                                         SizedBox(
                                           height: 2,
                                         ),
                                         Text(
-                                          review['content'],
+                                          '$formattedDay($formattedDayOfWeek)',
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(fontSize: 14),
+                                          style: const TextStyle(fontSize: 12),
                                         ),
                                         const SizedBox(
                                           height: 5,
                                         ),
-                                        Row(
-                                          children: [
-                                            if (commentCount > 0)
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.center,
-                                                children: [
-                                                  const Icon(
-                                                    FontAwesomeIcons.comment,
-                                                    color: Colors.black,
-                                                    size: 9,
-                                                  ),
-                                                  const SizedBox(
-                                                    width: 3,
-                                                  ),
-                                                  Text(
-                                                    '$commentCount',
-                                                    style: const TextStyle(
-                                                        fontSize: 9,
-                                                        color: bg_90),
-                                                  ),
-                                                  const SizedBox(
-                                                    width: 3,
-                                                  ),
-                                                  const Center(
-                                                    child: Text(
-                                                      'ㅣ',
-                                                      style: TextStyle(
-                                                          fontSize: 8,
-                                                          color: bg_90),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(
-                                                    width: 3,
-                                                  ),
-                                                ],
-                                              ),
-                                            Text(
-                                              formattedDate,
-                                              style: const TextStyle(
-                                                  fontSize: 9, color: bg_70),
-                                            ),
-                                            const SizedBox(
-                                              width: 3,
-                                            ),
-                                            const Text(
-                                              'ㅣ',
-                                              style: TextStyle(
-                                                  fontSize: 8, color: bg_70),
-                                            ),
-                                            const SizedBox(
-                                              width: 3,
-                                            ),
-                                            Text(
-                                              review['author'],
-                                              style: const TextStyle(
-                                                  fontSize: 9, color: bg_90),
-                                            ),
-                                          ],
-                                        )
                                       ],
                                     ),
                                   ),
@@ -224,6 +167,54 @@ class _ReviewPageState extends State<ReviewPage> {
                                         ),
                                       ),
                                     ),
+                                  SizedBox(
+                                    width: MediaQuery.of(context).size.width -
+                                        40 -
+                                        60 -
+                                        60 -
+                                        10,
+                                    height: 90,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              review['title'],
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600),
+                                            ),
+                                            SizedBox(
+                                              height: 2,
+                                            ),
+                                            Text(
+                                              '참석: ${review['member']}',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style:
+                                                  const TextStyle(fontSize: 12),
+                                            ),
+                                            const SizedBox(
+                                              height: 5,
+                                            ),
+                                          ],
+                                        ),
+                                        Text(
+                                          formattedDate,
+                                          style: const TextStyle(
+                                              fontSize: 14, color: bg_70),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
