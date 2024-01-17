@@ -11,8 +11,11 @@ import 'package:wact/main.dart';
 
 class ReviewDetailPage extends StatefulWidget {
   final Map<String, dynamic> review;
+  final int currentIndex;
 
-  const ReviewDetailPage({Key? key, required this.review}) : super(key: key);
+  const ReviewDetailPage(
+      {Key? key, required this.review, required this.currentIndex})
+      : super(key: key);
 
   @override
   State<ReviewDetailPage> createState() => _ReviewDetailPageState();

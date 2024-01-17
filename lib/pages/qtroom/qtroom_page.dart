@@ -10,6 +10,10 @@ class QTRoom extends StatefulWidget {
 class _QTRoomState extends State<QTRoom> {
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      body: Center(
+        child: Text('준비중'),
+      ),
+    );
   }
 }

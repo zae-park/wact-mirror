@@ -252,32 +252,6 @@ class _PostPageState extends State<PostPage> {
               );
             },
           ),
-          Positioned(
-            right: 16,
-            bottom: 16,
-            child: Align(
-              alignment: Alignment.center,
-              child: FloatingActionButton(
-                backgroundColor: Colors.black,
-                child: const Center(
-                  child: Icon(
-                    Icons.add,
-                    color: Colors.white,
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AddPostPage(
-                        onUpload: (String) {},
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
         ],
       ),
     );
