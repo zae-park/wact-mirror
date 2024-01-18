@@ -71,7 +71,7 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
         .match({'id': widget.review['id']}).select();
     print('supabase 삭제: $response');
     // 삭제 성공
-    Navigator.of(context).pop(); // 삭제 후 이전 화면으로 돌아감
+    Navigator.of(context).pop(true); // 삭제 후 이전 화면으로 돌아감
   }
 
   // 댓글 추가 함수
@@ -140,6 +140,10 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
     // 이미지 URL 리스트
     final DateTime parsedDate = DateTime.parse(widget.review['meet_date']);
     final formattedMeetDate = DateFormat('MM/dd(E)', 'ko').format(parsedDate);
+
+    // 참석 멤버수 구하기 - ,를 기준으로,
+    String members = widget.review['member'];
+    int memberCount = members.split(',').length;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -214,78 +218,87 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
                     height: 10,
                   ),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            '모임: ',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: primary,
-                            ),
-                          ),
-                          Text(
-                            '${formattedMeetDate}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Text(
-                            '장소: ',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: primary,
-                            ),
-                          ),
-                          Text(
-                            '${widget.review['place']}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 3,
-                  ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '참석: ',
+                        '날짜 ',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: primary,
                         ),
                       ),
-                      Expanded(
-                        child: Text(
-                          '${widget.review['member']}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                          ),
+                      Text(
+                        '${formattedMeetDate}',
+                        style: const TextStyle(
+                          fontSize: 14,
                         ),
                       ),
                     ],
                   ),
                   SizedBox(
-                    height: 3,
+                    height: 4,
+                  ),
+                  if (widget.review['place'] != '')
+                    Row(
+                      children: [
+                        Text(
+                          '장소 ',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: primary,
+                          ),
+                        ),
+                        Text(
+                          '${widget.review['place']}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  SizedBox(
+                    height: 4,
+                  ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '참석 ',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: primary,
+                        ),
+                      ),
+                      if (memberCount > 0)
+                        Expanded(
+                          child: Text(
+                            '${widget.review['member']} ($memberCount명)',
+                            style: const TextStyle(
+                              fontSize: 14,
+                            ),
+                          ),
+                        )
+                      else
+                        Expanded(
+                          child: Text(
+                            '${widget.review['member']}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 4,
                   ),
                   if (widget.review['bible'] != '')
                     Row(
                       children: [
                         Text(
-                          '본문: ',
+                          '본문 ',
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,

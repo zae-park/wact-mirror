@@ -29,10 +29,9 @@ class _PostPageState extends State<PostPage> {
   }
 
   Stream<List<Map<String, dynamic>>> _loadDataStream() {
-    // Create a stream that listens for real-time changes in the 'posts' table
     return Supabase.instance.client
         .from('posts')
-        .stream(primaryKey: ['id']) // Replace 'id' with your primary key column
+        .stream(primaryKey: ['id'])
         .order('created_at', ascending: false)
         .map((data) => List<Map<String, dynamic>>.from(data));
   }
@@ -112,13 +111,18 @@ class _PostPageState extends State<PostPage> {
                             width: MediaQuery.of(context).size.width - 40,
                             height: 90,
                             child: GestureDetector(
-                              onTap: () {
-                                Navigator.push(
+                              onTap: () async {
+                                final result = await Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
                                           PostDetailPage(post: posts[index])),
                                 );
+                                if (result == true) {
+                                  setState(() {
+                                    _stream = _loadDataStream();
+                                  });
+                                }
                               },
                               child: Row(
                                 mainAxisAlignment:

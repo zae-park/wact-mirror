@@ -34,10 +34,9 @@ class _ReviewPageState extends State<ReviewPage> {
   }
 
   Stream<List<Map<String, dynamic>>> _loadDataStream() {
-    // Create a stream that listens for real-time changes in the 'reviews' table
     return Supabase.instance.client
         .from('reviews')
-        .stream(primaryKey: ['id']) // Replace 'id' with your primary key column
+        .stream(primaryKey: ['id'])
         .order('created_at', ascending: false)
         .map((data) => List<Map<String, dynamic>>.from(data));
   }
@@ -127,9 +126,13 @@ class _ReviewPageState extends State<ReviewPage> {
                           String formattedDay =
                               DateFormat('d').format(parsedDate);
 
+                          // 참석자 수 ,값으로 세기
+                          String members = review['member'];
+                          int memberCount = members.split(',').length;
+
                           return InkWell(
-                            onTap: () {
-                              Navigator.push(
+                            onTap: () async {
+                              final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) => ReviewDetailPage(
@@ -137,6 +140,11 @@ class _ReviewPageState extends State<ReviewPage> {
                                           currentIndex: index,
                                         )),
                               );
+                              if (result == true) {
+                                setState(() {
+                                  _stream = _loadDataStream();
+                                });
+                              }
                             },
                             child: Column(
                               children: [
@@ -241,43 +249,47 @@ class _ReviewPageState extends State<ReviewPage> {
                                                                     .w500),
                                                       ),
                                                       SizedBox(
-                                                        height: 3,
+                                                        height: 3.5,
                                                       ),
                                                       Row(
                                                         children: <Widget>[
-                                                          const Text(
-                                                            '참석: ',
-                                                            style: TextStyle(
-                                                                fontSize: 12,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                color:
-                                                                    primary), // 여기에 원하는 스타일 적용
-                                                          ),
+                                                          if (memberCount > 0)
+                                                            Text(
+                                                              '$memberCount명 ',
+                                                              style: const TextStyle(
+                                                                  fontSize: 12,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  color:
+                                                                      primary), // 여기에 원하는 스타일 적용
+                                                            )
+                                                          else
+                                                            Text(
+                                                              '참석 ',
+                                                              style: const TextStyle(
+                                                                  fontSize: 12,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  color:
+                                                                      primary), // 여기에 원하는 스타일 적용
+                                                            ),
                                                           Expanded(
                                                             child: Text(
                                                               '${review['member']}',
-                                                              style: TextStyle(
+                                                              style:
+                                                                  const TextStyle(
                                                                 fontSize: 12,
                                                               ),
                                                               maxLines: 1,
                                                               overflow:
                                                                   TextOverflow
                                                                       .ellipsis,
-                                                              // 기본 스타일을 사용하거나 다른 스타일 지정
                                                             ),
                                                           ),
                                                         ],
                                                       ),
-
-                                                      // Text(
-                                                      //   '참석: ${review['member']}',
-                                                      //   maxLines: 1,
-                                                      //   overflow: TextOverflow.ellipsis,
-                                                      //   style: const TextStyle(
-                                                      //       fontSize: 12),
-                                                      // ),
                                                     ],
                                                   ),
                                                 ),
@@ -447,7 +459,7 @@ class _ReviewPageState extends State<ReviewPage> {
                                           width: 27,
                                           height: 16,
                                           decoration: BoxDecoration(
-                                            color: Colors.black,
+                                            color: primary,
                                             borderRadius:
                                                 BorderRadius.circular(3),
                                           ),

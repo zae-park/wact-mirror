@@ -12,7 +12,7 @@ import 'package:wact/root_layout.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 카톡 캄피-TEST 키
+  // 카톡앱 '캄피-TEST' 키
   KakaoSdk.init(
     nativeAppKey: '5d4cef15a6813674d5a8e4fd5907ac4f',
     javaScriptAppKey: '9f1a4a118913974e699835637ce11dca',

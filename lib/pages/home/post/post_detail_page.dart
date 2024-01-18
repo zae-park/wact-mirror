@@ -67,7 +67,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
         .match({'id': widget.post['id']}).select();
     print('supabase 삭제: $response');
     // 삭제 성공
-    Navigator.of(context).pop(); // 삭제 후 이전 화면으로 돌아감
+    Navigator.of(context).pop(true); // 삭제 후 이전 화면으로 돌아감
   }
 
   // 댓글 추가 함수
