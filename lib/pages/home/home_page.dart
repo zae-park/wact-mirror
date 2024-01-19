@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wact/common/const/color.dart';
-import 'package:wact/pages/home/post/add_post_page.dart';
 import 'package:wact/pages/home/post/post_page.dart';
-import 'package:wact/pages/home/review/add_review_page.dart';
 import 'package:wact/pages/home/review/review_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -103,7 +101,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [
+        children: const [
           PostPage(),
           ReviewPage(),
         ],

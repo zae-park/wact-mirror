@@ -2,13 +2,11 @@ import 'dart:convert';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:wact/common/const/color.dart';
-import 'package:wact/pages/home/review/add_review_page.dart';
 import 'package:wact/pages/home/review/review_detail_page.dart';
 
 class ReviewPage extends StatefulWidget {
@@ -183,7 +181,7 @@ class _ReviewPageState extends State<ReviewPage> {
                                                           FontWeight.w800),
                                                 ),
 
-                                                SizedBox(
+                                                const SizedBox(
                                                   height: 3,
                                                 ),
                                                 SizedBox(
@@ -248,7 +246,7 @@ class _ReviewPageState extends State<ReviewPage> {
                                                                 FontWeight
                                                                     .w500),
                                                       ),
-                                                      SizedBox(
+                                                      const SizedBox(
                                                         height: 3.5,
                                                       ),
                                                       Row(
@@ -265,9 +263,9 @@ class _ReviewPageState extends State<ReviewPage> {
                                                                       primary), // 여기에 원하는 스타일 적용
                                                             )
                                                           else
-                                                            Text(
+                                                            const Text(
                                                               '참석 ',
-                                                              style: const TextStyle(
+                                                              style: TextStyle(
                                                                   fontSize: 12,
                                                                   fontWeight:
                                                                       FontWeight
@@ -293,7 +291,7 @@ class _ReviewPageState extends State<ReviewPage> {
                                                     ],
                                                   ),
                                                 ),
-                                                SizedBox(
+                                                const SizedBox(
                                                   width: 5,
                                                 ),
                                                 if (imageUrl != null)

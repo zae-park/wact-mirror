@@ -399,7 +399,7 @@ class _AddReviewPageState extends State<AddReviewPage> {
         child: Column(
           children: <Widget>[
             buildImageGrid(),
-            Text('(사진은 최대 6장까지 선택 가능🙂)'),
+            const Text('(사진은 최대 6장까지 선택 가능🙂)'),
             // 제목과 내용 작성
             Padding(
               padding: const EdgeInsets.all(20.0),
@@ -413,10 +413,10 @@ class _AddReviewPageState extends State<AddReviewPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         DropdownButton<String>(
-                          style: TextStyle(color: Colors.black),
+                          style: const TextStyle(color: Colors.black),
                           dropdownColor: Colors.white,
                           value: _selectedTeam,
-                          hint: Text('지부'),
+                          hint: const Text('지부'),
                           onChanged: (String? newValue) {
                             setState(() {
                               _selectedTeam = newValue;
@@ -436,7 +436,7 @@ class _AddReviewPageState extends State<AddReviewPage> {
                               value: value,
                               child: Text(
                                 value,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: Colors.black,
                                   fontSize: 16,
                                 ),
@@ -460,9 +460,9 @@ class _AddReviewPageState extends State<AddReviewPage> {
                             },
                             child: Row(
                               children: [
-                                Text(
+                                const Text(
                                   '모임 날짜: ',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 15,
                                       color: Colors.black,
                                       fontWeight: FontWeight.w500),
@@ -499,10 +499,10 @@ class _AddReviewPageState extends State<AddReviewPage> {
                     ),
 
                     // 장소 작성
-                    Row(
+                    const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           '장소',
                           style: TextStyle(
                             color: bg_90,
@@ -512,7 +512,7 @@ class _AddReviewPageState extends State<AddReviewPage> {
                         ),
                         Text(
                           '',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: bg_90,
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
@@ -545,10 +545,10 @@ class _AddReviewPageState extends State<AddReviewPage> {
                     ),
 
                     // 참가자 작성
-                    Row(
+                    const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           '참석',
                           style: TextStyle(
                             color: bg_90,
@@ -559,7 +559,7 @@ class _AddReviewPageState extends State<AddReviewPage> {
                         Text(
                           '',
                           // '${_memberEditingController.text.length}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: bg_90,
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
@@ -592,10 +592,10 @@ class _AddReviewPageState extends State<AddReviewPage> {
                     ),
 
                     // 말씀 본문 작성
-                    Row(
+                    const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           '말씀',
                           style: TextStyle(
                             color: bg_90,
@@ -606,7 +606,7 @@ class _AddReviewPageState extends State<AddReviewPage> {
                         Text(
                           '',
                           // '${_memberEditingController.text.length}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: bg_90,
                             fontSize: 12,
                             fontWeight: FontWeight.w400,

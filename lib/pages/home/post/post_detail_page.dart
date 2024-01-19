@@ -84,7 +84,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
     var existingComments = List<Map<String, dynamic>>.from(
         widget.post['comments'] as List<dynamic>? ?? []);
-    var uuid = Uuid();
+    var uuid = const Uuid();
 
     // 새 댓글에 고유 ID 할당
     existingComments.add({
@@ -180,7 +180,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                         style: const TextStyle(
                             fontSize: 22, fontWeight: FontWeight.w600),
                       ),
-                      SizedBox(
+                      const SizedBox(
                         height: 6,
                       ),
                     ],
@@ -260,7 +260,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                         child: ListTile(
                           title: Text(
                             comment['author'] ?? '',
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.w500),
                           ),
                           subtitle: Column(
@@ -269,13 +269,13 @@ class _PostDetailPageState extends State<PostDetailPage> {
                             children: [
                               Text(
                                 comment['content'],
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 14,
                                 ),
                               ),
                               Text(
                                 formattedDate,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 9,
                                   color: bg_70,
                                 ),
@@ -284,7 +284,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                           ),
                           trailing: isCommentAuthor
                               ? IconButton(
-                                  icon: Icon(Icons.delete_outline, size: 16),
+                                  icon: const Icon(Icons.delete_outline, size: 16),
                                   onPressed: () {
                                     if (comment['id'] != null) {
                                       deleteComment(comment['id'], context);
@@ -293,8 +293,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
                               : null,
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 20, right: 20),
+                      const Padding(
+                        padding: EdgeInsets.only(left: 20, right: 20),
                         child: Divider(
                           height: 1,
                           color: bg_30,
@@ -305,7 +305,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                 },
               ),
             ),
-            SizedBox(
+            const SizedBox(
               height: 10,
             ),
           ],
@@ -323,7 +323,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
             filled: true, // 배경색 채우기 활성화
             fillColor: bg_10, // 배경색 지정
             suffixIcon: IconButton(
-              icon: Icon(
+              icon: const Icon(
                 FontAwesomeIcons.paperPlane,
                 size: 14,
               ),
@@ -339,7 +339,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
               borderSide: BorderSide.none, // 테두리 없앰
             ),
             contentPadding:
-                EdgeInsets.symmetric(horizontal: 20, vertical: 15), // 패딩 조정
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 15), // 패딩 조정
           ),
         ),
       ),

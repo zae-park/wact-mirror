@@ -6,7 +6,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/const/color.dart';
-import 'package:wact/pages/home/post/add_post_page.dart';
 import 'package:wact/pages/home/post/post_detail_page.dart';
 
 class PostPage extends StatefulWidget {
@@ -146,7 +145,7 @@ class _PostPageState extends State<PostPage> {
                                               fontSize: 18,
                                               fontWeight: FontWeight.w600),
                                         ),
-                                        SizedBox(
+                                        const SizedBox(
                                           height: 2,
                                         ),
                                         Text(

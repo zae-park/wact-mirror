@@ -73,7 +73,7 @@ class _MyPostPageState extends State<MyPostPage> {
   Future<void> addComment(String content, BuildContext context) async {
     var existingComments = List<Map<String, dynamic>>.from(
         widget.post['comments'] as List<dynamic>? ?? []);
-    var uuid = Uuid();
+    var uuid = const Uuid();
 
     // 새 댓글에 고유 ID 할당
     existingComments.add({
@@ -122,7 +122,7 @@ class _MyPostPageState extends State<MyPostPage> {
     // 기존 댓글 목록 복사
     var existingComments = List<Map<String, dynamic>>.from(
         widget.post['comments'] as List<dynamic>? ?? []);
-    var uuid = Uuid();
+    var uuid = const Uuid();
 
     // 대댓글 생성
     Map<String, dynamic> newReply = {
@@ -225,7 +225,7 @@ class _MyPostPageState extends State<MyPostPage> {
                         style: const TextStyle(
                             fontSize: 22, fontWeight: FontWeight.w600),
                       ),
-                      SizedBox(
+                      const SizedBox(
                         height: 6,
                       ),
                     ],
@@ -305,7 +305,7 @@ class _MyPostPageState extends State<MyPostPage> {
                         child: ListTile(
                           title: Text(
                             comment['author'] ?? '',
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.w500),
                           ),
                           subtitle: Column(
@@ -314,13 +314,13 @@ class _MyPostPageState extends State<MyPostPage> {
                             children: [
                               Text(
                                 comment['content'],
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 14,
                                 ),
                               ),
                               Text(
                                 formattedDate,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 9,
                                   color: bg_70,
                                 ),
@@ -329,7 +329,7 @@ class _MyPostPageState extends State<MyPostPage> {
                           ),
                           trailing: isCommentAuthor
                               ? IconButton(
-                                  icon: Icon(Icons.delete_outline, size: 16),
+                                  icon: const Icon(Icons.delete_outline, size: 16),
                                   onPressed: () {
                                     if (comment['id'] != null) {
                                       deleteComment(comment['id'], context);
@@ -338,8 +338,8 @@ class _MyPostPageState extends State<MyPostPage> {
                               : null,
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 20, right: 20),
+                      const Padding(
+                        padding: EdgeInsets.only(left: 20, right: 20),
                         child: Divider(
                           height: 1,
                           color: bg_30,
@@ -350,7 +350,7 @@ class _MyPostPageState extends State<MyPostPage> {
                 },
               ),
             ),
-            SizedBox(
+            const SizedBox(
               height: 10,
             ),
           ],
@@ -368,7 +368,7 @@ class _MyPostPageState extends State<MyPostPage> {
             filled: true, // 배경색 채우기 활성화
             fillColor: bg_10, // 배경색 지정
             suffixIcon: IconButton(
-              icon: Icon(
+              icon: const Icon(
                 FontAwesomeIcons.paperPlane,
                 size: 14,
               ),
@@ -384,7 +384,7 @@ class _MyPostPageState extends State<MyPostPage> {
               borderSide: BorderSide.none, // 테두리 없앰
             ),
             contentPadding:
-                EdgeInsets.symmetric(horizontal: 20, vertical: 15), // 패딩 조정
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 15), // 패딩 조정
           ),
         ),
       ),

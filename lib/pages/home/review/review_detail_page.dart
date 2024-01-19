@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -88,7 +87,7 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
 
     var existingComments = List<Map<String, dynamic>>.from(
         widget.review['comments'] as List<dynamic>? ?? []);
-    var uuid = Uuid();
+    var uuid = const Uuid();
 
     // 새 댓글에 고유 ID 할당
     existingComments.add({
@@ -214,36 +213,36 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
+                  const SizedBox(
                     height: 10,
                   ),
                   Row(
                     children: [
-                      Text(
+                      const Text(
                         '날짜 ',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: primary,
                         ),
                       ),
                       Text(
-                        '${formattedMeetDate}',
+                        formattedMeetDate,
                         style: const TextStyle(
                           fontSize: 14,
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(
+                  const SizedBox(
                     height: 4,
                   ),
                   if (widget.review['place'] != '')
                     Row(
                       children: [
-                        Text(
+                        const Text(
                           '장소 ',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: primary,
@@ -257,15 +256,15 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
                         ),
                       ],
                     ),
-                  SizedBox(
+                  const SizedBox(
                     height: 4,
                   ),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         '참석 ',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: primary,
@@ -291,15 +290,15 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
                         ),
                     ],
                   ),
-                  SizedBox(
+                  const SizedBox(
                     height: 4,
                   ),
                   if (widget.review['bible'] != '')
                     Row(
                       children: [
-                        Text(
+                        const Text(
                           '본문 ',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: primary,
@@ -374,7 +373,7 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
                         child: ListTile(
                           title: Text(
                             comment['author'] ?? '',
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.w500),
                           ),
                           subtitle: Column(
@@ -383,13 +382,13 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
                             children: [
                               Text(
                                 comment['content'],
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 14,
                                 ),
                               ),
                               Text(
                                 formattedDate,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 9,
                                   color: bg_70,
                                 ),
@@ -398,7 +397,7 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
                           ),
                           trailing: isCommentAuthor
                               ? IconButton(
-                                  icon: Icon(Icons.delete_outline, size: 16),
+                                  icon: const Icon(Icons.delete_outline, size: 16),
                                   onPressed: () {
                                     if (comment['id'] != null) {
                                       deleteComment(comment['id'], context);
@@ -407,8 +406,8 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
                               : null,
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 20, right: 20),
+                      const Padding(
+                        padding: EdgeInsets.only(left: 20, right: 20),
                         child: Divider(
                           height: 1,
                           color: bg_30,
@@ -419,7 +418,7 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
                 },
               ),
             ),
-            SizedBox(
+            const SizedBox(
               height: 10,
             ),
           ],
@@ -437,7 +436,7 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
             filled: true, // 배경색 채우기 활성화
             fillColor: bg_10, // 배경색 지정
             suffixIcon: IconButton(
-              icon: Icon(
+              icon: const Icon(
                 FontAwesomeIcons.paperPlane,
                 size: 14,
               ),
@@ -453,7 +452,7 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
               borderSide: BorderSide.none, // 테두리 없앰
             ),
             contentPadding:
-                EdgeInsets.symmetric(horizontal: 20, vertical: 15), // 패딩 조정
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 15), // 패딩 조정
           ),
         ),
       ),

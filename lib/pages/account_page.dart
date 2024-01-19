@@ -138,7 +138,7 @@ class _AccountPageState extends State<AccountPage> {
       appBar: AppBar(
         title: const Text(
           '프로필',
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
         ),
         backgroundColor: Colors.white,
       ),
@@ -164,10 +164,10 @@ class _AccountPageState extends State<AccountPage> {
                 ),
                 const SizedBox(height: 18),
                 DropdownButton<String>(
-                  style: TextStyle(color: Colors.black),
+                  style: const TextStyle(color: Colors.black),
                   dropdownColor: Colors.white,
                   value: _selectedTeam,
-                  hint: Text('소속'),
+                  hint: const Text('소속'),
                   onChanged: (String? newValue) {
                     setState(() {
                       _selectedTeam = newValue;
@@ -187,7 +187,7 @@ class _AccountPageState extends State<AccountPage> {
                       value: value,
                       child: Text(
                         value,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.black,
                           fontSize: 16,
                         ),
@@ -204,7 +204,7 @@ class _AccountPageState extends State<AccountPage> {
                   onPressed: _loading ? null : _updateProfile,
                   child: Text(
                     _loading ? '저장중...' : '입장',
-                    style: TextStyle(
+                    style: const TextStyle(
                         color: Colors.white, fontWeight: FontWeight.w700),
                   ),
                 ),

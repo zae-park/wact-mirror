@@ -1,12 +1,7 @@
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/const/color.dart';
-import 'package:wact/pages/home/post/add_post_page.dart';
-import 'package:wact/pages/my/my_post_page.dart';
 
 class MyPage extends StatefulWidget {
   const MyPage({

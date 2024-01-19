@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 final ThemeData appTheme = ThemeData(
-  datePickerTheme: DatePickerThemeData(),
-  popupMenuTheme: PopupMenuThemeData(color: bg_10),
+  datePickerTheme: const DatePickerThemeData(),
+  popupMenuTheme: const PopupMenuThemeData(color: bg_10),
   tabBarTheme: const TabBarTheme(
     unselectedLabelColor: Color.fromRGBO(0, 0, 0, 0),
     indicatorColor: Colors.transparent, // 밑줄 없애기

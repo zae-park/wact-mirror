@@ -4,7 +4,6 @@ import 'package:wact/pages/home/home_page.dart';
 import 'package:wact/pages/home/post/add_post_page.dart';
 import 'package:wact/pages/home/review/add_review_page.dart';
 import 'package:wact/pages/my/my_page.dart';
-import 'package:wact/pages/qtroom/qtroom_page.dart';
 
 class RootLayout extends StatefulWidget {
   const RootLayout({super.key});
@@ -17,7 +16,7 @@ class _RootLayoutState extends State<RootLayout>
     with SingleTickerProviderStateMixin {
   int _selectedIndex = 0; // 현재 선택된 탭의 인덱스
   late ScrollController _scrollController; // 스크롤을 감지하기 위한 컨트롤러
-  bool _isFABVisible = true; // FAB 가시성 설정
+  final bool _isFABVisible = true; // FAB 가시성 설정
   bool _isFabOpen = false;
 
   // 화면 리스트
