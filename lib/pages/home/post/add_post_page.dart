@@ -1,3 +1,5 @@
+// 첫 번째 FAB누르면 나오는 게시글 작성페이지
+
 import 'dart:io';
 import 'dart:math';
 

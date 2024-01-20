@@ -1,3 +1,5 @@
+// 자주 쓰는 색상들
+
 import 'dart:ui';
 
 const bg_10 = Color(0xFFEBEEF3);

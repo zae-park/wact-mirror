@@ -1,3 +1,5 @@
+// 유저 상세 정보 입력페이지
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/main.dart';

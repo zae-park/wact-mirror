@@ -1,3 +1,5 @@
+// 전체 앱 테마모음
+
 import 'package:wact/common/const/color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

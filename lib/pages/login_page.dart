@@ -1,3 +1,5 @@
+// 카톡 로그인 페이지
+
 import 'dart:async';
 
 import 'package:wact/common/const/color.dart';

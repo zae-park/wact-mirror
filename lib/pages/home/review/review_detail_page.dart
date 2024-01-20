@@ -1,3 +1,5 @@
+// 홈 > 후기게시판 > 후기 상세페이지
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -397,7 +399,8 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
                           ),
                           trailing: isCommentAuthor
                               ? IconButton(
-                                  icon: const Icon(Icons.delete_outline, size: 16),
+                                  icon: const Icon(Icons.delete_outline,
+                                      size: 16),
                                   onPressed: () {
                                     if (comment['id'] != null) {
                                       deleteComment(comment['id'], context);
@@ -451,8 +454,8 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
               borderRadius: BorderRadius.circular(15.0), // 둥근 모서리
               borderSide: BorderSide.none, // 테두리 없앰
             ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 15), // 패딩 조정
+            contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20, vertical: 15), // 패딩 조정
           ),
         ),
       ),

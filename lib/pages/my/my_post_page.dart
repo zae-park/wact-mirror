@@ -1,3 +1,5 @@
+// 마이페이지 > 내가 쓴 게시글(240120 수정 필요)
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -329,7 +331,8 @@ class _MyPostPageState extends State<MyPostPage> {
                           ),
                           trailing: isCommentAuthor
                               ? IconButton(
-                                  icon: const Icon(Icons.delete_outline, size: 16),
+                                  icon: const Icon(Icons.delete_outline,
+                                      size: 16),
                                   onPressed: () {
                                     if (comment['id'] != null) {
                                       deleteComment(comment['id'], context);
@@ -383,8 +386,8 @@ class _MyPostPageState extends State<MyPostPage> {
               borderRadius: BorderRadius.circular(15.0), // 둥근 모서리
               borderSide: BorderSide.none, // 테두리 없앰
             ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 15), // 패딩 조정
+            contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20, vertical: 15), // 패딩 조정
           ),
         ),
       ),

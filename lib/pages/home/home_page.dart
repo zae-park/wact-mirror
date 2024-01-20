@@ -1,3 +1,5 @@
+// 홈페이지로 자유게시판과 리뷰게시판 두 탭의 부모 위젯
+
 import 'package:flutter/material.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:wact/pages/home/post/post_page.dart';

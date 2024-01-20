@@ -1,3 +1,5 @@
+// 말묵방(예정)
+
 import 'package:flutter/material.dart';
 
 class QTRoom extends StatefulWidget {
