@@ -409,7 +409,7 @@ class _AddPostPageState extends State<AddPostPage> {
                           ),
                         ),
                         Text(
-                          '${_contentEditingController.text.length}/120',
+                          '${_contentEditingController.text.length}/150',
                           style: const TextStyle(
                             color: bg_90,
                             fontSize: 12,
@@ -422,7 +422,7 @@ class _AddPostPageState extends State<AddPostPage> {
                       child: TextFormField(
                         controller: _contentEditingController,
                         maxLines: 5,
-                        maxLength: 120,
+                        maxLength: 150,
                         cursorColor: primary,
                         decoration: const InputDecoration(
                           hintText: '내용을 작성해주세요.',
