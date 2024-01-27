@@ -65,6 +65,7 @@ class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         elevation: 0, // 앱바 그림자 제거
