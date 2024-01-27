@@ -1,3 +1,5 @@
+// 두 번째 FAB누르면 나오는 후기 작성페이지
+
 import 'dart:io';
 import 'dart:math';
 
@@ -9,20 +11,27 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/main.dart';
 
-class AddPostPage extends StatefulWidget {
+class AddReviewPage extends StatefulWidget {
   final List<XFile>? images;
   final void Function(List<String>) onUpload;
 
-  const AddPostPage({Key? key, this.images, required this.onUpload})
+  const AddReviewPage({Key? key, this.images, required this.onUpload})
       : super(key: key);
 
   @override
-  _AddPostPageState createState() => _AddPostPageState();
+  _AddReviewPageState createState() => _AddReviewPageState();
 }
 
-class _AddPostPageState extends State<AddPostPage> {
+class _AddReviewPageState extends State<AddReviewPage> {
   final _titleEditingController = TextEditingController();
+  final _placeEditingController = TextEditingController();
+  final _memberEditingController = TextEditingController();
   final _contentEditingController = TextEditingController();
+  final _teamController = TextEditingController();
+  final _bibleController = TextEditingController();
+  DateTime _selectedDate = DateTime.now();
+  String? _selectedTeam;
+
   List<XFile> _currentImages = [];
   bool _isLoading = false;
 
@@ -40,6 +49,30 @@ class _AddPostPageState extends State<AddPostPage> {
     }
   }
 
+  // 날짜 선택
+  Future<DateTime?> _selectDate() async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+      locale: const Locale('ko', 'KR'),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            primaryColor: primary,
+            colorScheme: const ColorScheme.light(primary: secondary),
+            buttonTheme:
+                const ButtonThemeData(textTheme: ButtonTextTheme.primary),
+            dialogBackgroundColor: Colors.grey[200],
+          ),
+          child: child!,
+        );
+      },
+    );
+    return pickedDate;
+  }
+
   // 이미지 없이 업로드 가능
   Future<void> _uploadPost() async {
     if (_isLoading) return;
@@ -52,9 +85,10 @@ class _AddPostPageState extends State<AddPostPage> {
         barrierDismissible: false,
         builder: (BuildContext context) {
           return const AlertDialog(
+            backgroundColor: bg_50,
             content: Column(
               mainAxisSize: MainAxisSize.min,
-              children: [Text('작품을 저장중입니다.')],
+              children: [Text('게시글을 저장중입니다.')],
             ),
           );
         },
@@ -137,10 +171,16 @@ class _AddPostPageState extends State<AddPostPage> {
 
       final username = profileResponse['username'] as String?;
       print('유저 이름: $username');
+      final team = _selectedTeam ?? '';
 
-      await supabase.from('posts').insert({
+      await supabase.from('reviews').insert({
         'author_id': user.id,
         'author': username,
+        'team': team,
+        'meet_date': _selectedDate.toIso8601String(),
+        'place': _placeEditingController.text,
+        'member': _memberEditingController.text,
+        'bible': _bibleController.text,
         'title': _titleEditingController.text,
         'content': _contentEditingController.text,
         'image_urls': imageUrls,
@@ -169,7 +209,23 @@ class _AddPostPageState extends State<AddPostPage> {
       setState(() {});
     });
 
+    _teamController.addListener(() {
+      setState(() {});
+    });
+
+    _placeEditingController.addListener(() {
+      setState(() {});
+    });
+
+    _memberEditingController.addListener(() {
+      setState(() {});
+    });
+
     _contentEditingController.addListener(() {
+      setState(() {});
+    });
+
+    _bibleController.addListener(() {
       setState(() {});
     });
   }
@@ -177,7 +233,11 @@ class _AddPostPageState extends State<AddPostPage> {
   @override
   void dispose() {
     _titleEditingController.dispose();
+    _teamController.dispose();
+    _placeEditingController.dispose();
+    _memberEditingController.dispose();
     _contentEditingController.dispose();
+    _bibleController.dispose();
     super.dispose();
   }
 
@@ -341,15 +401,246 @@ class _AddPostPageState extends State<AddPostPage> {
         child: Column(
           children: <Widget>[
             buildImageGrid(),
-
-// 작품명과 작품 설명 입력
+            const Text('(사진은 최대 6장까지 선택 가능🙂)'),
+            // 제목과 내용 작성
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: SizedBox(
-                height: (MediaQuery.of(context).size.height * 0.65 - 56),
+                height: (MediaQuery.of(context).size.height),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // 지부 & 날짜 선택
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        DropdownButton<String>(
+                          style: const TextStyle(color: Colors.black),
+                          dropdownColor: Colors.white,
+                          value: _selectedTeam,
+                          hint: const Text('지부'),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _selectedTeam = newValue;
+                            });
+                          },
+                          items: <String>[
+                            '강남',
+                            '시내',
+                            '신촌',
+                            '인천',
+                            '태릉',
+                            '오비',
+                            '행사',
+                            '모임',
+                          ].map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(
+                                value,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+
+                        // 날짜 선택
+                        Align(
+                          alignment: Alignment.topLeft,
+                          child: InkWell(
+                            onTap: () async {
+                              DateTime? pickedDate = await _selectDate();
+                              if (pickedDate != null &&
+                                  pickedDate != _selectedDate) {
+                                setState(() {
+                                  _selectedDate = pickedDate;
+                                });
+                              }
+                            },
+                            child: Row(
+                              children: [
+                                const Text(
+                                  '모임 날짜: ',
+                                  style: TextStyle(
+                                      fontSize: 15,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                // 날짜 표시
+                                _selectedDate != DateTime.now() // 날짜가 선택되었는지 확인
+                                    ? Text(
+                                        "${_selectedDate.year}년 ${_selectedDate.month}월 ${_selectedDate.day}일",
+                                        style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w500),
+                                      )
+                                    : const Text(
+                                        "날짜 선택",
+                                        style: TextStyle(color: secondary),
+                                      ),
+                                // 수정 아이콘 추가
+                                const SizedBox(width: 4),
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: Image.asset(
+                                      'assets/imgs/icon/icon_calendar.png'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 16,
+                    ),
+
+                    // 장소 작성
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '장소',
+                          style: TextStyle(
+                            color: bg_90,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        Text(
+                          '',
+                          style: TextStyle(
+                            color: bg_90,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                    TextFormField(
+                      controller: _placeEditingController,
+                      maxLines: 1,
+                      maxLength: 100,
+                      cursorColor: primary,
+                      decoration: const InputDecoration(
+                        hintText: '모임 장소를 적어주세요.',
+                        hintStyle: TextStyle(
+                          color: bg_70,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 15,
+                        ),
+                        border: InputBorder.none,
+                        counterText: '',
+                      ),
+                    ),
+                    // 색상 정보 복사 버튼과 사진 정보 복사 버튼
+                    const Divider(
+                      color: bg_30,
+                    ),
+                    const SizedBox(
+                      height: 16,
+                    ),
+
+                    // 참가자 작성
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '참석',
+                          style: TextStyle(
+                            color: bg_90,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        Text(
+                          '',
+                          // '${_memberEditingController.text.length}',
+                          style: TextStyle(
+                            color: bg_90,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                    TextFormField(
+                      controller: _memberEditingController,
+                      maxLines: 1,
+                      maxLength: 100,
+                      cursorColor: primary,
+                      decoration: const InputDecoration(
+                        hintText: '참석한 사람을 적어주세요.',
+                        hintStyle: TextStyle(
+                          color: bg_70,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 15,
+                        ),
+                        border: InputBorder.none,
+                        counterText: '',
+                      ),
+                    ),
+                    // 색상 정보 복사 버튼과 사진 정보 복사 버튼
+                    const Divider(
+                      color: bg_30,
+                    ),
+                    const SizedBox(
+                      height: 16,
+                    ),
+
+                    // 말씀 본문 작성
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '말씀',
+                          style: TextStyle(
+                            color: bg_90,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        Text(
+                          '',
+                          // '${_memberEditingController.text.length}',
+                          style: TextStyle(
+                            color: bg_90,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                    TextFormField(
+                      controller: _bibleController,
+                      maxLines: 1,
+                      maxLength: 100,
+                      cursorColor: primary,
+                      decoration: const InputDecoration(
+                        hintText: '말씀 묵상 범위를 적어주세요.',
+                        hintStyle: TextStyle(
+                          color: bg_70,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 15,
+                        ),
+                        border: InputBorder.none,
+                        counterText: '',
+                      ),
+                    ),
+                    // 색상 정보 복사 버튼과 사진 정보 복사 버튼
+                    const Divider(
+                      color: bg_30,
+                    ),
+                    const SizedBox(
+                      height: 16,
+                    ),
+
+                    // 제목 작성
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -394,6 +685,8 @@ class _AddPostPageState extends State<AddPostPage> {
                     const SizedBox(
                       height: 16,
                     ),
+
+                    // 내용 작성
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -433,6 +726,9 @@ class _AddPostPageState extends State<AddPostPage> {
                           focusColor: primary,
                         ),
                       ),
+                    ),
+                    const SizedBox(
+                      height: 32,
                     ),
                   ],
                 ),

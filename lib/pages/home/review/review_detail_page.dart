@@ -1,4 +1,4 @@
-// 마이페이지 > 내가 쓴 게시글(240120 수정 필요)
+// 홈 > 후기게시판 > 후기 상세페이지
 
 import 'dart:convert';
 
@@ -8,17 +8,21 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:wact/common/const/color.dart';
+import 'package:wact/main.dart';
 
-class MyPostPage extends StatefulWidget {
-  final Map<String, dynamic> post;
+class ReviewDetailPage extends StatefulWidget {
+  final Map<String, dynamic> review;
+  final int currentIndex;
 
-  const MyPostPage({Key? key, required this.post}) : super(key: key);
+  const ReviewDetailPage(
+      {Key? key, required this.review, required this.currentIndex})
+      : super(key: key);
 
   @override
-  State<MyPostPage> createState() => _MyPostPageState();
+  State<ReviewDetailPage> createState() => _ReviewDetailPageState();
 }
 
-class _MyPostPageState extends State<MyPostPage> {
+class _ReviewDetailPageState extends State<ReviewDetailPage> {
   late TextEditingController commentController;
   late User? user;
   late bool isAuthor;
@@ -30,14 +34,14 @@ class _MyPostPageState extends State<MyPostPage> {
     commentController = TextEditingController();
     user = Supabase.instance.client.auth.currentUser;
     updateAuthorStatus();
-    isAuthor = user?.id == widget.post['author_id'];
+    isAuthor = user?.id == widget.review['author_id'];
     // 타입 확인 및 처리
-    if (widget.post['compressed_image_urls'] is String) {
-      String jsonString = widget.post['compressed_image_urls'];
+    if (widget.review['compressed_image_urls'] is String) {
+      String jsonString = widget.review['compressed_image_urls'];
       imageUrls = json.decode(jsonString);
-    } else if (widget.post['compressed_image_urls'] is List) {
+    } else if (widget.review['compressed_image_urls'] is List) {
       // 이미 List<dynamic> 타입인 경우 직접 할당
-      imageUrls = widget.post['compressed_image_urls'];
+      imageUrls = widget.review['compressed_image_urls'];
     } else {
       // null 또는 다른 타입인 경우 빈 리스트 할당
       imageUrls = [];
@@ -45,12 +49,12 @@ class _MyPostPageState extends State<MyPostPage> {
 
     // 로그 출력
     print('User ID: ${user?.id}');
-    print('Author ID: ${widget.post['author_id']}');
+    print('Author ID: ${widget.review['author_id']}');
   }
 
   void updateAuthorStatus() {
     setState(() {
-      isAuthor = user?.id == widget.post['author_id'];
+      isAuthor = user?.id == widget.review['author_id'];
     });
   }
 
@@ -61,117 +65,71 @@ class _MyPostPageState extends State<MyPostPage> {
   }
 
   // 게시글 삭제 함수
-  Future<void> deletePost() async {
+  Future<void> deletereview() async {
     final response = await Supabase.instance.client
-        .from('posts')
+        .from('reviews')
         .delete()
-        .match({'id': widget.post['id']}).select();
+        .match({'id': widget.review['id']}).select();
     print('supabase 삭제: $response');
     // 삭제 성공
-    Navigator.of(context).pop(); // 삭제 후 이전 화면으로 돌아감
+    Navigator.of(context).pop(true); // 삭제 후 이전 화면으로 돌아감
   }
 
   // 댓글 추가 함수
   Future<void> addComment(String content, BuildContext context) async {
+    final profileResponse = await supabase
+        .from('profiles')
+        .select('username')
+        .match({'id': user!.id}).single();
+
+    print('유저: $profileResponse');
+
+    final username = profileResponse['username'] as String?;
+    print('유저 이름: $username');
+
     var existingComments = List<Map<String, dynamic>>.from(
-        widget.post['comments'] as List<dynamic>? ?? []);
+        widget.review['comments'] as List<dynamic>? ?? []);
     var uuid = const Uuid();
 
     // 새 댓글에 고유 ID 할당
     existingComments.add({
       'id': uuid.v4(), // UUID 생성
       'author_id': user?.id,
-      'author': widget.post['author'],
+      'author': username,
       'content': content,
       'created_at': DateTime.now().toIso8601String()
     });
 
     print('새 댓글: $existingComments');
 
-    // 'posts' 테이블에 업데이트
-    await Supabase.instance.client.from('posts').update(
-        {'comments': existingComments}).match({'id': widget.post['id']});
+    // 'reviews' 테이블에 업데이트
+    await Supabase.instance.client.from('reviews').update(
+        {'comments': existingComments}).match({'id': widget.review['id']});
 
     // 키보드 숨기기
     FocusScope.of(context).unfocus();
 
     setState(() {
-      widget.post['comments'] = existingComments;
+      widget.review['comments'] = existingComments;
     });
   }
 
 // 댓글 삭제 함수
   Future<void> deleteComment(String commentId, BuildContext context) async {
     var existingComments = List<Map<String, dynamic>>.from(
-        widget.post['comments'] as List<dynamic>? ?? []);
+        widget.review['comments'] as List<dynamic>? ?? []);
 
     // 삭제할 댓글을 찾아 목록에서 제거
     existingComments.removeWhere((comment) => comment['id'] == commentId);
 
-    // 'posts' 테이블에 업데이트
+    // 'reviews' 테이블에 업데이트
     final response = await Supabase.instance.client
-        .from('posts')
-        .update({'comments': existingComments}).eq('id', widget.post['id']);
+        .from('reviews')
+        .update({'comments': existingComments}).eq('id', widget.review['id']);
 
     setState(() {
-      widget.post['comments'] = existingComments;
+      widget.review['comments'] = existingComments;
     });
-  }
-
-  // 대댓글 추가 함수
-  Future<void> addReply(
-      String commentId, String content, BuildContext context) async {
-    // 기존 댓글 목록 복사
-    var existingComments = List<Map<String, dynamic>>.from(
-        widget.post['comments'] as List<dynamic>? ?? []);
-    var uuid = const Uuid();
-
-    // 대댓글 생성
-    Map<String, dynamic> newReply = {
-      'id': uuid.v4(), // UUID 생성
-      'author_id': user?.id,
-      'author': user?.email, // 또는 다른 사용자 식별자
-      'content': content,
-      'created_at': DateTime.now().toIso8601String(),
-      'replies': []
-    };
-
-    // 특정 댓글 찾아 대댓글 추가
-    for (var comment in existingComments) {
-      if (comment['id'] == commentId) {
-        (comment['replies'] as List<dynamic>).add(newReply);
-        break;
-      }
-    }
-
-    // 'posts' 테이블에 업데이트
-    await Supabase.instance.client
-        .from('posts')
-        .update({'comments': existingComments}).eq('id', widget.post['id']);
-    setState(() => widget.post['comments'] = existingComments);
-  }
-
-// 대댓글 삭제 함수
-  Future<void> deleteReply(
-      String commentId, String replyId, BuildContext context) async {
-    // 기존 댓글 목록 복사
-    var existingComments = List<Map<String, dynamic>>.from(
-        widget.post['comments'] as List<dynamic>? ?? []);
-
-    // 특정 댓글의 대댓글 목록에서 대댓글 삭제
-    for (var comment in existingComments) {
-      if (comment['id'] == commentId) {
-        (comment['replies'] as List<dynamic>)
-            .removeWhere((reply) => reply['id'] == replyId);
-        break;
-      }
-    }
-
-    // 'posts' 테이블에 업데이트
-    await Supabase.instance.client
-        .from('posts')
-        .update({'comments': existingComments}).eq('id', widget.post['id']);
-    setState(() => widget.post['comments'] = existingComments);
   }
 
   @override
@@ -179,20 +137,27 @@ class _MyPostPageState extends State<MyPostPage> {
     print('Is Author: $isAuthor');
 
     final createdAt =
-        DateFormat('MM/dd').format(DateTime.parse(widget.post['created_at']));
+        DateFormat('MM/dd').format(DateTime.parse(widget.review['created_at']));
     // 이미지 URL 리스트
+    final DateTime parsedDate = DateTime.parse(widget.review['meet_date']);
+    final formattedMeetDate = DateFormat('MM/dd(E)', 'ko').format(parsedDate);
+
+    // 참석 멤버수 구하기 - ,를 기준으로,
+    String members = widget.review['member'];
+    int memberCount = members.split(',').length;
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text(''),
+        title: Text(widget.review['team']),
+        centerTitle: true,
         actions: isAuthor
             ? [
                 PopupMenuButton(
                   onSelected: (value) {
                     if (value == 'delete') {
-                      deletePost();
+                      deletereview();
                     }
                   },
                   itemBuilder: (BuildContext context) => <PopupMenuEntry>[
@@ -223,19 +188,16 @@ class _MyPostPageState extends State<MyPostPage> {
                   Column(
                     children: [
                       Text(
-                        widget.post['title'],
+                        widget.review['title'],
                         style: const TextStyle(
                             fontSize: 22, fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(
-                        height: 6,
                       ),
                     ],
                   ),
                   Column(
                     children: [
                       Text(
-                        '${widget.post['author']}',
+                        '${widget.review['author']}',
                         style: const TextStyle(
                             fontSize: 10, fontWeight: FontWeight.w600),
                       ),
@@ -244,16 +206,122 @@ class _MyPostPageState extends State<MyPostPage> {
                         style: const TextStyle(fontSize: 9, color: bg_70),
                       ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.only(left: 20, right: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  Row(
+                    children: [
+                      const Text(
+                        '날짜 ',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: primary,
+                        ),
+                      ),
+                      Text(
+                        formattedMeetDate,
+                        style: const TextStyle(
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(
+                    height: 4,
+                  ),
+                  if (widget.review['place'] != '')
+                    Row(
+                      children: [
+                        const Text(
+                          '장소 ',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: primary,
+                          ),
+                        ),
+                        Text(
+                          '${widget.review['place']}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  const SizedBox(
+                    height: 4,
+                  ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '참석 ',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: primary,
+                        ),
+                      ),
+                      if (memberCount > 0)
+                        Expanded(
+                          child: Text(
+                            '${widget.review['member']} ($memberCount명)',
+                            style: const TextStyle(
+                              fontSize: 14,
+                            ),
+                          ),
+                        )
+                      else
+                        Expanded(
+                          child: Text(
+                            '${widget.review['member']}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(
+                    height: 4,
+                  ),
+                  if (widget.review['bible'] != '')
+                    Row(
+                      children: [
+                        const Text(
+                          '본문 ',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: primary,
+                          ),
+                        ),
+                        Text(
+                          '${widget.review['bible']}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
             Padding(
               padding: const EdgeInsets.only(left: 20, right: 20),
               child: Text(
-                widget.post['content'],
+                widget.review['content'],
                 style: const TextStyle(
                   fontSize: 14,
                 ),
@@ -289,9 +357,9 @@ class _MyPostPageState extends State<MyPostPage> {
             // 댓글 목록
             Column(
               children: List.generate(
-                (widget.post['comments'] as List<dynamic>?)?.length ?? 0,
+                (widget.review['comments'] as List<dynamic>?)?.length ?? 0,
                 (index) {
-                  var comment = widget.post['comments'][index];
+                  var comment = widget.review['comments'][index];
                   bool isCommentAuthor = user?.id == comment['author_id'];
 
                   // 날짜 형식 변환

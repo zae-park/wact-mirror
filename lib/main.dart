@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:get/get.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/theme/app_theme.dart';
@@ -10,7 +12,7 @@ import 'package:wact/root_layout.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 카톡 캄피-TEST 키
+  // 카톡앱 '캄피-TEST' 키
   KakaoSdk.init(
     nativeAppKey: '5d4cef15a6813674d5a8e4fd5907ac4f',
     javaScriptAppKey: '9f1a4a118913974e699835637ce11dca',
@@ -32,7 +34,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', ''), // 영어
+        Locale('ko', ''), // 한국어 추가
+      ],
       debugShowCheckedModeBanner: false,
       title: 'Supabase Flutter',
       theme: appTheme,

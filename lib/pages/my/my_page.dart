@@ -1,12 +1,8 @@
-import 'dart:convert';
+// 마이페이지
 
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/const/color.dart';
-import 'package:wact/pages/add_post_page.dart';
-import 'package:wact/pages/my/my_post_page.dart';
 
 class MyPage extends StatefulWidget {
   const MyPage({
@@ -17,16 +13,15 @@ class MyPage extends StatefulWidget {
   State<MyPage> createState() => _MyPageState();
 }
 
-class _MyPageState extends State<MyPage> {
+class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
   late Future<List<Map<String, dynamic>>>? _future;
   late Future<String> _usernameFuture;
-
-  late ScrollController controller;
+  late final TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    controller = ScrollController(); // ScrollController 초기화
+    _tabController = TabController(vsync: this, length: 2);
 
     _usernameFuture = _getUsername();
     _loadData();
@@ -45,7 +40,7 @@ class _MyPageState extends State<MyPage> {
     }
 
     final data = response;
-    return data['username'] ?? 'No username';
+    return data['team'] + ' ' + data['username'] ?? 'No username';
   }
 
   Future<void> _loadData() async {
@@ -62,7 +57,7 @@ class _MyPageState extends State<MyPage> {
 
   @override
   void dispose() {
-    controller.dispose(); // ScrollController 해제
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -73,7 +68,7 @@ class _MyPageState extends State<MyPage> {
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         elevation: 0, // 앱바 그림자 제거
-        // centerTitle: true,
+        centerTitle: true,
         title: FutureBuilder<String>(
           future: _usernameFuture,
           builder: (context, snapshot) {
@@ -86,209 +81,78 @@ class _MyPageState extends State<MyPage> {
             return Text(
               snapshot.data ?? '',
               style: const TextStyle(
-                fontSize: 22,
+                fontSize: 20,
                 fontWeight: FontWeight.w600,
                 color: Colors.black,
               ),
             );
           },
         ),
-      ),
-      backgroundColor: Colors.white,
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final posts = snapshot.data!;
-          return ListView.builder(
-            controller: controller,
-            scrollDirection: Axis.vertical,
-            itemCount: posts.length,
-            itemBuilder: (context, index) {
-              final post = posts[index];
-              // 이미지 URL 처리
-              List<dynamic> imageUrls = [];
-              // post['compressed_image_urls']가 List<dynamic>이면 직접 사용
-              if (post['compressed_image_urls'] is List<dynamic>) {
-                imageUrls = post['compressed_image_urls'];
-              }
-// post['compressed_image_urls']가 String이면 JSON 파싱
-              else if (post['compressed_image_urls'] is String) {
-                String imageUrlString = post['compressed_image_urls'];
-                imageUrls = json.decode(imageUrlString);
-              }
-              // 첫 번째 이미지 URL 추출
-              final imageUrl = imageUrls.isNotEmpty ? imageUrls[0] : null;
-
-              if (imageUrl != null) {
-                precacheImage(NetworkImage(imageUrl), context);
-              }
-
-              // 댓글 개수 처리
-              final commentCount =
-                  (post['comments'] as List<dynamic>?)?.length ?? 0;
-
-              // 날짜 형식 변경
-              final createdAt = DateTime.parse(post['created_at']);
-              final formattedDate = DateFormat('MM/dd').format(createdAt);
-
-              return InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => MyPostPage(post: posts[index])),
-                  );
-                },
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                      child: SizedBox(
-                        width: MediaQuery.of(context).size.width - 40,
-                        height: 90,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            SizedBox(
-                              width: MediaQuery.of(context).size.width -
-                                  40 -
-                                  60 -
-                                  10,
-                              height: 90,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    post['title'],
-                                    style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600),
-                                  ),
-                                  Text(
-                                    post['content'],
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                  const SizedBox(
-                                    height: 3,
-                                  ),
-                                  Row(
-                                    children: [
-                                      if (commentCount > 0)
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: [
-                                            const Icon(
-                                              FontAwesomeIcons.comment,
-                                              color: Colors.black,
-                                              size: 9,
-                                            ),
-                                            const SizedBox(
-                                              width: 3,
-                                            ),
-                                            Text(
-                                              '$commentCount',
-                                              style: const TextStyle(
-                                                  fontSize: 9, color: bg_90),
-                                            ),
-                                            const SizedBox(
-                                              width: 3,
-                                            ),
-                                            const Center(
-                                              child: Text(
-                                                'ㅣ',
-                                                style: TextStyle(
-                                                    fontSize: 8, color: bg_90),
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                              width: 3,
-                                            ),
-                                          ],
-                                        ),
-                                      Text(
-                                        formattedDate,
-                                        style: const TextStyle(
-                                            fontSize: 9, color: bg_70),
-                                      ),
-                                      const SizedBox(
-                                        width: 3,
-                                      ),
-                                      const Text(
-                                        'ㅣ',
-                                        style: TextStyle(
-                                            fontSize: 8, color: bg_70),
-                                      ),
-                                      const SizedBox(
-                                        width: 3,
-                                      ),
-                                      Text(
-                                        post['author'],
-                                        style: const TextStyle(
-                                            fontSize: 9, color: bg_90),
-                                      ),
-                                    ],
-                                  )
-                                ],
-                              ),
-                            ),
-                            if (imageUrl != null)
-                              SizedBox(
-                                width: 60,
-                                height: 60,
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(20),
-                                  child: Image.network(
-                                    imageUrl,
-                                    width: 60,
-                                    height: 60,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(20, 0, 20, 0),
-                      child: Divider(
-                        color: bg_10,
-                        height: 1,
-                      ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(42),
+          child: SizedBox(
+            width: 180,
+            height: 42,
+            child: Container(
+              decoration: const BoxDecoration(
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(29),
+                  ),
+                  color: bg_10),
+              child: TabBar(
+                dividerColor: Colors.transparent,
+                indicatorColor: Colors.transparent,
+                indicatorSize: TabBarIndicatorSize.tab,
+                indicatorPadding: const EdgeInsets.all(2),
+                labelPadding: const EdgeInsets.all(2),
+                indicator: BoxDecoration(
+                  borderRadius: const BorderRadius.all(
+                    Radius.circular(25),
+                  ),
+                  color: Colors.black,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.4),
+                      offset: const Offset(3, 3),
+                      blurRadius: 4,
+                      spreadRadius: 0,
                     ),
                   ],
                 ),
-              );
-            },
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.black,
-        child: const Center(
-          child: Icon(
-            Icons.add,
-            color: Colors.white,
+                controller: _tabController,
+
+                labelColor: Colors.white, // 선택된 탭의 글씨색
+                unselectedLabelColor: bg_70,
+                labelStyle: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 13.0,
+                  fontWeight: FontWeight.w400,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  color: bg_50,
+                  fontSize: 13.0,
+                  fontWeight: FontWeight.w400,
+                ),
+                tabs: const [
+                  Tab(
+                    text: '자유게시판',
+                  ),
+                  Tab(
+                    text: '후기게시판',
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => AddPostPage(
-                      onUpload: (String) {},
-                    )),
-          );
-        },
+      ),
+      backgroundColor: Colors.white,
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          Container(),
+          Container(),
+        ],
       ),
     );
   }

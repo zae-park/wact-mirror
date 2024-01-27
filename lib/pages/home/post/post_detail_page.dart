@@ -1,3 +1,5 @@
+// 홈 > 자유게시판 홈 > 게시글 상세페이지
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -8,16 +10,16 @@ import 'package:uuid/uuid.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:wact/main.dart';
 
-class HomePostPage extends StatefulWidget {
+class PostDetailPage extends StatefulWidget {
   final Map<String, dynamic> post;
 
-  const HomePostPage({Key? key, required this.post}) : super(key: key);
+  const PostDetailPage({Key? key, required this.post}) : super(key: key);
 
   @override
-  State<HomePostPage> createState() => _HomePostPageState();
+  State<PostDetailPage> createState() => _PostDetailPageState();
 }
 
-class _HomePostPageState extends State<HomePostPage> {
+class _PostDetailPageState extends State<PostDetailPage> {
   late TextEditingController commentController;
   late User? user;
   late bool isAuthor;
@@ -67,7 +69,7 @@ class _HomePostPageState extends State<HomePostPage> {
         .match({'id': widget.post['id']}).select();
     print('supabase 삭제: $response');
     // 삭제 성공
-    Navigator.of(context).pop(); // 삭제 후 이전 화면으로 돌아감
+    Navigator.of(context).pop(true); // 삭제 후 이전 화면으로 돌아감
   }
 
   // 댓글 추가 함수
@@ -84,7 +86,7 @@ class _HomePostPageState extends State<HomePostPage> {
 
     var existingComments = List<Map<String, dynamic>>.from(
         widget.post['comments'] as List<dynamic>? ?? []);
-    var uuid = Uuid();
+    var uuid = const Uuid();
 
     // 새 댓글에 고유 ID 할당
     existingComments.add({
@@ -180,7 +182,7 @@ class _HomePostPageState extends State<HomePostPage> {
                         style: const TextStyle(
                             fontSize: 22, fontWeight: FontWeight.w600),
                       ),
-                      SizedBox(
+                      const SizedBox(
                         height: 6,
                       ),
                     ],
@@ -260,7 +262,7 @@ class _HomePostPageState extends State<HomePostPage> {
                         child: ListTile(
                           title: Text(
                             comment['author'] ?? '',
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.w500),
                           ),
                           subtitle: Column(
@@ -269,13 +271,13 @@ class _HomePostPageState extends State<HomePostPage> {
                             children: [
                               Text(
                                 comment['content'],
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 14,
                                 ),
                               ),
                               Text(
                                 formattedDate,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 9,
                                   color: bg_70,
                                 ),
@@ -284,7 +286,8 @@ class _HomePostPageState extends State<HomePostPage> {
                           ),
                           trailing: isCommentAuthor
                               ? IconButton(
-                                  icon: Icon(Icons.delete_outline, size: 16),
+                                  icon: const Icon(Icons.delete_outline,
+                                      size: 16),
                                   onPressed: () {
                                     if (comment['id'] != null) {
                                       deleteComment(comment['id'], context);
@@ -293,8 +296,8 @@ class _HomePostPageState extends State<HomePostPage> {
                               : null,
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 20, right: 20),
+                      const Padding(
+                        padding: EdgeInsets.only(left: 20, right: 20),
                         child: Divider(
                           height: 1,
                           color: bg_30,
@@ -305,7 +308,7 @@ class _HomePostPageState extends State<HomePostPage> {
                 },
               ),
             ),
-            SizedBox(
+            const SizedBox(
               height: 10,
             ),
           ],
@@ -323,7 +326,7 @@ class _HomePostPageState extends State<HomePostPage> {
             filled: true, // 배경색 채우기 활성화
             fillColor: bg_10, // 배경색 지정
             suffixIcon: IconButton(
-              icon: Icon(
+              icon: const Icon(
                 FontAwesomeIcons.paperPlane,
                 size: 14,
               ),
@@ -338,8 +341,8 @@ class _HomePostPageState extends State<HomePostPage> {
               borderRadius: BorderRadius.circular(15.0), // 둥근 모서리
               borderSide: BorderSide.none, // 테두리 없앰
             ),
-            contentPadding:
-                EdgeInsets.symmetric(horizontal: 20, vertical: 15), // 패딩 조정
+            contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20, vertical: 15), // 패딩 조정
           ),
         ),
       ),

@@ -1,3 +1,5 @@
+// 처음 호출되는 페이지로 기존 사용자 유무 체크 후 메인 혹은 로그인으로 이동
+
 import 'package:flutter/material.dart';
 import 'package:wact/main.dart';
 

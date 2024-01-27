@@ -1,9 +1,12 @@
+// 전체 앱 테마모음
+
 import 'package:wact/common/const/color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 final ThemeData appTheme = ThemeData(
-  popupMenuTheme: PopupMenuThemeData(color: bg_10),
+  datePickerTheme: const DatePickerThemeData(),
+  popupMenuTheme: const PopupMenuThemeData(color: bg_10),
   tabBarTheme: const TabBarTheme(
     unselectedLabelColor: Color.fromRGBO(0, 0, 0, 0),
     indicatorColor: Colors.transparent, // 밑줄 없애기
@@ -16,7 +19,7 @@ final ThemeData appTheme = ThemeData(
       statusBarIconBrightness: Brightness.dark, // 아이콘 및 글씨 색상
     ),
   ),
-  splashColor: Colors.white,
+  splashColor: Colors.transparent,
   highlightColor: Colors.white,
   floatingActionButtonTheme: const FloatingActionButtonThemeData(
     elevation: 0,
