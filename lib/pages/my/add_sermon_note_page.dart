@@ -1,5 +1,6 @@
 // 첫 번째 FAB누르면 나오는 게시글 작성페이지
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -10,6 +11,11 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/main.dart';
+import 'package:flutter/services.dart' show rootBundle;
+
+import 'package:googleapis/vision/v1.dart' as vision;
+import 'package:googleapis_auth/auth_io.dart';
+import 'package:http/http.dart' as http;
 
 class AddSermonNotePage extends StatefulWidget {
   final XFile? image;
@@ -44,19 +50,52 @@ class _AddSermonNotePageState extends State<AddSermonNotePage> {
     }
   }
 
-  Future<void> _extractTextFromImage(XFile image) async {
-    try {
-      final inputImage = InputImage.fromFilePath(image.path);
-      final RecognizedText recognizedText =
-          await _textRecognizer.processImage(inputImage);
+  // Future<void> _extractTextFromImage(XFile image) async {
+  //   try {
+  //     final inputImage = InputImage.fromFilePath(image.path);
+  //     final RecognizedText recognizedText =
+  //         await _textRecognizer.processImage(inputImage);
 
+  //     setState(() {
+  //       _contentEditingController.text = recognizedText.text;
+  //     });
+  //     _textRecognizer.close();
+  //   } catch (e) {
+  //     // 에러 로깅
+  //     print('텍스트 추출 오류 - Error extracting text from image: $e');
+  //   }
+  // }
+  Future<void> _extractTextFromImage(XFile image) async {
+    final bytes = await image.readAsBytes();
+    String base64Image = base64Encode(bytes);
+
+    final client = http.Client();
+
+    final String jsonString = await rootBundle
+        .loadString('assets/poetic-nova-412611-3ddfdded92bb.json');
+    final ServiceAccountCredentials accountCredentials =
+        ServiceAccountCredentials.fromJson(json.decode(jsonString));
+
+    final authClient = await clientViaServiceAccount(
+        accountCredentials, [vision.VisionApi.cloudVisionScope]);
+
+    final visionApi = vision.VisionApi(authClient);
+    final request = vision.AnnotateImageRequest(
+      image: vision.Image(content: base64Image),
+      features: [vision.Feature(type: "TEXT_DETECTION")],
+    );
+    final batchRequest = vision.BatchAnnotateImagesRequest(requests: [request]);
+    try {
+      final response = await visionApi.images.annotate(batchRequest);
+      final textAnnotation = response.responses?.first.textAnnotations?.first;
       setState(() {
-        _contentEditingController.text = recognizedText.text;
+        _contentEditingController.text = textAnnotation?.description ?? '';
       });
-      _textRecognizer.close();
     } catch (e) {
-      // 에러 로깅
-      print('텍스트 추출 오류 - Error extracting text from image: $e');
+      print('Error while extracting text: $e');
+    } finally {
+      client.close();
+      authClient.close();
     }
   }
 
