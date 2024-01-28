@@ -116,8 +116,10 @@ class _PostPageState extends State<PostPage> {
                                 final result = await Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) =>
-                                          PostDetailPage(post: posts[index])),
+                                    builder: (context) => PostDetailPage(
+                                      post: posts[index],
+                                    ),
+                                  ),
                                 );
                                 if (result == true) {
                                   setState(() {
