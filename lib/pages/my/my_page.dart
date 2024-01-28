@@ -1,8 +1,11 @@
 // 마이페이지
 
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/const/color.dart';
+import 'package:wact/pages/my/add_sermon_note_page.dart';
 
 class MyPage extends StatefulWidget {
   const MyPage({
@@ -65,6 +68,14 @@ class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(FontAwesomeIcons.bookBible),
+          onPressed: () => Get.to(
+            () => AddSermonNotePage(
+              onUpload: (String) {},
+            ),
+          ),
+        ),
         automaticallyImplyLeading: false,
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
