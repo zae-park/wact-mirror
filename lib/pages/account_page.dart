@@ -1,5 +1,6 @@
 // 유저 상세 정보 입력페이지
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/main.dart';
@@ -15,7 +16,9 @@ class _AccountPageState extends State<AccountPage> {
   final _usernameController = TextEditingController();
   final _universityController = TextEditingController();
   final _studentidController = TextEditingController();
-  final _teamController = TextEditingController();
+  final _groupCodeController = TextEditingController();
+  final _teamController = TextEditingController(); // 안 쓰는 것 같음
+  String? _selectedGroup;
   String? _selectedTeam;
 
   var _loading = true;
@@ -28,10 +31,11 @@ class _AccountPageState extends State<AccountPage> {
     try {
       final userId = supabase.auth.currentUser!.id;
       final data =
-          await supabase.from('profiles').select().eq('id', userId).single();
+      await supabase.from('profiles').select().eq('id', userId).single();
       _usernameController.text = (data['username'] ?? '') as String;
       _studentidController.text = (data['studentid'] ?? '') as String;
       _universityController.text = (data['university'] ?? '') as String;
+      _selectedGroup = (data['group_name'] ?? '') as String;
       _selectedTeam = (data['team'] ?? '') as String;
     } on PostgrestException catch (error) {
       SnackBar(
@@ -60,41 +64,72 @@ class _AccountPageState extends State<AccountPage> {
     final userName = _usernameController.text.trim();
     final studentid = _studentidController.text.trim();
     final university = _universityController.text.trim();
+    final group = _selectedGroup ?? '';
     final team = _selectedTeam ?? '';
 
     final user = supabase.auth.currentUser;
     final updates = {
       'id': user!.id,
-      'username': userName,
-      'university': university,
       'updated_at': DateTime.now().toIso8601String(),
+      'username': userName,
       'studentid': studentid,
+      'university': university,
+      'group': group,
       'team': team,
     };
-    try {
-      await supabase.from('profiles').upsert(updates);
-      if (mounted) {
-        const SnackBar(
-          content: Text('Successfully updated profile!'),
+
+    final codeInfo = _getGroupCode;
+
+    if (_groupCodeController.text == codeInfo) {
+      try {
+        await supabase.from('profiles').upsert(updates);
+        if (mounted) {
+          const SnackBar(
+            content: Text('Successfully updated profile!'),
+          );
+          Navigator.of(context).pushReplacementNamed('/home');
+        }
+      } on PostgrestException catch (error) {
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: Theme.of(context).colorScheme.error,
         );
-        Navigator.of(context).pushReplacementNamed('/home');
+      } catch (error) {
+        SnackBar(
+          content: const Text('Unexpected error occurred'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        );
+      } finally {
+        if (mounted) {
+          setState(() {
+            _loading = false;
+          });
+        }
       }
-    } on PostgrestException catch (error) {
-      SnackBar(
-        content: Text(error.message),
-        backgroundColor: Theme.of(context).colorScheme.error,
+    }
+    else {
+      showDialog(
+          context: context,
+          builder: (BuildContext context) => Dialog(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  const Text('코드가 유효하지 않습니다.'),
+                  const SizedBox(height: 15),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text('닫기'),
+                  ),
+                ],
+              ),
+            ),
+          )
       );
-    } catch (error) {
-      SnackBar(
-        content: const Text('Unexpected error occurred'),
-        backgroundColor: Theme.of(context).colorScheme.error,
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _loading = false;
-        });
-      }
     }
   }
 
@@ -118,6 +153,15 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
+  Future<String> _getGroupCode() async {
+    final codeInfo = await supabase
+        .from('codes')
+        .select()
+        .eq('group_name', _selectedGroup ?? '')
+        .single();
+    return codeInfo['group_code'];
+  }
+
   @override
   void initState() {
     super.initState();
@@ -127,8 +171,9 @@ class _AccountPageState extends State<AccountPage> {
   @override
   void dispose() {
     _usernameController.dispose();
-    _studentidController.dispose();
     _universityController.dispose();
+    _studentidController.dispose();
+    _groupCodeController.dispose();
     _teamController.dispose();
     super.dispose();
   }
@@ -163,6 +208,42 @@ class _AccountPageState extends State<AccountPage> {
                   maxLength: 2,
                   controller: _studentidController,
                   decoration: const InputDecoration(labelText: '학번'),
+                ),
+                const SizedBox(height: 18),
+                TextFormField(
+                  controller: _groupCodeController,
+                  decoration: const InputDecoration(labelText: '코드'),
+                ),
+                const SizedBox(height: 18),
+                DropdownButton<String>(
+                  style: const TextStyle(color: Colors.black),
+                  dropdownColor: Colors.white,
+                  value: _selectedGroup,
+                  hint: const Text('합회'),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedGroup = newValue;
+                    });
+                  },
+                  items: <String>[
+                    '서중한액트',
+                    '동중한액트',
+                    // '영남액트',
+                    // '충청액트',
+                    // '호남액트',
+                    // '제주액트',
+                  ].map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(
+                        value,
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 16,
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
                 const SizedBox(height: 18),
                 DropdownButton<String>(
