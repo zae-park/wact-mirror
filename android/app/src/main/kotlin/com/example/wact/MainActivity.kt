@@ -1,4 +1,4 @@
-package com.example.wact
+package com.one.wact
 
 import io.flutter.embedding.android.FlutterActivity
 

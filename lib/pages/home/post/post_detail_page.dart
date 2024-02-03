@@ -9,6 +9,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:wact/main.dart';
+import 'package:youtube_player_iframe/youtube_player_iframe.dart'; 
+
 
 class PostDetailPage extends StatefulWidget {
   final Map<String, dynamic> post;
@@ -24,6 +26,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
   late User? user;
   late bool isAuthor;
   List<dynamic>? imageUrls;
+
+
 
   @override
   void initState() {
@@ -129,6 +133,62 @@ class _PostDetailPageState extends State<PostDetailPage> {
     });
   }
 
+  // 문자열 필터링
+  String? extractVideoId(String content) {
+    RegExp regExp = RegExp(
+      r'(?:https:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})',
+    );
+    Match? match = regExp.firstMatch(content);
+    if (match != null) {
+      return match.group(1);
+    } else {
+      return null;
+    }
+  }
+  // 링크 변환
+  Widget buildContent(String content) {
+    List<String> parts = content.split('\n'); // 줄 바꿈을 기준으로 텍스트를 나눔
+    List<Widget> widgets = [];
+
+    for (String part in parts) {
+      if (part.contains('youtube.com') || part.contains('youtu.be')) {
+        String videoId = extractVideoId(part) ?? ''; // null이면 빈 문자열로 초기화
+
+        if (videoId.isNotEmpty) {
+          widgets.add(
+            Container(
+              child: YoutubePlayer( 
+                controller: YoutubePlayerController
+                  .fromVideoId(
+                    videoId: videoId,
+                    autoPlay: false,
+                    params: const YoutubePlayerParams(showFullscreenButton: true),
+                  ),
+                aspectRatio: 16 / 9,      // Aspect ratio you want to take in screen 
+              ), 
+            ),
+          );
+        }
+      } else {
+        // YouTube 링크가 아닌 경우 텍스트로 표시
+        widgets.add(
+          Text(
+            part,
+            style: const TextStyle(
+              fontSize: 14,
+            ),
+          ),
+        );
+      }
+    }
+
+    // 위젯을 Column으로 묶어서 반환
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start, // 왼쪽 정렬
+      children: widgets,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     print('Is Author: $isAuthor');
@@ -203,22 +263,18 @@ class _PostDetailPageState extends State<PostDetailPage> {
                 ],
               ),
             ),
-
             const SizedBox(height: 10),
+            // 게시글 내용
             Padding(
               padding: const EdgeInsets.only(left: 20, right: 20),
-              child: Text(
-                widget.post['content'],
-                style: const TextStyle(
-                  fontSize: 14,
-                ),
-              ),
+              child: buildContent(widget.post['content']),
             ),
             const SizedBox(
               height: 20,
             ),
+
             // 이미지 리스트 표시
-// 이미지 리스트 표시
+            // 이미지 리스트 표시
             if (imageUrls != null && imageUrls!.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
