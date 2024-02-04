@@ -4,16 +4,20 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:wact/main.dart';
+import 'package:wact/pages/home/post/post_edit_page.dart';
 
 class PostDetailPage extends StatefulWidget {
-  final Map<String, dynamic> post;
+  Map<String, dynamic> post;
+  final Function refreshCallback;
 
-  const PostDetailPage({Key? key, required this.post}) : super(key: key);
+  PostDetailPage({Key? key, required this.post, required this.refreshCallback})
+      : super(key: key);
 
   @override
   State<PostDetailPage> createState() => _PostDetailPageState();
@@ -196,12 +200,39 @@ class _PostDetailPageState extends State<PostDetailPage> {
         actions: isAuthor
             ? [
                 PopupMenuButton(
-                  onSelected: (value) {
-                    if (value == 'delete') {
+                  surfaceTintColor: Colors.white,
+                  color: Colors.white,
+                  onSelected: (value) async {
+                    // 수정 버튼 눌렀을 때의 로직
+                    if (value == 'edit') {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PostEditPage(
+                            post: widget.post,
+                            onUpdateSuccess: () {},
+                            onUpload: (String) {},
+                          ),
+                        ),
+                      );
+                      if (result != null && result is Map<String, dynamic>) {
+                        setState(() {
+                          widget.post = result; // 수정된 게시글 데이터로 업데이트
+                        });
+                      }
+                    } else if (value == 'delete') {
                       deletePost();
                     }
                   },
                   itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: ListTile(
+                        title: Text(
+                          '수정',
+                        ),
+                      ),
+                    ),
                     const PopupMenuItem(
                       value: 'delete',
                       child: ListTile(

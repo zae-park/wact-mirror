@@ -69,7 +69,7 @@ class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(FontAwesomeIcons.bookBible),
+          icon: const Icon(FontAwesomeIcons.bookBible),
           onPressed: () => Get.to(
             () => AddSermonNotePage(
               onUpload: (String) {},

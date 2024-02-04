@@ -96,13 +96,21 @@ class _PostPageState extends State<PostPage> {
                   final formattedDate = DateFormat('MM/dd').format(createdAt);
 
                   return InkWell(
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) =>
-                                PostDetailPage(post: posts[index])),
+                          builder: (context) => PostDetailPage(
+                            post: posts[index],
+                            refreshCallback: _loadDataStream,
+                          ),
+                        ),
                       );
+                      if (result == true) {
+                        setState(() {
+                          _stream = _loadDataStream();
+                        });
+                      }
                     },
                     child: Column(
                       children: [
@@ -112,21 +120,6 @@ class _PostPageState extends State<PostPage> {
                             width: MediaQuery.of(context).size.width - 40,
                             height: 90,
                             child: GestureDetector(
-                              onTap: () async {
-                                final result = await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => PostDetailPage(
-                                      post: posts[index],
-                                    ),
-                                  ),
-                                );
-                                if (result == true) {
-                                  setState(() {
-                                    _stream = _loadDataStream();
-                                  });
-                                }
-                              },
                               child: Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
