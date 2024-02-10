@@ -1,16 +1,14 @@
-# wact
+# <center>WACT<center>
+## <center>Etch our faith digitally</center>
+<p align="center">
+  <img src="./assets/imgs/logo/actlogo.jpg" alt="wact_CI" style="max-width: 50%; height: auto;">
+</p>
 
-A new Flutter project.
 
-## Getting Started
+### Dev status
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- [ ] 회원 가입
+- [ ] 회원 정보 수정
+- [ ] 마이 페이지
+- [ ] 게시글 작성
+- [ ] 게시글 수정
