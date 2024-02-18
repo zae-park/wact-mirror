@@ -334,8 +334,7 @@ class _PostEditPageState extends State<PostEditPage> {
           IconButton(
             onPressed: () async {
               // 모든 조건이 충족되는지 확인
-              if ((images.isNotEmpty) &&
-                  _titleEditingController.text.isNotEmpty &&
+              if (_titleEditingController.text.isNotEmpty &&
                   _contentEditingController.text.isNotEmpty) {
                 ScaffoldMessenger.of(context).removeCurrentSnackBar();
                 await _updatePost();

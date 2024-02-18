@@ -4,9 +4,9 @@ import 'package:get/get.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/theme/app_theme.dart';
-import 'package:wact/pages/account_page.dart';
-import 'package:wact/pages/login_page.dart';
-import 'package:wact/pages/splash_page.dart';
+import 'package:wact/pages/login/account_page.dart';
+import 'package:wact/pages/login/login_page.dart';
+import 'package:wact/pages/login/splash_page.dart';
 import 'package:wact/root_layout.dart';
 
 Future<void> main() async {
@@ -52,7 +52,9 @@ class MyApp extends StatelessWidget {
         '/': (_) => const SplashPage(),
         '/login': (_) => const LoginPage(),
         '/account': (_) => const AccountPage(),
-        '/home': (_) => const RootLayout(),
+        '/home': (_) => const RootLayout(
+              initialTab: 0,
+            ),
       },
     );
   }

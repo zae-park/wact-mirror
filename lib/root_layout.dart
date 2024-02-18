@@ -6,7 +6,7 @@ import 'package:wact/pages/home/review/review_add_page.dart';
 import 'package:wact/pages/my/my_page.dart';
 
 class RootLayout extends StatefulWidget {
-  const RootLayout({super.key});
+  const RootLayout({super.key, required int initialTab});
 
   @override
   State<RootLayout> createState() => _RootLayoutState();

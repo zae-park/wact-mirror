@@ -31,6 +31,10 @@ android {
     compileSdk 33
     ndkVersion flutter.ndkVersion
 
+    packagingOptions {
+        pickFirst 'lib/arm64-v8a/libc++_shared.so'
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
