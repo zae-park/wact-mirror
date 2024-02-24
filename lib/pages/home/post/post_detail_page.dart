@@ -4,16 +4,20 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:wact/main.dart';
+import 'package:wact/pages/home/post/post_edit_page.dart';
 
 class PostDetailPage extends StatefulWidget {
-  final Map<String, dynamic> post;
+  Map<String, dynamic> post;
+  final Function refreshCallback;
 
-  const PostDetailPage({Key? key, required this.post}) : super(key: key);
+  PostDetailPage({Key? key, required this.post, required this.refreshCallback})
+      : super(key: key);
 
   @override
   State<PostDetailPage> createState() => _PostDetailPageState();
@@ -24,6 +28,9 @@ class _PostDetailPageState extends State<PostDetailPage> {
   late User? user;
   late bool isAuthor;
   List<dynamic>? imageUrls;
+
+  // 현재 페이지 인덱스를 추적하기 위한 변수
+  int currentPageIndex = 0;
 
   @override
   void initState() {
@@ -53,6 +60,54 @@ class _PostDetailPageState extends State<PostDetailPage> {
     setState(() {
       isAuthor = user?.id == widget.post['author_id'];
     });
+  }
+
+  // 선택한 이미지를 팝업으로 표시
+  void _showImagePopup(BuildContext context, String selectedImagePath) {
+    int initialPage = imageUrls!.indexOf(selectedImagePath);
+    final PageController pageController =
+        PageController(initialPage: initialPage);
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return GestureDetector(
+          onTap: () => Navigator.pop(context),
+          behavior: HitTestBehavior.opaque,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withOpacity(0.8),
+                ),
+              ),
+              Center(
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height * 0.8,
+                  child: Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      PageView.builder(
+                        controller: pageController,
+                        itemCount: imageUrls!.length,
+                        itemBuilder: (context, index) {
+                          return Image.network(
+                            imageUrls![index],
+                            fit: BoxFit.contain,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -145,12 +200,39 @@ class _PostDetailPageState extends State<PostDetailPage> {
         actions: isAuthor
             ? [
                 PopupMenuButton(
-                  onSelected: (value) {
-                    if (value == 'delete') {
+                  surfaceTintColor: Colors.white,
+                  color: Colors.white,
+                  onSelected: (value) async {
+                    // 수정 버튼 눌렀을 때의 로직
+                    if (value == 'edit') {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PostEditPage(
+                            post: widget.post,
+                            onUpdateSuccess: () {},
+                            onUpload: (String) {},
+                          ),
+                        ),
+                      );
+                      if (result != null && result is Map<String, dynamic>) {
+                        setState(() {
+                          widget.post = result; // 수정된 게시글 데이터로 업데이트
+                        });
+                      }
+                    } else if (value == 'delete') {
                       deletePost();
                     }
                   },
                   itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: ListTile(
+                        title: Text(
+                          '수정',
+                        ),
+                      ),
+                    ),
                     const PopupMenuItem(
                       value: 'delete',
                       child: ListTile(
@@ -217,7 +299,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
             const SizedBox(
               height: 20,
             ),
-            // 이미지 리스트 표시
+
 // 이미지 리스트 표시
             if (imageUrls != null && imageUrls!.isNotEmpty)
               Padding(
@@ -230,7 +312,10 @@ class _PostDetailPageState extends State<PostDetailPage> {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: GestureDetector(
-                        onTap: () {},
+                        onTap: () {
+                          // _showImagePopup 함수를 호출하면서 현재 인덱스의 이미지 URL을 전달.
+                          _showImagePopup(context, imageUrls![index]);
+                        },
                         child: Image.network(
                           imageUrls![index],
                           fit: BoxFit.cover,

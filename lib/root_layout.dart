@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:wact/pages/home/home_page.dart';
-import 'package:wact/pages/home/post/add_post_page.dart';
-import 'package:wact/pages/home/review/add_review_page.dart';
+import 'package:wact/pages/home/post/post_add_page.dart';
+import 'package:wact/pages/home/review/review_add_page.dart';
 import 'package:wact/pages/my/my_page.dart';
 
 class RootLayout extends StatefulWidget {
-  const RootLayout({super.key});
+  const RootLayout({super.key, required int initialTab});
 
   @override
   State<RootLayout> createState() => _RootLayoutState();
@@ -127,7 +127,7 @@ class _RootLayoutState extends State<RootLayout>
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => AddPostPage(
+                  builder: (context) => PostAddPage(
                     onUpload: (String) {},
                   ),
                 ),
@@ -152,7 +152,7 @@ class _RootLayoutState extends State<RootLayout>
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => AddReviewPage(
+                  builder: (context) => ReviewAddPage(
                     onUpload: (String) {},
                   ),
                 ),

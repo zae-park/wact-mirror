@@ -1,8 +1,15 @@
 // 마이페이지
 
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/const/color.dart';
+import 'package:wact/pages/my/add_sermon_note_page.dart';
+import 'package:wact/pages/my/my_bug_report_page.dart';
+import 'package:wact/pages/my/my_privacy_policy_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wact/pages/my/my_user_edit_page.dart';
 
 class MyPage extends StatefulWidget {
   const MyPage({
@@ -55,6 +62,50 @@ class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
     setState(() {});
   }
 
+  // 로그아웃 기능을 가진 함수
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          surfaceTintColor: Colors.white,
+          backgroundColor: Colors.white,
+          title: const Text('로그아웃'),
+          content: const Text('로그아웃 하시겠습니까?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text(
+                '아니오',
+                style: TextStyle(color: primary, fontWeight: FontWeight.w500),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(); // 대화상자 닫기
+              },
+            ),
+            TextButton(
+              child: const Text(
+                '예',
+                style: TextStyle(color: bg_90, fontWeight: FontWeight.w500),
+              ),
+              onPressed: () async {
+                // 로그아웃 처리
+                await Supabase.instance.client.auth.signOut();
+
+                // 로그인 상태 업데이트
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('isLoggedIn', false);
+
+                // 로그아웃 후 로그인 화면으로 리디렉션
+                Navigator.of(context)
+                    .pushNamedAndRemoveUntil('/login', (route) => false);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -89,70 +140,100 @@ class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
             );
           },
         ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(42),
-          child: SizedBox(
-            width: 180,
-            height: 42,
-            child: Container(
-              decoration: const BoxDecoration(
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(29),
-                  ),
-                  color: bg_10),
-              child: TabBar(
-                dividerColor: Colors.transparent,
-                indicatorColor: Colors.transparent,
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicatorPadding: const EdgeInsets.all(2),
-                labelPadding: const EdgeInsets.all(2),
-                indicator: BoxDecoration(
-                  borderRadius: const BorderRadius.all(
-                    Radius.circular(25),
-                  ),
-                  color: Colors.black,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.4),
-                      offset: const Offset(3, 3),
-                      blurRadius: 4,
-                      spreadRadius: 0,
-                    ),
-                  ],
-                ),
-                controller: _tabController,
-
-                labelColor: Colors.white, // 선택된 탭의 글씨색
-                unselectedLabelColor: bg_70,
-                labelStyle: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 13.0,
-                  fontWeight: FontWeight.w400,
-                ),
-                unselectedLabelStyle: const TextStyle(
-                  color: bg_50,
-                  fontSize: 13.0,
-                  fontWeight: FontWeight.w400,
-                ),
-                tabs: const [
-                  Tab(
-                    text: '자유게시판',
-                  ),
-                  Tab(
-                    text: '후기게시판',
-                  ),
-                ],
+      ),
+      backgroundColor: Colors.white,
+      body: ListView(
+        shrinkWrap: true,
+        children: <Widget>[
+          GestureDetector(
+            onTap: () {},
+            child: const ListTile(
+              title: Text('내 글 보기'),
+              trailing: Icon(
+                Icons.list_alt,
+                size: 20,
+                color: Colors.black,
               ),
             ),
           ),
-        ),
-      ),
-      backgroundColor: Colors.white,
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          Container(),
-          Container(),
+          Divider(
+            thickness: 0.5,
+            height: 0,
+          ),
+          GestureDetector(
+            onTap: () {
+              Get.to(
+                () => const UserEditPage(),
+              );
+            },
+            child: const ListTile(
+              title: Text('정보 수정'),
+              trailing: Icon(
+                Icons.edit,
+                size: 20,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          Divider(
+            thickness: 0.5,
+            height: 0,
+          ),
+          GestureDetector(
+            onTap: () {
+              Get.to(
+                () => BugReportPage(),
+              );
+            },
+            child: const ListTile(
+              title: Text('버그리포트'),
+              trailing: Icon(
+                Icons.question_mark_rounded,
+                size: 20,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          Divider(
+            thickness: 0.5,
+            height: 0,
+          ),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const PrivacyPolicyPage()),
+              );
+            },
+            child: const ListTile(
+              title: Text('개인정보처리방침'),
+              trailing: Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          Divider(
+            thickness: 0.5,
+            height: 0,
+          ),
+          GestureDetector(
+            onTap: _showLogoutDialog, // 로그아웃 대화상자 표시
+            child: const ListTile(
+              title: Text('로그아웃'),
+              trailing: Icon(
+                Icons.logout_rounded,
+                size: 20,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          Divider(
+            thickness: 0.5,
+            height: 0,
+          ),
         ],
       ),
     );

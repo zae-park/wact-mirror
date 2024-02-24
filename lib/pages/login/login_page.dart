@@ -1,7 +1,6 @@
 // 카톡 로그인 페이지
 
 import 'dart:async';
-
 import 'package:wact/common/const/color.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -19,17 +18,36 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   bool _redirecting = false;
-  late final StreamSubscription<AuthState> _authStateSubscription;
+  StreamSubscription<AuthState>? _authStateSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkCurrentSession();
+    _setupAuthListener();
+  }
+
+  void _checkCurrentSession() async {
+    final currentSession = supabase.auth.currentSession;
+    if (currentSession != null) {
+      // 현재 세션이 유효하므로 홈 화면으로 바로 넘어감.
+      _redirecting = true;
+      Navigator.of(context).pushReplacementNamed('/home');
+    }
+  }
+
+  void _setupAuthListener() {
+    _authStateSubscription = supabase.auth.onAuthStateChange.listen((data) {
+      if (_redirecting) return;
+      final session = data.session;
+      if (session != null) {
+        _redirecting = true;
+        Navigator.of(context).pushReplacementNamed('/home');
+      }
+    });
+  }
 
   Future<void> _signIn() async {
-    final prefs = await SharedPreferences.getInstance();
-    bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-
-    if (isLoggedIn) {
-      Navigator.of(context).pushReplacementNamed('/home');
-      return;
-    }
-
     try {
       setState(() {
         _isLoading = true;
@@ -43,6 +61,7 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       // 로그인 성공 시 로컬 스토리지에 상태 저장
+      final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);
 
       if (mounted) {
@@ -70,21 +89,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   @override
-  void initState() {
-    _authStateSubscription = supabase.auth.onAuthStateChange.listen((data) {
-      if (_redirecting) return;
-      final session = data.session;
-      if (session != null) {
-        _redirecting = true;
-        Navigator.of(context).pushReplacementNamed('/account');
-      }
-    });
-    super.initState();
-  }
-
-  @override
   void dispose() {
-    _authStateSubscription.cancel();
+    _authStateSubscription?.cancel();
     super.dispose();
   }
 
@@ -134,7 +140,7 @@ class _LoginPageState extends State<LoginPage> {
                           'assets/imgs/logo/sns/kakao.png',
                           fit: BoxFit.contain,
                         )),
-                  ), //
+                  ),
                 ],
               ),
             ]),

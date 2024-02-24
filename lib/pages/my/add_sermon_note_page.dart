@@ -1,44 +1,101 @@
 // 첫 번째 FAB누르면 나오는 게시글 작성페이지
 
+import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/main.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
-class AddPostPage extends StatefulWidget {
-  final List<XFile>? images;
-  final void Function(List<String>) onUpload;
+import 'package:googleapis/vision/v1.dart' as vision;
+import 'package:googleapis_auth/auth_io.dart';
+import 'package:http/http.dart' as http;
 
-  const AddPostPage({Key? key, this.images, required this.onUpload})
+class AddSermonNotePage extends StatefulWidget {
+  final XFile? image;
+  final void Function(String) onUpload;
+
+  const AddSermonNotePage({Key? key, this.image, required this.onUpload})
       : super(key: key);
 
   @override
-  _AddPostPageState createState() => _AddPostPageState();
+  _AddSermonNotePageState createState() => _AddSermonNotePageState();
 }
 
-class _AddPostPageState extends State<AddPostPage> {
+class _AddSermonNotePageState extends State<AddSermonNotePage> {
   final _titleEditingController = TextEditingController();
   final _contentEditingController = TextEditingController();
-  List<XFile> _currentImages = [];
+  XFile? _currentImage;
+  String? _imageUrl;
   bool _isLoading = false;
+  String? _compressedimageUrl;
+  final TextRecognizer _textRecognizer =
+      TextRecognizer(script: TextRecognitionScript.korean);
 
-  Future<void> _pickImages() async {
-    final pickedFiles = await ImagePicker().pickMultiImage();
-
-    // 현재 이미지 수와 새로 선택된 이미지 수의 합이 6을 초과하는지 확인
-    if (_currentImages.length + pickedFiles.length > 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('최대 6장의 이미지만 선택할 수 있습니다.')));
-    } else {
+  Future<void> _pickImage() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
       setState(() {
-        _currentImages.addAll(pickedFiles);
+        _currentImage = pickedFile;
       });
+      // 이미지를 선택한 후 텍스트 추출 함수 호출
+      await _extractTextFromImage(pickedFile);
+    }
+  }
+
+  // Future<void> _extractTextFromImage(XFile image) async {
+  //   try {
+  //     final inputImage = InputImage.fromFilePath(image.path);
+  //     final RecognizedText recognizedText =
+  //         await _textRecognizer.processImage(inputImage);
+
+  //     setState(() {
+  //       _contentEditingController.text = recognizedText.text;
+  //     });
+  //     _textRecognizer.close();
+  //   } catch (e) {
+  //     // 에러 로깅
+  //     print('텍스트 추출 오류 - Error extracting text from image: $e');
+  //   }
+  // }
+  Future<void> _extractTextFromImage(XFile image) async {
+    final bytes = await image.readAsBytes();
+    String base64Image = base64Encode(bytes);
+
+    final client = http.Client();
+
+    final String jsonString = await rootBundle
+        .loadString('assets/poetic-nova-412611-3ddfdded92bb.json');
+    final ServiceAccountCredentials accountCredentials =
+        ServiceAccountCredentials.fromJson(json.decode(jsonString));
+
+    final authClient = await clientViaServiceAccount(
+        accountCredentials, [vision.VisionApi.cloudVisionScope]);
+
+    final visionApi = vision.VisionApi(authClient);
+    final request = vision.AnnotateImageRequest(
+      image: vision.Image(content: base64Image),
+      features: [vision.Feature(type: "TEXT_DETECTION")],
+    );
+    final batchRequest = vision.BatchAnnotateImagesRequest(requests: [request]);
+    try {
+      final response = await visionApi.images.annotate(batchRequest);
+      final textAnnotation = response.responses?.first.textAnnotations?.first;
+      setState(() {
+        _contentEditingController.text = textAnnotation?.description ?? '';
+      });
+    } catch (e) {
+      print('Error while extracting text: $e');
+    } finally {
+      client.close();
+      authClient.close();
     }
   }
 
@@ -57,7 +114,7 @@ class _AddPostPageState extends State<AddPostPage> {
             backgroundColor: bg_50,
             content: Column(
               mainAxisSize: MainAxisSize.min,
-              children: [Text('게시글을 저장중입니다.')],
+              children: [Text('설교노트를 저장중입니다.')],
             ),
           );
         },
@@ -66,70 +123,42 @@ class _AddPostPageState extends State<AddPostPage> {
       final user = supabase.auth.currentUser;
       if (user == null) throw Exception('User not found');
 
-      List<String> imageUrls = [];
-      // 압축된 이미지의 URL 리스트
-      List<String> compressedImageUrls = [];
+      // 이미지를 바이트 배열로 변환
+      final imageBytes = await _currentImage?.readAsBytes();
+      // 압축된 이미지 파일
+      final compressedImageBytes = await FlutterImageCompress.compressWithList(
+        imageBytes!,
+        quality: 70,
+      );
 
-      // 이미지가 있을 경우에만 업로드 로직 실행
-      if (_currentImages.isNotEmpty) {
-        // 파일 경로 리스트 생성
-        List<String> filePaths = _currentImages.map((imageFile) {
-          final fileExt = imageFile.path.split('.').last;
-          final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
-          return '${user.id}/$fileName';
-        }).toList();
+      final fileExt = _currentImage?.path.split('.').last;
+      final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
+      final compressedfileName =
+          '${DateTime.now().toIso8601String()})compressed.$fileExt';
+      final filePath = fileName;
+      final compressedfilePath = compressedfileName;
 
-        // 압축된 이미지의 경로 리스트 생성
-        List<String> compressedFilePaths = _currentImages.map((imageFile) {
-          final fileExt = imageFile.path.split('.').last;
-          final fileName =
-              '${DateTime.now().toIso8601String()}_compressed.$fileExt';
-          return '${user.id}/$fileName';
-        }).toList();
+      // 파일 업로드
+      await supabase.storage.from('post_photo').uploadBinary(
+          filePath, imageBytes,
+          fileOptions: FileOptions(contentType: _currentImage?.mimeType));
 
-        // 이미지 업로드
-        for (int i = 0; i < _currentImages.length; i++) {
-          var imageFile = _currentImages[i];
-          var filePath = filePaths[i];
-          var compressedFilePath = compressedFilePaths[i];
+      // 압축 파일 업로드
+      await supabase.storage.from('post_compressed_photo').uploadBinary(
+          compressedfilePath, compressedImageBytes,
+          fileOptions: FileOptions(contentType: _currentImage?.mimeType));
 
-          final imageBytes = await imageFile.readAsBytes();
-          final fileExt = imageFile.path.split('.').last;
+      final imageUrlResponse = await supabase.storage
+          .from('post_photo')
+          .createSignedUrl(filePath, 60 * 60 * 24 * 365 * 10);
 
-          // 이미지 압축
-          final compressedImageBytes =
-              await FlutterImageCompress.compressWithList(
-            imageBytes,
-            quality: 80, // 70% 품질로 압축
-          );
+      final compressedimageUrlResponse = await supabase.storage
+          .from('post_compressed_photo')
+          .createSignedUrl(compressedfilePath, 60 * 60 * 24 * 365 * 10);
 
-          await supabase.storage.from('post_photo').uploadBinary(
-              filePath, imageBytes,
-              fileOptions: FileOptions(contentType: 'image/$fileExt'));
-
-          // 압축된 이미지 업로드
-          await supabase.storage.from('post_compressed_photo').uploadBinary(
-              compressedFilePath, compressedImageBytes,
-              fileOptions:
-                  FileOptions(contentType: 'compressedImage/$fileExt'));
-        }
-
-        // 이미지 업로드 후 서명된 URL 생성
-        List<SignedUrl> signedUrls = await supabase.storage
-            .from('post_photo')
-            .createSignedUrls(filePaths, 60 * 60 * 24 * 365 * 10);
-
-        // 서명된 URL 추출 및 저장
-        imageUrls.addAll(signedUrls.map((e) => e.signedUrl));
-
-        // 압축된 이미지의 서명된 URL 생성
-        List<SignedUrl> compressedSignedUrls = await supabase.storage
-            .from('post_compressed_photo')
-            .createSignedUrls(compressedFilePaths, 60 * 60 * 24 * 365 * 10);
-
-        compressedImageUrls
-            .addAll(compressedSignedUrls.map((e) => e.signedUrl));
-      }
+      _imageUrl = imageUrlResponse;
+      _compressedimageUrl = compressedimageUrlResponse;
+      widget.onUpload(imageUrlResponse);
 
       final profileResponse = await supabase
           .from('profiles')
@@ -146,11 +175,9 @@ class _AddPostPageState extends State<AddPostPage> {
         'author': username,
         'title': _titleEditingController.text,
         'content': _contentEditingController.text,
-        'image_urls': imageUrls,
-        'compressed_image_urls': compressedImageUrls,
+        'image_urls': [_imageUrl],
+        'compressed_image_urls': [_compressedimageUrl],
       });
-
-      widget.onUpload(imageUrls);
 
       if (mounted) {
         Navigator.pop(context, true);
@@ -165,13 +192,13 @@ class _AddPostPageState extends State<AddPostPage> {
   @override
   void initState() {
     super.initState();
-    if (widget.images != null) {
-      _currentImages = widget.images!;
+    if (widget.image != null) {
+      _currentImage = widget.image;
+      _extractTextFromImage(_currentImage!);
     }
     _titleEditingController.addListener(() {
       setState(() {});
     });
-
     _contentEditingController.addListener(() {
       setState(() {});
     });
@@ -186,85 +213,38 @@ class _AddPostPageState extends State<AddPostPage> {
 
   @override
   Widget build(BuildContext context) {
-    // 이미지 표시 부분
-    Widget buildImageGrid() {
-      return Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 8.0,
-            crossAxisSpacing: 8.0,
+    Widget imageDisplayWidget;
+
+    if (_currentImage != null) {
+      // 플랫폼이 웹이 아닐 때, 즉 모바일 앱일 때
+      if (!kIsWeb) {
+        imageDisplayWidget = GestureDetector(
+          onTap: _pickImage,
+          child: Image.file(
+            File(_currentImage!.path),
+            fit: BoxFit.contain,
           ),
-          itemCount: min(_currentImages.length + 1, 6),
-          itemBuilder: (BuildContext context, int index) {
-            if (index < _currentImages.length) {
-              return DragTarget<XFile>(
-                onWillAccept: (data) => true,
-                onAccept: (data) {
-                  setState(() {
-                    final oldIndex = _currentImages.indexOf(data);
-                    _currentImages.remove(data);
-                    if (index > oldIndex) {
-                      _currentImages.insert(index - 1, data);
-                    } else {
-                      _currentImages.insert(index, data);
-                    }
-                  });
-                },
-                builder: (context, candidateData, rejectedData) {
-                  return LongPressDraggable<XFile>(
-                    data: _currentImages[index],
-                    feedback: Material(
-                      child: Image.file(File(_currentImages[index].path),
-                          fit: BoxFit.cover, width: 100, height: 100),
-                    ),
-                    childWhenDragging: Container(),
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: Image.file(File(_currentImages[index].path),
-                              fit: BoxFit.cover),
-                        ),
-                        // 삭제 버튼
-                        Positioned(
-                          right: -8,
-                          top: -8,
-                          child: IconButton(
-                            iconSize: 16,
-                            icon: const FaIcon(
-                              FontAwesomeIcons.circleMinus,
-                              color: Colors.white,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _currentImages.removeAt(index);
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            } else if (_currentImages.length < 6) {
-              return GestureDetector(
-                onTap: _pickImages,
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.add),
-                ),
-              );
-            } else {
-              return Container();
-            }
-          },
+        );
+      } else {
+        // 플랫폼이 웹일 때
+// 플랫폼이 웹일 때
+        imageDisplayWidget = GestureDetector(
+          onTap: _pickImage,
+          child: Image.memory(
+            File(_currentImage!.path).readAsBytesSync(), // 수정된 부분
+            fit: BoxFit.contain,
+          ),
+        );
+      }
+    } else {
+      // _currentImage가 null일 때의 placeholder 처리
+      imageDisplayWidget = GestureDetector(
+        onTap: _pickImage,
+        child: Container(
+          width: MediaQuery.of(context).size.width,
+          height: 200, // placeholder의 높이
+          color: Colors.grey[300],
+          child: const Icon(Icons.image, size: 100),
         ),
       );
     }
@@ -287,7 +267,7 @@ class _AddPostPageState extends State<AddPostPage> {
           ),
         ),
         title: const Text(
-          '글쓰기',
+          '설교노트',
           style: TextStyle(
             color: Colors.black,
             fontSize: 20,
@@ -326,7 +306,7 @@ class _AddPostPageState extends State<AddPostPage> {
                       color: Colors.black),
                   child: const Center(
                     child: Text(
-                      '게시',
+                      '작성',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 13,
@@ -343,9 +323,7 @@ class _AddPostPageState extends State<AddPostPage> {
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
-            buildImageGrid(),
-
-            // 제목과 내용 입력
+            imageDisplayWidget, // 제목과 내용 입력
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: SizedBox(
@@ -421,8 +399,8 @@ class _AddPostPageState extends State<AddPostPage> {
                     Expanded(
                       child: TextFormField(
                         controller: _contentEditingController,
-                        maxLines: 5,
-                        maxLength: 150,
+                        maxLines: 15,
+                        maxLength: 500,
                         cursorColor: primary,
                         decoration: const InputDecoration(
                           hintText: '내용을 작성해주세요.',
