@@ -9,8 +9,27 @@ import 'package:wact/pages/login_page.dart';
 import 'package:wact/pages/splash_page.dart';
 import 'package:wact/root_layout.dart';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'notification/messaging_page.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+Future<void> onTokenRefreshFCM() async {
+  print('FCM 토큰 관련 함수 체크예정');
+  FirebaseMessaging.instance.onTokenRefresh.listen((String fcmToken) async {
+    print("New token: $fcmToken");
+    // FFAppState().fcmTokenRefresh = true;
+  }, onError: (err) async {
+    print("Error getting token");
+  });
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  FirebaseApp firebaseInit = await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // 카톡앱 '캄피-TEST' 키
   KakaoSdk.init(
@@ -18,11 +37,25 @@ Future<void> main() async {
     javaScriptAppKey: '9f1a4a118913974e699835637ce11dca',
   );
 
-  await Supabase.initialize(
+  Supabase supabaseInit = await Supabase.initialize(
     url: 'https://tucpydftldyqknodgghy.supabase.co',
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1Y3B5ZGZ0bGR5cWtub2RnZ2h5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDQ3OTI0NTgsImV4cCI6MjAyMDM2ODQ1OH0.iCo1iAtV55fZjNpiYI-ccH6Hcrzhi55UB-yZYNtkKsg',
   );
+
+  // getMyDeviceToken();
+
+  // void fcmTkn = await onTokenRefreshFCM();
+
+  // String? fcmToken = await FirebaseMessaging.instance.getToken();
+  // FirebaseMessaging.instance.onTokenRefresh.listen((fcmToken) {
+  //   // TODO: If necessary send token to application server.
+
+  //   // Note: This callback is fired at each app startup and whenever a new
+  //   // token is generated.
+  // }).onError((err) {
+  //   // Error getting token.
+  // });
 
   runApp(const MyApp());
 }
@@ -52,7 +85,8 @@ class MyApp extends StatelessWidget {
         '/': (_) => const SplashPage(),
         '/login': (_) => const LoginPage(),
         '/account': (_) => const AccountPage(),
-        '/home': (_) => const RootLayout(),
+        '/home': (_) => const HomePage(),
+        // '/home': (_) => const RootLayout(),
       },
     );
   }
