@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
@@ -43,19 +44,27 @@ Future<void> main() async {
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1Y3B5ZGZ0bGR5cWtub2RnZ2h5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDQ3OTI0NTgsImV4cCI6MjAyMDM2ODQ1OH0.iCo1iAtV55fZjNpiYI-ccH6Hcrzhi55UB-yZYNtkKsg',
   );
 
-  // getMyDeviceToken();
+  await Firebase.initializeApp();
 
-  // void fcmTkn = await onTokenRefreshFCM();
+  var channel = const AndroidNotificationChannel(
+    'high_importance_channel', // id
+    'High Importance Notifications', // name
+    description:
+        'This channel is used for important notifications.', // description
+    importance: Importance.high,
+  );
 
-  // String? fcmToken = await FirebaseMessaging.instance.getToken();
-  // FirebaseMessaging.instance.onTokenRefresh.listen((fcmToken) {
-  //   // TODO: If necessary send token to application server.
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    print('Receive push-notification in foreground');
+    print('Handling a foreground message: ${message.data}');
+  });
 
-  //   // Note: This callback is fired at each app startup and whenever a new
-  //   // token is generated.
-  // }).onError((err) {
-  //   // Error getting token.
-  // });
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    print('Push=notification was tapped');
+    // 사용자가 푸시 알림을 탭하여 앱을 열었을 때 수행할 로직
+  });
+
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   runApp(const MyApp());
 }

@@ -11,10 +11,11 @@ String server_key =
     'BPi_ZsKTbasEoaPsqDQ14HLpMCy0bQYsLex3-6EXthmm2_Nyi9ZbUzYFr4obH3TXU4ZnXR27muLTirSORvBmDwM';
 
 @pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
 
-  // 세부 내용이 필요한 경우 추가...
+  print('Receive push-notification in background');
+  print('Handling a background message: ${message.messageId}');
 }
 
 @pragma('vm:entry-point')
@@ -83,7 +84,7 @@ Future<void> main() async {
 
   await Firebase.initializeApp();
 
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   initializeNotification();
 
@@ -119,7 +120,8 @@ class _HomePageState extends State<HomePage> {
   late String deviceTkn;
 
   Future<void> getMyDeviceToken() async {
-    deviceTkn = await FirebaseMessaging.instance.getToken() ?? '';
+    deviceTkn =
+        await FirebaseMessaging.instance.getToken(vapidKey: server_key) ?? '';
     print("내 디바이스 토큰: $deviceTkn");
   }
 
@@ -132,7 +134,8 @@ class _HomePageState extends State<HomePage> {
 
     final headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'key=$server_key',
+      'Authorization': 'Bearer $server_key',
+      // 'Authorization': 'key=$server_key',
     };
 
     final body = {
