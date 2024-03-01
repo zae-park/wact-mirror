@@ -1,13 +1,21 @@
 {
+  "_comment" : "FCM 업데이트하면서 프로젝트id, app id 등이 변경됨. 이전 값들은 '_pre'로 기록.",
   "project_info": {
-    "project_number": "65461336274",
-    "project_id": "wact-43f5d",
-    "storage_bucket": "wact-43f5d.appspot.com"
+
+    "_pre_project_number" : "65461336274",
+    "project_number": "484932274756",
+
+    "_pre_project_id" : "wact-43f5d",
+    "project_id": "wact-95d5b",
+
+    "_pre_storage_bucket" : "wact-43f5d.appspot.com",
+    "storage_bucket": "wact-95d5b.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:65461336274:android:6ba746fcea0edac0c3d50b",
+        "_pre_mobilesdk_app_id" : "1:65461336274:android:6ba746fcea0edac0c3d50b",
+        "mobilesdk_app_id": "1:484932274756:android:378d1942b8e714885a8a11",
         "android_client_info": {
           "package_name": "com.example.wact"
         }
@@ -15,7 +23,8 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyC_Wq81p53EEOYCF0m-ZmvkU1y3MJbf4qg"
+          "_pre_current_key" : "AIzaSyC_Wq81p53EEOYCF0m-ZmvkU1y3MJbf4qg",
+          "current_key": "AIzaSyB803Mu_DS3gRpF-qRomHVubjT8nVy_BTk"
         }
       ],
       "services": {
