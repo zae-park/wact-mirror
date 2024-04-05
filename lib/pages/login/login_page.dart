@@ -1,6 +1,10 @@
 // 카톡 로그인 페이지
 
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'package:crypto/crypto.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +23,9 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   bool _redirecting = false;
   StreamSubscription<AuthState>? _authStateSubscription;
+  final String supabaseClientId = 'com.one.wact';
+  final String expectedIssuer = 'https://appleid.apple.com';
+  final String expectedAudience = 'com.one.wact';
 
   @override
   void initState() {
@@ -37,12 +44,23 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _setupAuthListener() {
-    _authStateSubscription = supabase.auth.onAuthStateChange.listen((data) {
+    _authStateSubscription =
+        supabase.auth.onAuthStateChange.listen((data) async {
       if (_redirecting) return;
       final session = data.session;
       if (session != null) {
-        _redirecting = true;
-        Navigator.of(context).pushReplacementNamed('/home');
+        // 사용자 프로필 조회하여 username 확인
+        final userProfile = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('id', session.user.id)
+            .single();
+        debugPrint('사용자 프로필 조회: $userProfile');
+        if (userProfile.isNotEmpty && userProfile['username'] != null) {
+          Navigator.of(context).pushReplacementNamed('/home');
+        } else {
+          Navigator.of(context).pushReplacementNamed('/account');
+        }
       }
     });
   }
@@ -75,6 +93,201 @@ class _LoginPageState extends State<LoginPage> {
         backgroundColor: Theme.of(context).colorScheme.error,
       );
     } catch (error) {
+      SnackBar(
+        content: const Text('예상치못한 오류 발생'),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void verifyTokenAndNonce(String idToken, String rawNonce) {
+    final parts = idToken.split('.');
+    if (parts.length != 3) {
+      debugPrint('ID 토큰 형식이 올바르지 않습니다.');
+      return;
+    }
+
+    debugPrint('ID토큰 parts: $parts');
+
+    final payload = json
+        .decode(utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))));
+    debugPrint('payload: $payload');
+
+    final tokenExp = payload['exp'];
+    debugPrint('tokenExp: $tokenExp');
+
+    final tokenNonce = payload['nonce'];
+    debugPrint('tokenNonce: $tokenNonce');
+
+    final tokenAud = payload['aud']; // `aud` 필드 추출
+    debugPrint('tokenAud: $tokenAud');
+
+    final tokenIss = payload['iss']; // `iss` 필드
+    debugPrint('tokenIss: $tokenIss');
+
+    final tokenSub = payload['sub']; // `sub` 필드
+    debugPrint('tokenSub: $tokenSub');
+
+    // exp 필드 검증
+    final currentTime = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+    debugPrint('currentTime: $currentTime');
+
+    if (tokenExp < currentTime) {
+      debugPrint('ID 토큰이 만료되었습니다.');
+    } else {
+      debugPrint('ID 토큰이 유효합니다.');
+    }
+
+    // nonce 값 일치 확인
+    if (tokenNonce == rawNonce) {
+      debugPrint('Nonce 값이 일치합니다.');
+    } else {
+      debugPrint('Nonce 값이 일치하지 않습니다.');
+    }
+
+    // `aud` 필드 검증
+    if (tokenAud == supabaseClientId) {
+      debugPrint('aud 필드가 일치합니다. 토큰이 해당 서비스를 위한 것입니다.');
+    } else {
+      debugPrint('aud 필드가 일치하지 않습니다. 토큰이 이 서비스를 위한 것이 아닙니다.');
+    }
+
+    if (tokenIss == expectedIssuer) {
+      debugPrint('iss 필드가 올바릅니다.');
+    } else {
+      debugPrint('iss 필드가 기대하는 값과 다릅니다.');
+    }
+
+    // `sub` 필드는 일반적으로 사용자 식별자로, 특정 값과의 일치 여부보다는 값의 존재 유무를 검사하는 것이 일반적입니다.
+    if (tokenSub != null && tokenSub.isNotEmpty) {
+      debugPrint('sub 필드가 유효합니다.');
+    } else {
+      debugPrint('sub 필드가 유효하지 않습니다.');
+    }
+
+    // email_verified 검증
+    final emailVerified = payload['email_verified'] == 'true' ||
+        payload['email_verified'] == true;
+    debugPrint('이메일 검증됨: $emailVerified');
+
+    // is_private_email 검증
+    final isPrivateEmail = payload['is_private_email'] == 'true' ||
+        payload['is_private_email'] == true;
+    debugPrint('프라이빗 이메일: $isPrivateEmail');
+
+    // real_user_status 검증 로직 추가
+    final realUserStatus = payload['real_user_status'];
+    debugPrint('realUserStatus: $realUserStatus');
+
+    if (realUserStatus != null) {
+      switch (realUserStatus) {
+        case 0: // Unsupported
+          debugPrint('실제 사용자 상태: Unsupported');
+          break;
+        case 1: // Unknown
+          debugPrint('실제 사용자 상태: Unknown');
+          // 여기서 추가적인 검증 로직을 수행할 수 있습니다.
+          break;
+        case 2: // LikelyReal
+          debugPrint('실제 사용자 상태: LikelyReal');
+          // 사용자를 실제 사람으로 간주하고 계속 진행합니다.
+          break;
+        default:
+          debugPrint('알 수 없는 실제 사용자 상태');
+      }
+    }
+  }
+
+  Future<AuthResponse> _appleSignIn() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      debugPrint('Apple login start');
+
+      final rawNonce = supabase.auth.generateRawNonce();
+      final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+      debugPrint('Raw Nonce: $rawNonce');
+      debugPrint('Hashed Nonce: $hashedNonce');
+
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: hashedNonce,
+      );
+
+      debugPrint('Credential: $credential');
+
+      final idToken = credential.identityToken;
+      debugPrint('idToken: $idToken');
+
+      if (idToken == null) {
+        throw const AuthException(
+            'Could not find ID Token from generated credential.');
+      }
+
+      // ID 토큰 유효성 검사 로그 추가
+      verifyTokenAndNonce(idToken, hashedNonce);
+
+      // Supabase를 통한 애플 로그인 시도
+      debugPrint('Supabase Apple login start');
+      final response = await supabase.auth.signInWithIdToken(
+        provider: OAuthProvider.apple,
+        idToken: idToken,
+        nonce: rawNonce,
+      );
+
+      debugPrint('Supabase를 통한 애플 로그인 성공');
+      return response;
+    } catch (error) {
+      if (error is AuthException) {
+        debugPrint(
+            'AuthException occur: message=${error.message}, statusCode=${error.statusCode}');
+      } else {
+        debugPrint('else error: $error');
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> _appleSignInAndroid() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      await supabase.auth.signInWithOAuth(
+        OAuthProvider.apple,
+        redirectTo: 'io.supabase.calmpy://login-callback/',
+      );
+      // 로그인 성공 시 로컬 스토리지에 상태 저장
+      final prefs = await SharedPreferences.getInstance();
+      debugPrint('로컬 저장정보: $prefs');
+      await prefs.setBool('isLoggedIn', true);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('애플 로그인 성공')),
+        );
+      }
+    } on AuthException catch (error) {
+      debugPrint('애플 로그인 AuthException 오류: $error');
+
+      SnackBar(
+        content: Text(error.message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      );
+    } catch (error) {
+      debugPrint('애플 로그인 오류: $error');
       SnackBar(
         content: const Text('예상치못한 오류 발생'),
         backgroundColor: Theme.of(context).colorScheme.error,
@@ -134,13 +347,41 @@ class _LoginPageState extends State<LoginPage> {
                   GestureDetector(
                     onTap: _isLoading ? null : _signIn,
                     child: SizedBox(
+                      width: 54,
+                      height: 54,
+                      child: Image.asset(
+                        'assets/imgs/logo/sns/kakao.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 20,
+                  ),
+                  if (Platform.isIOS)
+                    GestureDetector(
+                      onTap: _isLoading ? null : _appleSignIn,
+                      child: SizedBox(
                         width: 54,
                         height: 54,
                         child: Image.asset(
-                          'assets/imgs/logo/sns/kakao.png',
+                          'assets/imgs/logo/sns/apple.png',
                           fit: BoxFit.contain,
-                        )),
-                  ),
+                        ),
+                      ),
+                    )
+                  else
+                    GestureDetector(
+                      onTap: _isLoading ? null : _appleSignInAndroid,
+                      child: SizedBox(
+                        width: 54,
+                        height: 54,
+                        child: Image.asset(
+                          'assets/imgs/logo/sns/apple.png',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ]),

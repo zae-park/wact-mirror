@@ -186,7 +186,7 @@ class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
               );
             },
             child: const ListTile(
-              title: Text('버그리포트'),
+              title: Text('고객센터'),
               trailing: Icon(
                 Icons.question_mark_rounded,
                 size: 20,
