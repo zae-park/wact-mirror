@@ -85,10 +85,15 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
         barrierDismissible: false,
         builder: (BuildContext context) {
           return const AlertDialog(
-            backgroundColor: bg_50,
+            backgroundColor: Colors.black,
             content: Column(
               mainAxisSize: MainAxisSize.min,
-              children: [Text('게시글을 저장중입니다.')],
+              children: [
+                Text(
+                  '게시글을 저장중입니다.',
+                  style: TextStyle(color: Colors.white),
+                )
+              ],
             ),
           );
         },

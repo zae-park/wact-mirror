@@ -102,7 +102,11 @@ class _PostPageState extends State<PostPage> {
                         MaterialPageRoute(
                           builder: (context) => PostDetailPage(
                             post: posts[index],
-                            refreshCallback: _loadDataStream,
+                            refreshCallback: () {
+                              setState(() {
+                                _stream = _loadDataStream(); // 데이터 스트림 갱신
+                              });
+                            },
                           ),
                         ),
                       );

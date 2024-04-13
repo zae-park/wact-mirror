@@ -54,12 +54,13 @@ class _LoginPageState extends State<LoginPage> {
             .from('profiles')
             .select('username')
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle();
+
         debugPrint('사용자 프로필 조회: $userProfile');
-        if (userProfile.isNotEmpty && userProfile['username'] != null) {
-          Navigator.of(context).pushReplacementNamed('/home');
-        } else {
+        if (userProfile == null) {
           Navigator.of(context).pushReplacementNamed('/account');
+        } else {
+          Navigator.of(context).pushReplacementNamed('/home');
         }
       }
     });
@@ -205,6 +206,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<AuthResponse> _appleSignIn() async {
+    debugPrint('애플 iOS 로그인 시작');
+
     try {
       setState(() {
         _isLoading = true;
@@ -260,6 +263,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _appleSignInAndroid() async {
+    debugPrint('애플 안드로이드 로그인 시작');
     try {
       setState(() {
         _isLoading = true;
@@ -267,7 +271,7 @@ class _LoginPageState extends State<LoginPage> {
 
       await supabase.auth.signInWithOAuth(
         OAuthProvider.apple,
-        redirectTo: 'io.supabase.calmpy://login-callback/',
+        redirectTo: 'io.supabase.actapp://login-callback/',
       );
       // 로그인 성공 시 로컬 스토리지에 상태 저장
       final prefs = await SharedPreferences.getInstance();
@@ -344,20 +348,20 @@ class _LoginPageState extends State<LoginPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  GestureDetector(
-                    onTap: _isLoading ? null : _signIn,
-                    child: SizedBox(
-                      width: 54,
-                      height: 54,
-                      child: Image.asset(
-                        'assets/imgs/logo/sns/kakao.png',
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    width: 20,
-                  ),
+                  // GestureDetector(
+                  //   onTap: _isLoading ? null : _signIn,
+                  //   child: SizedBox(
+                  //     width: 54,
+                  //     height: 54,
+                  //     child: Image.asset(
+                  //       'assets/imgs/logo/sns/kakao.png',
+                  //       fit: BoxFit.contain,
+                  //     ),
+                  //   ),
+                  // ),
+                  // const SizedBox(
+                  //   width: 20,
+                  // ),
                   if (Platform.isIOS)
                     GestureDetector(
                       onTap: _isLoading ? null : _appleSignIn,

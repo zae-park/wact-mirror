@@ -1,36 +1,28 @@
-// 홈 > 자유게시판 홈 > 게시글 상세페이지
+// 마이페이지 > 내가 쓴 게시글(240120 수정 필요)
 
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:wact/common/const/color.dart';
-import 'package:wact/main.dart';
-import 'package:wact/pages/home/post/post_edit_page.dart';
 
-class PostDetailPage extends StatefulWidget {
-  Map<String, dynamic> post;
-  final Function refreshCallback;
+class MyPostPage extends StatefulWidget {
+  final Map<String, dynamic> post;
 
-  PostDetailPage({Key? key, required this.post, required this.refreshCallback})
-      : super(key: key);
+  const MyPostPage({Key? key, required this.post}) : super(key: key);
 
   @override
-  State<PostDetailPage> createState() => _PostDetailPageState();
+  State<MyPostPage> createState() => _MyPostPageState();
 }
 
-class _PostDetailPageState extends State<PostDetailPage> {
+class _MyPostPageState extends State<MyPostPage> {
   late TextEditingController commentController;
   late User? user;
   late bool isAuthor;
   List<dynamic>? imageUrls;
-
-  // 현재 페이지 인덱스를 추적하기 위한 변수
-  int currentPageIndex = 0;
 
   @override
   void initState() {
@@ -62,54 +54,6 @@ class _PostDetailPageState extends State<PostDetailPage> {
     });
   }
 
-  // 선택한 이미지를 팝업으로 표시
-  void _showImagePopup(BuildContext context, String selectedImagePath) {
-    int initialPage = imageUrls!.indexOf(selectedImagePath);
-    final PageController pageController =
-        PageController(initialPage: initialPage);
-
-    showDialog(
-      context: context,
-      barrierColor: Colors.transparent,
-      builder: (BuildContext context) {
-        return GestureDetector(
-          onTap: () => Navigator.pop(context),
-          behavior: HitTestBehavior.opaque,
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: Container(
-                  color: Colors.black.withOpacity(0.8),
-                ),
-              ),
-              Center(
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width,
-                  height: MediaQuery.of(context).size.height * 0.8,
-                  child: Stack(
-                    alignment: Alignment.bottomCenter,
-                    children: [
-                      PageView.builder(
-                        controller: pageController,
-                        itemCount: imageUrls!.length,
-                        itemBuilder: (context, index) {
-                          return Image.network(
-                            imageUrls![index],
-                            fit: BoxFit.contain,
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   @override
   void dispose() {
     commentController.dispose();
@@ -124,21 +68,11 @@ class _PostDetailPageState extends State<PostDetailPage> {
         .match({'id': widget.post['id']}).select();
     print('supabase 삭제: $response');
     // 삭제 성공
-    Navigator.of(context).pop(true); // 삭제 후 이전 화면으로 돌아감
+    Navigator.of(context).pop(); // 삭제 후 이전 화면으로 돌아감
   }
 
   // 댓글 추가 함수
   Future<void> addComment(String content, BuildContext context) async {
-    final profileResponse = await supabase
-        .from('profiles')
-        .select('username')
-        .match({'id': user!.id}).single();
-
-    print('유저: $profileResponse');
-
-    final username = profileResponse['username'] as String?;
-    print('유저 이름: $username');
-
     var existingComments = List<Map<String, dynamic>>.from(
         widget.post['comments'] as List<dynamic>? ?? []);
     var uuid = const Uuid();
@@ -147,7 +81,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
     existingComments.add({
       'id': uuid.v4(), // UUID 생성
       'author_id': user?.id,
-      'author': username,
+      'author': widget.post['author'],
       'content': content,
       'created_at': DateTime.now().toIso8601String()
     });
@@ -184,6 +118,62 @@ class _PostDetailPageState extends State<PostDetailPage> {
     });
   }
 
+  // 대댓글 추가 함수
+  Future<void> addReply(
+      String commentId, String content, BuildContext context) async {
+    // 기존 댓글 목록 복사
+    var existingComments = List<Map<String, dynamic>>.from(
+        widget.post['comments'] as List<dynamic>? ?? []);
+    var uuid = const Uuid();
+
+    // 대댓글 생성
+    Map<String, dynamic> newReply = {
+      'id': uuid.v4(), // UUID 생성
+      'author_id': user?.id,
+      'author': user?.email, // 또는 다른 사용자 식별자
+      'content': content,
+      'created_at': DateTime.now().toIso8601String(),
+      'replies': []
+    };
+
+    // 특정 댓글 찾아 대댓글 추가
+    for (var comment in existingComments) {
+      if (comment['id'] == commentId) {
+        (comment['replies'] as List<dynamic>).add(newReply);
+        break;
+      }
+    }
+
+    // 'posts' 테이블에 업데이트
+    await Supabase.instance.client
+        .from('posts')
+        .update({'comments': existingComments}).eq('id', widget.post['id']);
+    setState(() => widget.post['comments'] = existingComments);
+  }
+
+// 대댓글 삭제 함수
+  Future<void> deleteReply(
+      String commentId, String replyId, BuildContext context) async {
+    // 기존 댓글 목록 복사
+    var existingComments = List<Map<String, dynamic>>.from(
+        widget.post['comments'] as List<dynamic>? ?? []);
+
+    // 특정 댓글의 대댓글 목록에서 대댓글 삭제
+    for (var comment in existingComments) {
+      if (comment['id'] == commentId) {
+        (comment['replies'] as List<dynamic>)
+            .removeWhere((reply) => reply['id'] == replyId);
+        break;
+      }
+    }
+
+    // 'posts' 테이블에 업데이트
+    await Supabase.instance.client
+        .from('posts')
+        .update({'comments': existingComments}).eq('id', widget.post['id']);
+    setState(() => widget.post['comments'] = existingComments);
+  }
+
   @override
   Widget build(BuildContext context) {
     print('Is Author: $isAuthor');
@@ -197,54 +187,15 @@ class _PostDetailPageState extends State<PostDetailPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: const Text(''),
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-          ),
-          onPressed: () {
-            Navigator.of(context).pop(); // 수정 성공 후 돌아가기
-            widget.refreshCallback(); // 변경 사항을 알리는 콜백 호출
-          },
-        ),
         actions: isAuthor
             ? [
                 PopupMenuButton(
-                  surfaceTintColor: Colors.white,
-                  color: Colors.white,
-                  onSelected: (value) async {
-                    // 수정 버튼 눌렀을 때의 로직
-                    if (value == 'edit') {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => PostEditPage(
-                            post: widget.post,
-                            onUpdateSuccess: () {},
-                            onUpload: (String) {},
-                          ),
-                        ),
-                      );
-                      if (result != null && result is Map<String, dynamic>) {
-                        setState(() {
-                          widget.post = result; // 수정된 게시글 데이터로 업데이트
-                          if (result.containsKey('compressed_image_urls')) {
-                            imageUrls = result['compressed_image_urls'];
-                          }
-                        });
-                      }
-                    } else if (value == 'delete') {
+                  onSelected: (value) {
+                    if (value == 'delete') {
                       deletePost();
                     }
                   },
                   itemBuilder: (BuildContext context) => <PopupMenuEntry>[
-                    const PopupMenuItem(
-                      value: 'edit',
-                      child: ListTile(
-                        title: Text(
-                          '수정',
-                        ),
-                      ),
-                    ),
                     const PopupMenuItem(
                       value: 'delete',
                       child: ListTile(
@@ -257,35 +208,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                   ),
                 ),
               ]
-            : [
-                PopupMenuButton(
-                  surfaceTintColor: Colors.white,
-                  color: Colors.white,
-                  onSelected: (value) async {
-                    if (value == 'bookmark') {
-                    } else if (value == 'report') {}
-                  },
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry>[
-                    const PopupMenuItem(
-                      value: 'bookmark',
-                      child: ListTile(
-                        title: Text(
-                          '저장',
-                        ),
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'report',
-                      child: ListTile(
-                        title: Text('신고'),
-                      ),
-                    ),
-                  ],
-                  icon: const Icon(
-                    Icons.more_vert,
-                  ),
-                ),
-              ],
+            : null,
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -339,7 +262,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
             const SizedBox(
               height: 20,
             ),
-
+            // 이미지 리스트 표시
 // 이미지 리스트 표시
             if (imageUrls != null && imageUrls!.isNotEmpty)
               Padding(
@@ -352,10 +275,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: GestureDetector(
-                        onTap: () {
-                          // _showImagePopup 함수를 호출하면서 현재 인덱스의 이미지 URL을 전달.
-                          _showImagePopup(context, imageUrls![index]);
-                        },
+                        onTap: () {},
                         child: Image.network(
                           imageUrls![index],
                           fit: BoxFit.cover,

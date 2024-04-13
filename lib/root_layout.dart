@@ -124,6 +124,7 @@ class _RootLayoutState extends State<RootLayout>
             backgroundColor: Colors.black,
             mini: true,
             onPressed: () {
+              _toggleFAB();
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -149,6 +150,7 @@ class _RootLayoutState extends State<RootLayout>
             backgroundColor: Colors.black,
             mini: true,
             onPressed: () {
+              _toggleFAB();
               Navigator.push(
                 context,
                 MaterialPageRoute(

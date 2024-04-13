@@ -40,20 +40,27 @@ class _PostEditPageState extends State<PostEditPage> {
         TextEditingController(text: widget.post['content']);
 
     var imageUrls = widget.post['compressed_image_urls'];
-    if (imageUrls is String) {
-      images = (jsonDecode(imageUrls) as List<dynamic>)
-          .map((item) => XFile(item as String))
-          .toList();
-      print('1');
-    } else if (imageUrls is List<dynamic>) {
-      images = imageUrls.map((item) => XFile(item as String)).toList();
-      print('2');
-    } else {
-      images = [];
-      print('3');
-    }
+    debugPrint('테스트 중인 JSON 문자열: $imageUrls'); // JSON 데이터 출력
 
-    print('기존 이미지 초기화: $images');
+    try {
+      if (imageUrls is String) {
+        // JSON 문자열을 파싱하여 이미지 URL 리스트로 변환
+        images = (jsonDecode(imageUrls) as List<dynamic>)
+            .map((item) => XFile(item as String))
+            .toList();
+        debugPrint('파싱된 이미지 리스트: $images');
+      } else if (imageUrls is List<dynamic>) {
+        images = imageUrls.map((item) => XFile(item as String)).toList();
+        debugPrint('이미 리스트 타입인 경우 처리된 이미지 리스트: $images');
+      } else {
+        images = [];
+        debugPrint('예상치 못한 데이터 타입으로 인한 빈 이미지 리스트 초기화');
+      }
+    } catch (e) {
+      // JSON 파싱 중 예외 발생 시 로그 출력
+      debugPrint('JSON 파싱 중 오류 발생: $e');
+      images = []; // 오류가 발생하면 이미지 리스트를 비움
+    }
   }
 
   Future<void> _pickImages() async {
@@ -62,7 +69,10 @@ class _PostEditPageState extends State<PostEditPage> {
     // 현재 이미지 수와 새로 선택된 이미지 수의 합이 6을 초과하는지 확인
     if (images.length + pickedFiles.length > 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('최대 6장의 이미지만 선택할 수 있습니다.')));
+        const SnackBar(
+          content: Text('최대 6장의 이미지만 선택할 수 있습니다.'),
+        ),
+      );
     } else {
       setState(() {
         images.addAll(pickedFiles);
@@ -72,6 +82,9 @@ class _PostEditPageState extends State<PostEditPage> {
   }
 
   Future<void> _updatePost() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) throw Exception('사용자를 찾지 못했습니다.');
+
     if (_isLoading) return;
 
     setState(() => _isLoading = true);
@@ -92,9 +105,6 @@ class _PostEditPageState extends State<PostEditPage> {
       },
     );
 
-    final user = supabase.auth.currentUser;
-    if (user == null) throw Exception('사용자를 찾지 못했습니다.');
-
     // 수정된 값과 기존의 값이 다른지 확인. 다르다면 true로 설정하고 updateData 맵에 변경사항을 추가
     bool shouldUpdate = false;
     Map<String, dynamic> updateData = {};
@@ -111,6 +121,12 @@ class _PostEditPageState extends State<PostEditPage> {
 
     List<String> imageUrls = [];
     List<String> compressedImageUrls = [];
+    var originalImageUrls = widget.post['compressed_image_urls'];
+
+    if (images.length !=
+        (originalImageUrls is List ? originalImageUrls.length : 0)) {
+      shouldUpdate = true; // 이미지 개수가 변경되었음을 감지
+    }
 
     if (images.isNotEmpty) {
       for (XFile image in images) {
@@ -124,7 +140,7 @@ class _PostEditPageState extends State<PostEditPage> {
           final compressedImageBytes =
               await FlutterImageCompress.compressWithList(
             imageBytes,
-            quality: 50,
+            quality: 92,
           );
 
           final fileExt = image.name.split('.').last;
@@ -158,30 +174,20 @@ class _PostEditPageState extends State<PostEditPage> {
         }
       }
 
-      // PostgreSQL 배열 형식으로 변환
-      String formatForPostgresArray(List<String> list) {
-        var quotedList = list.map((item) => '"$item"').join(',');
-        return '{$quotedList}';
-      }
-
-      updateData['image_urls'] = formatForPostgresArray(imageUrls);
-      print('원본이미지 updateData에 넣기: ${updateData['image_urls']}');
-
+      updateData['image_urls'] = imageUrls; // 이미지 URL 리스트 업데이트
       updateData['compressed_image_urls'] =
-          formatForPostgresArray(compressedImageUrls);
-      print('압축이미지 updateData에 넣기: ${updateData['compressed_image_urls']}');
-      shouldUpdate = true;
+          compressedImageUrls; // 압축된 이미지 URL 리스트 업데이트
+    } else {
+      updateData['image_urls'] = []; // 이미지를 전부 삭제한 경우 빈 배열로 설정
+      updateData['compressed_image_urls'] = [];
     }
-
-    if (shouldUpdate || images.isNotEmpty) {
+    if (shouldUpdate) {
       final response = await supabase
           .from('posts')
           .update(updateData)
           .eq('id', widget.post['id']);
 
       print('업데이트 response: $response');
-
-      widget.onUpdateSuccess();
 
       final updatedpost = {
         ...widget.post,
@@ -190,6 +196,8 @@ class _PostEditPageState extends State<PostEditPage> {
         'compressed_image_url': compressedImageUrls,
       };
       print('업데이트 결과: $updatedpost');
+
+      widget.onUpdateSuccess();
 
       Navigator.of(context, rootNavigator: true).pop();
 
