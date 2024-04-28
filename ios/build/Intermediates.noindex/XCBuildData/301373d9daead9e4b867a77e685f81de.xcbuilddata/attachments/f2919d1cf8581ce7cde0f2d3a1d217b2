@@ -1,0 +1,48 @@
+{
+  "" : {
+    "diagnostics" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/sign_in_with_apple-master.dia",
+    "emit-module-dependencies" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/sign_in_with_apple-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/sign_in_with_apple-master-emit-module.dia",
+    "swift-dependencies" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/sign_in_with_apple-master.swiftdeps"
+  },
+  "/Users/calmpy/.pub-cache/hosted/pub.dev/sign_in_with_apple-5.0.0/ios/Classes/SignInWithAppleAvailablePlugin.swift" : {
+    "const-values" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleAvailablePlugin.swiftconstvalues",
+    "dependencies" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleAvailablePlugin.d",
+    "diagnostics" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleAvailablePlugin.dia",
+    "index-unit-output-path" : "/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleAvailablePlugin.o",
+    "llvm-bc" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleAvailablePlugin.bc",
+    "object" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleAvailablePlugin.o",
+    "swift-dependencies" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleAvailablePlugin.swiftdeps",
+    "swiftmodule" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleAvailablePlugin~partial.swiftmodule"
+  },
+  "/Users/calmpy/.pub-cache/hosted/pub.dev/sign_in_with_apple-5.0.0/ios/Classes/SignInWithAppleError.swift" : {
+    "const-values" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleError.swiftconstvalues",
+    "dependencies" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleError.d",
+    "diagnostics" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleError.dia",
+    "index-unit-output-path" : "/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleError.o",
+    "llvm-bc" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleError.bc",
+    "object" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleError.o",
+    "swift-dependencies" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleError.swiftdeps",
+    "swiftmodule" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleError~partial.swiftmodule"
+  },
+  "/Users/calmpy/.pub-cache/hosted/pub.dev/sign_in_with_apple-5.0.0/ios/Classes/SignInWithAppleUnavailablePlugin.swift" : {
+    "const-values" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleUnavailablePlugin.swiftconstvalues",
+    "dependencies" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleUnavailablePlugin.d",
+    "diagnostics" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleUnavailablePlugin.dia",
+    "index-unit-output-path" : "/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleUnavailablePlugin.o",
+    "llvm-bc" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleUnavailablePlugin.bc",
+    "object" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleUnavailablePlugin.o",
+    "swift-dependencies" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleUnavailablePlugin.swiftdeps",
+    "swiftmodule" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SignInWithAppleUnavailablePlugin~partial.swiftmodule"
+  },
+  "/Users/calmpy/.pub-cache/hosted/pub.dev/sign_in_with_apple-5.0.0/ios/Classes/SwiftSignInWithApplePlugin.swift" : {
+    "const-values" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SwiftSignInWithApplePlugin.swiftconstvalues",
+    "dependencies" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SwiftSignInWithApplePlugin.d",
+    "diagnostics" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SwiftSignInWithApplePlugin.dia",
+    "index-unit-output-path" : "/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SwiftSignInWithApplePlugin.o",
+    "llvm-bc" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SwiftSignInWithApplePlugin.bc",
+    "object" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SwiftSignInWithApplePlugin.o",
+    "swift-dependencies" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SwiftSignInWithApplePlugin.swiftdeps",
+    "swiftmodule" : "/Users/calmpy/actapp/ios/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/sign_in_with_apple.build/Objects-normal/arm64/SwiftSignInWithApplePlugin~partial.swiftmodule"
+  }
+}

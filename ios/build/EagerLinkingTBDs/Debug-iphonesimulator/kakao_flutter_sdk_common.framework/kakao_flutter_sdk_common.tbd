@@ -1,0 +1,192 @@
+{
+  "main_library": {
+    "exported_symbols": [
+      {
+        "data": {
+          "global": [
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginCfD",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC6resultyypSgcSgvMTq",
+            "_$s24kakao_flutter_sdk_common9SdkCryptoCfD",
+            "_$s24kakao_flutter_sdk_common9SdkCryptoCACycfCTq",
+            "_$sSD24kakao_flutter_sdk_commonE13urlQueryItemsSay10Foundation12URLQueryItemVGSgvg",
+            "_$s24kakao_flutter_sdk_common7UtilityCfd",
+            "_$s24kakao_flutter_sdk_common12LaunchMethodOSQAAMc",
+            "_$s24kakao_flutter_sdk_common7UtilityC21makeUrlWithParameters_10parameters10Foundation3URLVSgSS_SDySSypGSgtFZ",
+            "_$s24kakao_flutter_sdk_common7UtilityCMa",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC30authorizeTalkCompletionHandlery10Foundation3URLVSg_So0G5ErrorCSgtcSgvM",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11application_4open7optionsSbSo13UIApplicationC_10Foundation3URLVSDySo0M17OpenURLOptionsKeyaypGtF",
+            "_$s24kakao_flutter_sdk_common9SdkCryptoCN",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11initialLinkSSSgvpMV",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11initialLinkSSSgvpfi",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC9eventSinkyypSgcSgvsTq",
+            "_$s24kakao_flutter_sdk_common7UtilityC6appVerSSyFZ",
+            "_$s24kakao_flutter_sdk_common7UtilityCfD",
+            "_$s24kakao_flutter_sdk_common9ConstantsV12eventChannelSSvpZ",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC9eventSinkyypSgcSgvpfi",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11redirectUriSSSgvsTq",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11initialLinkSSSgvs",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC18presentationAnchor3forSo8UIWindowCSo26ASWebAuthenticationSessionC_tF",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC9eventSinkyypSgcSgvg",
+            "_$s24kakao_flutter_sdk_common9SdkCryptoCfd",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC30authorizeTalkCompletionHandlery10Foundation3URLVSg_So0G5ErrorCSgtcSgvpWvd",
+            "_$s24kakao_flutter_sdk_common9SdkCryptoCACycfC",
+            "_$s24kakao_flutter_sdk_common12LaunchMethodOMn",
+            "_$s24kakao_flutter_sdk_common12LaunchMethodON",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC6resultyypSgcSgvgTq",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC6resultyypSgcSgvpfi",
+            "_$s24kakao_flutter_sdk_common9ConstantsV9oauthPathSSvau",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11application_29didFinishLaunchingWithOptionsSbSo13UIApplicationC_SDys11AnyHashableVypGtF",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC6handle_6resultySo0G10MethodCallC_yypSgctFTq",
+            "_$s24kakao_flutter_sdk_common7UtilityCMm",
+            "_$s24kakao_flutter_sdk_common9ConstantsV13methodChannelSSvau",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC8onCancel13withArgumentsSo0G5ErrorCSgypSg_tF",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginCACycfC",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC30authorizeTalkCompletionHandlery10Foundation3URLVSg_So0G5ErrorCSgtcSgvgTq",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11redirectUriSSSgvpWvd",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC9eventSinkyypSgcSgvpMV",
+            "_$s24kakao_flutter_sdk_common7UtilityCN",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC9eventSinkyypSgcSgvpWvd",
+            "_$s24kakao_flutter_sdk_common9ConstantsV12eventChannelSSvau",
+            "_$s24kakao_flutter_sdk_common9SdkCryptoC6sha5126string10Foundation4DataVSgSS_tFZ",
+            "_$s24kakao_flutter_sdk_common9ConstantsV12eventChannelSSvgZ",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC30authorizeTalkCompletionHandlery10Foundation3URLVSg_So0G5ErrorCSgtcSgvsTq",
+            "_$s24kakao_flutter_sdk_common9SdkCryptoCACycfc",
+            "_$s24kakao_flutter_sdk_common12LaunchMethodO8rawValueSSvg",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC18presentationAnchor3forSo8UIWindowCSo26ASWebAuthenticationSessionC_tFTq",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC6handle_6resultySo0G10MethodCallC_yypSgctF",
+            "_$sSD24kakao_flutter_sdk_commonSSRszrlE12toJsonStringSSSgyF",
+            "_kakao_flutter_sdk_commonVersionNumber",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC6resultyypSgcSgvsTq",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC6resultyypSgcSgvpMV",
+            "_$s24kakao_flutter_sdk_common9SdkCryptoC20generateCodeVerifierSSSgyFZ",
+            "_$s24kakao_flutter_sdk_common9SdkCryptoCMm",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginCN",
+            "_$s24kakao_flutter_sdk_common12LaunchMethodOMa",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11redirectUriSSSgvg",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC6resultyypSgcSgvg",
+            "_$s24kakao_flutter_sdk_common12LaunchMethodOSHAAMc",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC16launchBrowserTab33_8F8429D14DEE3F52BE6D89473AA3CC65LL3url11redirectUri6resultySS_SSSgyypSgctF",
+            "_$s24kakao_flutter_sdk_common9ConstantsV15talkSharingPathSSvpZ",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11application_29didFinishLaunchingWithOptionsSbSo13UIApplicationC_SDys11AnyHashableVypGtFTq",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11application_4open7optionsSbSo13UIApplicationC_10Foundation3URLVSDySo0M17OpenURLOptionsKeyaypGtFTq",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11redirectUriSSSgvpMV",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11initialLinkSSSgvgTq",
+            "_$s24kakao_flutter_sdk_common9ConstantsV9oauthPathSSvgZ",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11redirectUriSSSgvgTq",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11redirectUriSSSgvs",
+            "_$s24kakao_flutter_sdk_common9SdkCryptoC6sha2566string10Foundation4DataVSgSS_tFZ",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11initialLinkSSSgvg",
+            "_$s24kakao_flutter_sdk_common7UtilityCMn",
+            "_$s24kakao_flutter_sdk_common9ConstantsV15talkSharingPathSSvgZ",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginCMn",
+            "_$s24kakao_flutter_sdk_common9SdkCryptoC6base644dataSS10Foundation4DataV_tFZ",
+            "_$s24kakao_flutter_sdk_common9ConstantsV15talkSharingPathSSvau",
+            "_$s24kakao_flutter_sdk_common12LaunchMethodO8rawValueACSgSS_tcfC",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC9eventSinkyypSgcSgvgTq",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC8register4withySo0gI9Registrar_p_tFZ",
+            "_$s24kakao_flutter_sdk_common9ConstantsV13methodChannelSSvpZ",
+            "_$s24kakao_flutter_sdk_common9ConstantsV13methodChannelSSvgZ",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC9eventSinkyypSgcSgvMTq",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC6resultyypSgcSgvM",
+            "_$sSD24kakao_flutter_sdk_commonE13urlQueryItemsSay10Foundation12URLQueryItemVGSgvpMV",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11redirectUriSSSgvMTq",
+            "_$s24kakao_flutter_sdk_common7UtilityCACycfC",
+            "_$s24kakao_flutter_sdk_common9SdkCryptoCMn",
+            "_$s24kakao_flutter_sdk_common9SdkCryptoC6sha2564data10Foundation4DataVSgAH_tFZ",
+            "_$s24kakao_flutter_sdk_common7UtilityC6originSSyFZ",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11initialLinkSSSgvpWvd",
+            "_kakao_flutter_sdk_commonVersionString",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11initialLinkSSSgvMTq",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC30authorizeTalkCompletionHandlery10Foundation3URLVSg_So0G5ErrorCSgtcSgvs",
+            "_$s24kakao_flutter_sdk_common12LaunchMethodO8rawValueSSvpMV",
+            "_$s24kakao_flutter_sdk_common9ConstantsVMa",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC9eventSinkyypSgcSgvM",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC8onListen13withArguments9eventSinkSo0G5ErrorCSgypSg_yAJctF",
+            "_$s24kakao_flutter_sdk_common9ConstantsVACycfC",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginCMa",
+            "_$s24kakao_flutter_sdk_common7UtilityC26makeLoginUrlWithParameters_13universalLink10parameters10Foundation3URLVSgSS_SSSgSDySSypGSgtFZ",
+            "_$s24kakao_flutter_sdk_common12LaunchMethodOSYAAMc",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11initialLinkSSSgvsTq",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC30authorizeTalkCompletionHandlery10Foundation3URLVSg_So0G5ErrorCSgtcSgvg",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC8onListen13withArguments9eventSinkSo0G5ErrorCSgypSg_yAJctFTq",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC30authorizeTalkCompletionHandlery10Foundation3URLVSg_So0G5ErrorCSgtcSgvpMV",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC06launchF4Talk33_8F8429D14DEE3F52BE6D89473AA3CC65LL3uri6resultySS_yypSgctF",
+            "_$s24kakao_flutter_sdk_common9SdkCryptoC6sha5124data10Foundation4DataVSgAH_tFZ",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11redirectUriSSSgvpfi",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC17authorizeWithTalk33_8F8429D14DEE3F52BE6D89473AA3CC65LL10parameters6resultySDyS2SG_yypSgctF",
+            "_$s24kakao_flutter_sdk_common9ConstantsVMn",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginCACycfc",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC30authorizeTalkCompletionHandlery10Foundation3URLVSg_So0G5ErrorCSgtcSgvpfi",
+            "_$s24kakao_flutter_sdk_common9SdkCryptoC9base64url4dataSS10Foundation4DataV_tFZ",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC6resultyypSgcSgvpWvd",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11initialLinkSSSgvM",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC8onCancel13withArgumentsSo0G5ErrorCSgypSg_tFTq",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC6resultyypSgcSgvs",
+            "_$s24kakao_flutter_sdk_common7UtilityCACycfc",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC30authorizeTalkCompletionHandlery10Foundation3URLVSg_So0G5ErrorCSgtcSgvMTq",
+            "_$s24kakao_flutter_sdk_common9ConstantsV9oauthPathSSvpZ",
+            "_$s24kakao_flutter_sdk_common7UtilityC8kaHeaderSSyFZ",
+            "_$s24kakao_flutter_sdk_common7UtilityCACycfCTq",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC9eventSinkyypSgcSgvs",
+            "_$s24kakao_flutter_sdk_common9ConstantsVN",
+            "_$s24kakao_flutter_sdk_common9SdkCryptoCMa",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC11redirectUriSSSgvM",
+            "_$s24kakao_flutter_sdk_common7UtilityC27makeUrlStringWithParameters_10parametersSSSgSS_SDySSypGSgtFZ",
+            "_$s24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPluginC19reauthorizeWithTalk33_8F8429D14DEE3F52BE6D89473AA3CC65LL11loginScheme10parametersySS_SDySSypGtF"
+          ],
+          "objc_class": [
+            "_TtC24kakao_flutter_sdk_common26SwiftKakaoFlutterSdkPlugin",
+            "KakaoFlutterSdkPlugin",
+            "PodsDummy_kakao_flutter_sdk_common"
+          ]
+        }
+      },
+      {
+        "data": {
+          "global": [
+            "_Swift50Overrides",
+            "_Swift51Overrides"
+          ]
+        },
+        "targets": [
+          "x86_64-ios-simulator"
+        ],
+        "text": {
+          "global": [
+            "__ZN5swift39swift51override_conformsToSwiftProtocolEPKNS_14TargetMetadataINS_9InProcessEEEPKNS_24TargetProtocolDescriptorIS1_EEN7__swift9__runtime4llvm9StringRefEPFPKNS_35TargetProtocolConformanceDescriptorIS1_EES4_S8_SC_E",
+            "__ZN5swift34swift50override_conformsToProtocolEPKNS_14TargetMetadataINS_9InProcessEEEPKNS_24TargetProtocolDescriptorIS1_EEPFPKNS_18TargetWitnessTableIS1_EES4_S8_E",
+            "__Z34_swiftoverride_class_getSuperclassPKN5swift14TargetMetadataINS_9InProcessEEE"
+          ]
+        }
+      }
+    ],
+    "flags": [
+      {
+        "attributes": [
+          "not_app_extension_safe"
+        ]
+      }
+    ],
+    "install_names": [
+      {
+        "name": "@rpath/kakao_flutter_sdk_common.framework/kakao_flutter_sdk_common"
+      }
+    ],
+    "swift_abi": [
+      {
+        "abi": 7
+      }
+    ],
+    "target_info": [
+      {
+        "min_deployment": "12",
+        "target": "x86_64-ios-simulator"
+      },
+      {
+        "min_deployment": "14",
+        "target": "arm64-ios-simulator"
+      }
+    ]
+  },
+  "tapi_tbd_version": 5
+}

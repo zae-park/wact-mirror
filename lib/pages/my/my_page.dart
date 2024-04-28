@@ -1,5 +1,6 @@
 // 마이페이지
 // 240406 탈퇴 항목 추가
+// 240421 내 댓글 보기 추가
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -8,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:wact/pages/my/add_sermon_note_page.dart';
 import 'package:wact/pages/my/my_bug_report_page.dart';
+import 'package:wact/pages/my/my_comment_page.dart';
 import 'package:wact/pages/my/my_home_page.dart';
 import 'package:wact/pages/my/my_privacy_policy_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -222,7 +224,8 @@ class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
 
                 // 로그인 상태 업데이트
                 final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool('isLoggedIn', false);
+                // await prefs.setBool('isLoggedIn', false);
+                await prefs.clear(); // 로컬 저장정보 초기화
 
                 // 로그아웃 후 로그인 화면으로 리디렉션
                 Navigator.of(context)
@@ -286,6 +289,25 @@ class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
                 Icons.list_alt,
                 size: 20,
                 color: Colors.black,
+              ),
+            ),
+          ),
+          Divider(
+            thickness: 0.5,
+            height: 0,
+          ),
+          GestureDetector(
+            onTap: () {
+              Get.to(
+                () => const MyCommentPage(),
+              );
+            },
+            child: const ListTile(
+              title: Text('내 댓글 보기'),
+              trailing: Icon(
+                FontAwesomeIcons.comment,
+                color: Colors.black,
+                size: 17,
               ),
             ),
           ),

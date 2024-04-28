@@ -1,0 +1,23 @@
+/Users/calmpy/actapp/ios/Pods/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/FMDB/FMDB.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/GTMSessionFetcher/GTMSessionFetcher.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/GoogleDataTransport/GoogleDataTransport.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/GoogleToolboxForMac/GoogleToolboxForMac.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/GoogleUtilities/GoogleUtilities.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/Mantle/Mantle.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/PromisesObjC/FBLPromises.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/SDWebImage/SDWebImage.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/SDWebImageWebPCoder/SDWebImageWebPCoder.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/app_links/app_links.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/flutter_image_compress_common/flutter_image_compress_common.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/flutter_pdfview/flutter_pdfview.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/image_picker_ios/image_picker_ios.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/kakao_flutter_sdk_common/kakao_flutter_sdk_common.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/libwebp/libwebp.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/nanopb/nanopb.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/path_provider_foundation/path_provider_foundation.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/shared_preferences_foundation/shared_preferences_foundation.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/sign_in_with_apple/sign_in_with_apple.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/sqflite/sqflite.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/url_launcher_ios/url_launcher_ios.framework
+/Users/calmpy/actapp/ios/build/Debug-iphonesimulator/webview_flutter_wkwebview/webview_flutter_wkwebview.framework

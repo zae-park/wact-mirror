@@ -33,6 +33,7 @@ class _PostPageState extends State<PostPage> {
     return Supabase.instance.client
         .from('posts')
         .stream(primaryKey: ['id'])
+        .eq('report', false)
         .order('created_at', ascending: false)
         .map((data) => List<Map<String, dynamic>>.from(data));
   }

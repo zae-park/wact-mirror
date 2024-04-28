@@ -58,6 +58,7 @@ class _AccountPageState extends State<AccountPage> {
 
   /// Called when user taps `Update` button
   Future<void> _updateProfile() async {
+    debugPrint('프로필 업데이트 시작~');
     setState(() {
       _loading = true;
     });
@@ -79,6 +80,7 @@ class _AccountPageState extends State<AccountPage> {
     };
 
     final codeInfo = await _getGroupCode();
+    debugPrint('코드 업데이트 시작~$codeInfo');
 
     if (_groupCodeController.text == codeInfo) {
       try {
@@ -90,6 +92,8 @@ class _AccountPageState extends State<AccountPage> {
           Navigator.of(context).pushReplacementNamed('/home');
         }
       } on PostgrestException catch (error) {
+        debugPrint('코드 오류~$error.message');
+
         SnackBar(
           content: Text(error.message),
           backgroundColor: Theme.of(context).colorScheme.error,
@@ -110,13 +114,20 @@ class _AccountPageState extends State<AccountPage> {
       showDialog(
           context: context,
           builder: (BuildContext context) => Dialog(
+                backgroundColor: Colors.black,
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                      const Text('코드가 유효하지 않습니다.'),
+                      const Text(
+                        '코드가 유효하지 않습니다.',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
                       const SizedBox(height: 15),
                       TextButton(
                         onPressed: () {
@@ -125,7 +136,13 @@ class _AccountPageState extends State<AccountPage> {
                           });
                           Navigator.pop(context);
                         },
-                        child: const Text('닫기'),
+                        child: const Text(
+                          '닫기',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -197,7 +214,8 @@ class _AccountPageState extends State<AccountPage> {
               children: [
                 TextFormField(
                   controller: _usernameController,
-                  decoration: const InputDecoration(labelText: '이름'),
+                  decoration: const InputDecoration(
+                      labelText: '이름', hintText: '성과 이름을 같이 입력해주세요.'),
                 ),
                 const SizedBox(height: 18),
                 TextFormField(
@@ -208,7 +226,8 @@ class _AccountPageState extends State<AccountPage> {
                 TextFormField(
                   maxLength: 2,
                   controller: _studentidController,
-                  decoration: const InputDecoration(labelText: '학번'),
+                  decoration: const InputDecoration(
+                      labelText: '학번', hintText: '숫자만 입력해주세요.'),
                 ),
                 const SizedBox(height: 18),
                 TextFormField(
@@ -285,7 +304,32 @@ class _AccountPageState extends State<AccountPage> {
                     backgroundColor:
                         MaterialStateProperty.all<Color>(Colors.black),
                   ),
-                  onPressed: _loading ? null : _updateProfile,
+                  onPressed: _loading
+                      ? null
+                      : () {
+                          if (_usernameController.text.isNotEmpty &&
+                              _universityController.text.isNotEmpty &&
+                              _studentidController.text.isNotEmpty &&
+                              _groupCodeController.text.isNotEmpty &&
+                              _selectedGroup != null &&
+                              _selectedGroup!.isNotEmpty &&
+                              _selectedTeam != null &&
+                              _selectedTeam!.isNotEmpty) {
+                            _updateProfile();
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  '양식을 모두 작성해주세요',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                backgroundColor: Colors.black,
+                              ),
+                            );
+                          }
+                        },
                   child: Text(
                     _loading ? '저장중...' : '입장',
                     style: const TextStyle(

@@ -1,0 +1,44 @@
+{
+  "main_library": {
+    "exported_symbols": [
+      {
+        "data": {
+          "global": [
+            "_flutter_pdfviewVersionNumber",
+            "_flutter_pdfviewVersionString"
+          ],
+          "objc_class": [
+            "FLTPDFViewFlutterPlugin",
+            "FLTPDFViewFactory",
+            "PodsDummy_flutter_pdfview",
+            "FLTPDFViewController",
+            "FLTPDFView"
+          ]
+        }
+      }
+    ],
+    "flags": [
+      {
+        "attributes": [
+          "not_app_extension_safe"
+        ]
+      }
+    ],
+    "install_names": [
+      {
+        "name": "@rpath/flutter_pdfview.framework/flutter_pdfview"
+      }
+    ],
+    "target_info": [
+      {
+        "min_deployment": "12",
+        "target": "x86_64-ios-simulator"
+      },
+      {
+        "min_deployment": "14",
+        "target": "arm64-ios-simulator"
+      }
+    ]
+  },
+  "tapi_tbd_version": 5
+}

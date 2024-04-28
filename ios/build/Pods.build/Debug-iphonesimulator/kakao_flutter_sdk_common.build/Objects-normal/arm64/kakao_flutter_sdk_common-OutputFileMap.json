@@ -1,0 +1,48 @@
+{
+  "" : {
+    "diagnostics" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/kakao_flutter_sdk_common-master.dia",
+    "emit-module-dependencies" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/kakao_flutter_sdk_common-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/kakao_flutter_sdk_common-master-emit-module.dia",
+    "swift-dependencies" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/kakao_flutter_sdk_common-master.swiftdeps"
+  },
+  "/Users/calmpy/.pub-cache/hosted/pub.dev/kakao_flutter_sdk_common-1.8.0/ios/Classes/Common.swift" : {
+    "const-values" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Common.swiftconstvalues",
+    "dependencies" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Common.d",
+    "diagnostics" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Common.dia",
+    "index-unit-output-path" : "/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Common.o",
+    "llvm-bc" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Common.bc",
+    "object" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Common.o",
+    "swift-dependencies" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Common.swiftdeps",
+    "swiftmodule" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Common~partial.swiftmodule"
+  },
+  "/Users/calmpy/.pub-cache/hosted/pub.dev/kakao_flutter_sdk_common-1.8.0/ios/Classes/Constants.swift" : {
+    "const-values" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Constants.swiftconstvalues",
+    "dependencies" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Constants.d",
+    "diagnostics" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Constants.dia",
+    "index-unit-output-path" : "/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Constants.o",
+    "llvm-bc" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Constants.bc",
+    "object" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Constants.o",
+    "swift-dependencies" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Constants.swiftdeps",
+    "swiftmodule" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Constants~partial.swiftmodule"
+  },
+  "/Users/calmpy/.pub-cache/hosted/pub.dev/kakao_flutter_sdk_common-1.8.0/ios/Classes/SwiftKakaoFlutterSdkPlugin.swift" : {
+    "const-values" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/SwiftKakaoFlutterSdkPlugin.swiftconstvalues",
+    "dependencies" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/SwiftKakaoFlutterSdkPlugin.d",
+    "diagnostics" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/SwiftKakaoFlutterSdkPlugin.dia",
+    "index-unit-output-path" : "/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/SwiftKakaoFlutterSdkPlugin.o",
+    "llvm-bc" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/SwiftKakaoFlutterSdkPlugin.bc",
+    "object" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/SwiftKakaoFlutterSdkPlugin.o",
+    "swift-dependencies" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/SwiftKakaoFlutterSdkPlugin.swiftdeps",
+    "swiftmodule" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/SwiftKakaoFlutterSdkPlugin~partial.swiftmodule"
+  },
+  "/Users/calmpy/.pub-cache/hosted/pub.dev/kakao_flutter_sdk_common-1.8.0/ios/Classes/Utility.swift" : {
+    "const-values" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Utility.swiftconstvalues",
+    "dependencies" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Utility.d",
+    "diagnostics" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Utility.dia",
+    "index-unit-output-path" : "/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Utility.o",
+    "llvm-bc" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Utility.bc",
+    "object" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Utility.o",
+    "swift-dependencies" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Utility.swiftdeps",
+    "swiftmodule" : "/Users/calmpy/actapp/ios/build/Pods.build/Debug-iphonesimulator/kakao_flutter_sdk_common.build/Objects-normal/arm64/Utility~partial.swiftmodule"
+  }
+}

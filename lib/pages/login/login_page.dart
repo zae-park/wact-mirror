@@ -39,6 +39,7 @@ class _LoginPageState extends State<LoginPage> {
     if (currentSession != null) {
       // 현재 세션이 유효하므로 홈 화면으로 바로 넘어감.
       _redirecting = true;
+
       Navigator.of(context).pushReplacementNamed('/home');
     }
   }
@@ -205,20 +206,14 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<AuthResponse> _appleSignIn() async {
-    debugPrint('애플 iOS 로그인 시작');
-
+  Future<void> _appleSignIn() async {
     try {
       setState(() {
         _isLoading = true;
       });
 
-      debugPrint('Apple login start');
-
       final rawNonce = supabase.auth.generateRawNonce();
       final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
-      debugPrint('Raw Nonce: $rawNonce');
-      debugPrint('Hashed Nonce: $hashedNonce');
 
       final credential = await SignInWithApple.getAppleIDCredential(
         scopes: [
@@ -228,37 +223,43 @@ class _LoginPageState extends State<LoginPage> {
         nonce: hashedNonce,
       );
 
-      debugPrint('Credential: $credential');
-
       final idToken = credential.identityToken;
-      debugPrint('idToken: $idToken');
-
       if (idToken == null) {
         throw const AuthException(
             'Could not find ID Token from generated credential.');
       }
 
-      // ID 토큰 유효성 검사 로그 추가
       verifyTokenAndNonce(idToken, hashedNonce);
 
-      // Supabase를 통한 애플 로그인 시도
-      debugPrint('Supabase Apple login start');
       final response = await supabase.auth.signInWithIdToken(
         provider: OAuthProvider.apple,
         idToken: idToken,
         nonce: rawNonce,
       );
 
-      debugPrint('Supabase를 통한 애플 로그인 성공');
-      return response;
-    } catch (error) {
-      if (error is AuthException) {
-        debugPrint(
-            'AuthException occur: message=${error.message}, statusCode=${error.statusCode}');
+      debugPrint('애플로그인성공');
+      // 스낵바가 사라질 때까지 기다린 후 페이지 이동
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('로그인 프로세스가 사용자에 의해 취소되었습니다.')),
+        );
       } else {
-        debugPrint('else error: $error');
+        ScaffoldMessenger.of(context).showSnackBar(
+          // SnackBar(content: Text('로그인 중 오류 발생: ${e.message}')),
+          const SnackBar(content: Text('로그인을 취소했습니다.')),
+        );
       }
-      rethrow;
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('애플 로그인 중 예기치 않은 오류 발생: ${e.toString()}')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
