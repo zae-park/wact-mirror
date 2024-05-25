@@ -315,33 +315,33 @@ class _PostDetailPageState extends State<PostDetailPage> {
                 ),
               ]
             : [
-                PopupMenuButton(
-                  surfaceTintColor: Colors.white,
-                  color: Colors.white,
-                  onSelected: (value) async {
-                    if (value == 'bookmark') {
-                    } else if (value == 'report') {}
-                  },
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry>[
-                    const PopupMenuItem(
-                      value: 'bookmark',
-                      child: ListTile(
-                        title: Text(
-                          '저장',
-                        ),
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'report',
-                      child: ListTile(
-                        title: Text('신고'),
-                      ),
-                    ),
-                  ],
-                  icon: const Icon(
-                    Icons.more_vert,
-                  ),
-                ),
+                // PopupMenuButton(
+                //   surfaceTintColor: Colors.white,
+                //   color: Colors.white,
+                //   onSelected: (value) async {
+                //     if (value == 'bookmark') {
+                //     } else if (value == 'report') {}
+                //   },
+                //   itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+                //     const PopupMenuItem(
+                //       value: 'bookmark',
+                //       child: ListTile(
+                //         title: Text(
+                //           '저장',
+                //         ),
+                //       ),
+                //     ),
+                //     const PopupMenuItem(
+                //       value: 'report',
+                //       child: ListTile(
+                //         title: Text('신고'),
+                //       ),
+                //     ),
+                //   ],
+                //   icon: const Icon(
+                //     Icons.more_vert,
+                //   ),
+                // ),
               ],
       ),
       body: SingleChildScrollView(

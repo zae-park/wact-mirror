@@ -1,4 +1,5 @@
 // 홈 > 후기게시판 홈
+// 240525 ,로 인원 구분이 아닌 review['participants']값 저장 후 불러오기로 수정
 
 import 'dart:convert';
 
@@ -253,9 +254,11 @@ class _ReviewPageState extends State<ReviewPage> {
                                                       ),
                                                       Row(
                                                         children: <Widget>[
-                                                          if (memberCount > 0)
+                                                          if (review[
+                                                                  'participants'] !=
+                                                              null)
                                                             Text(
-                                                              '$memberCount명 ',
+                                                              '${review['participants']}명 ',
                                                               style: const TextStyle(
                                                                   fontSize: 12,
                                                                   fontWeight:

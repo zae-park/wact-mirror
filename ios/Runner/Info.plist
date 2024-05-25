@@ -22,6 +22,8 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>GIDClientID</key>
+	<string>866308159640-eo30bqc5ssl849h0h3jpao25pf06qg2u.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -30,6 +32,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>io.supabase.actapp</string>
+     			<string>com.googleusercontent.apps.866308159640-eo30bqc5ssl849h0h3jpao25pf06qg2u</string>
 			</array>
 		</dict>
 	</array>

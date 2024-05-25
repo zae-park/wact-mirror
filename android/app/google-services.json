@@ -1,26 +1,43 @@
 {
   "project_info": {
-    "project_number": "65461336274",
-    "project_id": "wact-43f5d",
-    "storage_bucket": "wact-43f5d.appspot.com"
+    "project_number": "866308159640",
+    "project_id": "wact-b34ab",
+    "storage_bucket": "wact-b34ab.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:65461336274:android:6ba746fcea0edac0c3d50b",
+        "mobilesdk_app_id": "1:866308159640:android:49f8cff6f3283b042a38ed",
         "android_client_info": {
-          "package_name": "com.example.wact"
+          "package_name": "com.one.wact"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "866308159640-c6kart9c7vjerhoq103elk36ltcjr9g6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyC_Wq81p53EEOYCF0m-ZmvkU1y3MJbf4qg"
+          "current_key": "AIzaSyDsvyPj7WZOz-3qEu7QImrFb_TkncmRUsw"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "866308159640-c6kart9c7vjerhoq103elk36ltcjr9g6.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "866308159640-eo30bqc5ssl849h0h3jpao25pf06qg2u.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.one.wact"
+              }
+            }
+          ]
         }
       }
     }

@@ -1,9 +1,10 @@
-// 카톡 로그인 페이지
+//  SNS 로그인 페이지
 
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:crypto/crypto.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:flutter/foundation.dart';
@@ -306,6 +307,42 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<void> _nativeGoogleSignin() async {
+    /// TODO: update the Web client ID with your own.
+    ///
+    /// Web Client ID that you registered with Google Cloud.
+    const webClientId =
+        '866308159640-c6kart9c7vjerhoq103elk36ltcjr9g6.apps.googleusercontent.com';
+
+    /// TODO: update the iOS client ID with your own.
+    ///
+    /// iOS Client ID that you registered with Google Cloud.
+    const iosClientId =
+        '866308159640-eo30bqc5ssl849h0h3jpao25pf06qg2u.apps.googleusercontent.com';
+
+    final GoogleSignIn googleSignIn = GoogleSignIn(
+      clientId: iosClientId,
+      serverClientId: webClientId,
+    );
+    final googleUser = await googleSignIn.signIn();
+    final googleAuth = await googleUser!.authentication;
+    final accessToken = googleAuth.accessToken;
+    final idToken = googleAuth.idToken;
+
+    if (accessToken == null) {
+      throw 'No Access Token found.';
+    }
+    if (idToken == null) {
+      throw 'No ID Token found.';
+    }
+
+    await supabase.auth.signInWithIdToken(
+      provider: OAuthProvider.google,
+      idToken: idToken,
+      accessToken: accessToken,
+    );
+  }
+
   @override
   void dispose() {
     _authStateSubscription?.cancel();
@@ -363,6 +400,25 @@ class _LoginPageState extends State<LoginPage> {
                   // const SizedBox(
                   //   width: 20,
                   // ),
+                  GestureDetector(
+                    onTap: () async {
+                      if(!kIsWeb && (Platform.isAndroid || Platform.isIOS)){
+                        await _nativeGoogleSignin();
+                      }
+                      await supabase.auth.signInWithOAuth(OAuthProvider.google);
+                    },
+                    child: SizedBox(
+                      width: 54,
+                      height: 54,
+                      child: Image.asset(
+                        'assets/imgs/logo/sns/google.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 20,
+                  ),
                   if (Platform.isIOS)
                     GestureDetector(
                       onTap: _isLoading ? null : _appleSignIn,

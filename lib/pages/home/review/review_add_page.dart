@@ -1,4 +1,5 @@
 // 두 번째 FAB누르면 나오는 후기 작성페이지
+// 240525 '인원'선택하여 명수 저장하는 기능 추가
 
 import 'dart:io';
 import 'dart:math';
@@ -31,6 +32,11 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
   final _bibleController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   String? _selectedTeam;
+
+  // 240525 드롭다운 메뉴 리스트
+  List<String> participantsList =
+      ['00명'] + List.generate(100, (index) => '$index명');
+  String? _selectedParticipants;
 
   List<XFile> _currentImages = [];
   bool _isLoading = false;
@@ -190,6 +196,7 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
         'content': _contentEditingController.text,
         'image_urls': imageUrls,
         'compressed_image_urls': compressedImageUrls,
+        'participants': _selectedParticipants?.replaceAll('명', ''),
       });
 
       widget.onUpload(imageUrls);
@@ -364,8 +371,10 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
               width: 52,
               child: GestureDetector(
                 onTap: () async {
-                  if (_titleEditingController.text.isNotEmpty ||
-                      _contentEditingController.text.isNotEmpty) {
+                  if (_selectedTeam != null &&
+                      _titleEditingController.text.isNotEmpty &&
+                      _contentEditingController.text.isNotEmpty &&
+                      _selectedParticipants != null) {
                     await _uploadPost().then((_) {
                       Navigator.pop(context);
                     });
@@ -374,7 +383,7 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
                       const SnackBar(
                         backgroundColor: Colors.black,
                         content: Text(
-                          '내용을 작성해주세요.',
+                          '양식을 전부 작성해주세요.',
                           style: TextStyle(
                               fontWeight: FontWeight.w500, color: Colors.white),
                         ),
@@ -505,6 +514,68 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
                       height: 16,
                     ),
 
+                    // 참가자 작성
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          '참석',
+                          style: TextStyle(
+                            color: bg_90,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        DropdownButton<String>(
+                          style: const TextStyle(color: Colors.black),
+                          dropdownColor: Colors.white,
+                          value: _selectedParticipants,
+                          hint: const Text('인원'),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _selectedParticipants = newValue;
+                            });
+                          },
+                          items: participantsList
+                              .map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(
+                                value,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                    TextFormField(
+                      controller: _memberEditingController,
+                      maxLines: 1,
+                      maxLength: 100,
+                      cursorColor: primary,
+                      decoration: const InputDecoration(
+                        hintText: '참석한 사람을 적어주세요.',
+                        hintStyle: TextStyle(
+                          color: bg_70,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 15,
+                        ),
+                        border: InputBorder.none,
+                        counterText: '',
+                      ),
+                    ),
+                    // 색상 정보 복사 버튼과 사진 정보 복사 버튼
+                    const Divider(
+                      color: bg_30,
+                    ),
+                    const SizedBox(
+                      height: 16,
+                    ),
+
                     // 장소 작성
                     const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -534,53 +605,6 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
                       cursorColor: primary,
                       decoration: const InputDecoration(
                         hintText: '모임 장소를 적어주세요.',
-                        hintStyle: TextStyle(
-                          color: bg_70,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 15,
-                        ),
-                        border: InputBorder.none,
-                        counterText: '',
-                      ),
-                    ),
-                    // 색상 정보 복사 버튼과 사진 정보 복사 버튼
-                    const Divider(
-                      color: bg_30,
-                    ),
-                    const SizedBox(
-                      height: 16,
-                    ),
-
-                    // 참가자 작성
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '참석',
-                          style: TextStyle(
-                            color: bg_90,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                        Text(
-                          '',
-                          // '${_memberEditingController.text.length}',
-                          style: TextStyle(
-                            color: bg_90,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
-                    ),
-                    TextFormField(
-                      controller: _memberEditingController,
-                      maxLines: 1,
-                      maxLength: 100,
-                      cursorColor: primary,
-                      decoration: const InputDecoration(
-                        hintText: '참석한 사람을 적어주세요.',
                         hintStyle: TextStyle(
                           color: bg_70,
                           fontWeight: FontWeight.w500,

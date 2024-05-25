@@ -1,4 +1,5 @@
 // 홈 > 후기게시판 > 후기 상세페이지
+// 240525 참석 인원 수 가져오기 변경
 
 import 'dart:convert';
 
@@ -142,6 +143,9 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
     final DateTime parsedDate = DateTime.parse(widget.review['meet_date']);
     final formattedMeetDate = DateFormat('MM/dd(E)', 'ko').format(parsedDate);
 
+    // 240525 참석 인원 수 가져오기
+    final String participants = widget.review['participants'] ?? '0';
+
     // 참석 멤버수 구하기 - ,를 기준으로,
     String members = widget.review['member'];
     int memberCount = members.split(',').length;
@@ -272,24 +276,14 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
                           color: primary,
                         ),
                       ),
-                      if (memberCount > 0)
-                        Expanded(
-                          child: Text(
-                            '${widget.review['member']} ($memberCount명)',
-                            style: const TextStyle(
-                              fontSize: 14,
-                            ),
-                          ),
-                        )
-                      else
-                        Expanded(
-                          child: Text(
-                            '${widget.review['member']}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                            ),
+                      Expanded(
+                        child: Text(
+                          '$participants명',
+                          style: const TextStyle(
+                            fontSize: 14,
                           ),
                         ),
+                      ),
                     ],
                   ),
                   const SizedBox(
