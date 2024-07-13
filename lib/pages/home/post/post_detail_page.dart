@@ -9,7 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:wact/common/const/color.dart';
-import 'package:wact/main.dart';
+import 'package:wact/common/init.dart';
 import 'package:wact/pages/home/post/post_edit_page.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 

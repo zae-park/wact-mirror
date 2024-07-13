@@ -14,10 +14,10 @@ class PostPage extends StatefulWidget {
   const PostPage({super.key});
 
   @override
-  State<PostPage> createState() => _PostPageState();
+  State<PostPage> createState() => PostPageState();
 }
 
-class _PostPageState extends State<PostPage> {
+class PostPageState extends State<PostPage> {
   late Stream<List<Map<String, dynamic>>> _stream;
   late ScrollController controller;
 
@@ -38,6 +38,22 @@ class _PostPageState extends State<PostPage> {
         .map((data) => List<Map<String, dynamic>>.from(data));
   }
 
+  void refresh() {
+    setState(() {
+      _stream = _loadDataStream();
+      debugPrint('PostPage 새로고침 실행됨');
+    });
+  }
+
+  @override
+  void didUpdateWidget(PostPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    setState(() {
+      _stream = _loadDataStream();
+      debugPrint('PostPage 위젯 업데이트됨');
+    });
+  }
+
   @override
   void dispose() {
     controller.dispose(); // Dispose the ScrollController
@@ -50,9 +66,7 @@ class _PostPageState extends State<PostPage> {
       color: Colors.white,
       backgroundColor: Colors.black,
       onRefresh: () async {
-        setState(() {
-          _stream = _loadDataStream(); // 스트림을 재구독하여 새로운 데이터 로드
-        });
+        refresh();
       },
       child: Stack(
         children: [
@@ -106,6 +120,7 @@ class _PostPageState extends State<PostPage> {
                             refreshCallback: () {
                               setState(() {
                                 _stream = _loadDataStream(); // 데이터 스트림 갱신
+                                debugPrint('PostDetailPage에서 돌아옴: 새로고침');
                               });
                             },
                           ),
@@ -114,6 +129,7 @@ class _PostPageState extends State<PostPage> {
                       if (result == true) {
                         setState(() {
                           _stream = _loadDataStream();
+                          debugPrint('PostDetailPage에서 result true: 새로고침');
                         });
                       }
                     },

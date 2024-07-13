@@ -7,7 +7,7 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:wact/common/const/color.dart';
-import 'package:wact/main.dart';
+import 'package:wact/common/init.dart';
 
 class PostEditPage extends StatefulWidget {
   final Map<String, dynamic> post;

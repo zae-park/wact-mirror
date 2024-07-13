@@ -1,5 +1,6 @@
 import 'package:wact/common/const/color.dart';
-import 'package:wact/main.dart';
+import 'package:wact/common/init.dart';
+import 'package:wact/common/init.dart';
 import 'package:wact/root_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

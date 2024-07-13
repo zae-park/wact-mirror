@@ -9,11 +9,12 @@ class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<HomePage> createState() => HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late final TabController _tabController;
+  final GlobalKey<PostPageState> _postPageKey = GlobalKey<PostPageState>();
 
   @override
   void initState() {
@@ -26,6 +27,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         // 탭이 변경될 때 UI를 갱신
       });
     });
+  }
+
+  void refreshPostPage() {
+    debugPrint('이제 곧 실제 refresh동작 실행');
+    _postPageKey.currentState?.refresh();
+    debugPrint('HomePage: PostPage refresh동작 실행완료');
   }
 
   @override
@@ -104,9 +111,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [
-          PostPage(),
-          ReviewPage(),
+        children: [
+          PostPage(key: _postPageKey),
+          const ReviewPage(),
         ],
       ),
     );

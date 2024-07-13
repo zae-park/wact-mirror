@@ -9,13 +9,19 @@ import 'package:wact/common/const/color.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:wact/main.dart';
+import 'package:wact/common/init.dart';
+import 'package:wact/pages/home/home_page.dart';
 
 class PostAddPage extends StatefulWidget {
   final List<XFile>? images;
   final void Function(List<String>) onUpload;
+  final GlobalKey<HomePageState> homePageKey;
 
-  const PostAddPage({Key? key, this.images, required this.onUpload})
+  const PostAddPage(
+      {Key? key,
+      this.images,
+      required this.onUpload,
+      required this.homePageKey})
       : super(key: key);
 
   @override
@@ -43,8 +49,8 @@ class _PostAddPageState extends State<PostAddPage> {
   }
 
   // 이미지 없이 업로드 가능
-  Future<void> _uploadPost() async {
-    if (_isLoading) return;
+  Future<bool> _uploadPost() async {
+    if (_isLoading) return false;
 
     try {
       setState(() => _isLoading = true);
@@ -158,13 +164,16 @@ class _PostAddPageState extends State<PostAddPage> {
       widget.onUpload(imageUrls);
 
       if (mounted) {
-        Navigator.pop(context, true);
+        Navigator.pop(context); // 다이얼로그 닫기
+        return true;
+        debugPrint('게시글 업로드 성공');
       }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+    return false; // 모든 조건이 충족되지 않을 경우 false 반환
   }
 
   @override
@@ -309,9 +318,21 @@ class _PostAddPageState extends State<PostAddPage> {
                 onTap: () async {
                   if (_titleEditingController.text.isNotEmpty ||
                       _contentEditingController.text.isNotEmpty) {
-                    await _uploadPost().then((_) {
-                      Navigator.pop(context);
-                    });
+                    debugPrint('게시글 업로드 버튼 클릭');
+                    // await _uploadPost().then((_) {
+                    //   debugPrint('게시글 업로드 성공');
+                    //   // context.findAncestorStateOfType<HomePageState>()를 사용하는 대신 전달된 GlobalKey를 활용합니다.
+                    //   final homePageState = widget.homePageKey.currentState;
+                    //   debugPrint('homePageState: $homePageState');
+                    //   // if (homePageState != null) {
+                    //   homePageState?.refreshPostPage();
+                    //   debugPrint('PostPage 새로고침 완료');
+                    //   // }
+                    //   Navigator.pop(context, true);
+                    // });
+                    bool result = await _uploadPost();
+                    Navigator.pop(
+                        context, result); // 여기서 새로고침 로직을 제거하고, 결과만 반환합니다.
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(

@@ -4,6 +4,7 @@ import 'package:wact/pages/home/home_page.dart';
 import 'package:wact/pages/home/post/post_add_page.dart';
 import 'package:wact/pages/home/review/review_add_page.dart';
 import 'package:wact/pages/my/my_page.dart';
+import 'package:wact/widgets/buttons/custom_fab.dart';
 
 class RootLayout extends StatefulWidget {
   const RootLayout({super.key, required int initialTab});
@@ -16,20 +17,20 @@ class _RootLayoutState extends State<RootLayout>
     with SingleTickerProviderStateMixin {
   int _selectedIndex = 0; // 현재 선택된 탭의 인덱스
   late ScrollController _scrollController; // 스크롤을 감지하기 위한 컨트롤러
-  final bool _isFABVisible = true; // FAB 가시성 설정
+  late List<Widget> _screens; // 화면 리스트
   bool _isFabOpen = false;
-
-  // 화면 리스트
-  final List<Widget> _screens = [
-    const HomePage(),
-    // const QTRoom(),
-    const MyPage(),
-  ];
+  final GlobalKey<HomePageState> _homePageKey =
+      GlobalKey<HomePageState>(); // 추가
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
+    _screens = [
+      HomePage(key: _homePageKey), // initState에서 _screens를 초기화합니다.
+      // const QTRoom(),
+      const MyPage(),
+    ];
   }
 
   void _toggleFAB() {
@@ -84,97 +85,20 @@ class _RootLayoutState extends State<RootLayout>
           });
         },
       ),
-      floatingActionButton: _isFABVisible
-          ? Stack(
-              alignment: Alignment.bottomCenter,
-              children: [
-                _buildExtendedFAB(),
-                _buildFAB(),
-              ],
-            )
-          : null,
+      floatingActionButton: CustomFAB(
+        isFABVisible: true,
+        isFabOpen: _isFabOpen,
+        toggleFAB: _toggleFAB,
+        selectedIndex: _selectedIndex, // 추가
+        onTabChange: (index) {
+          // 추가
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        homePageKey: _homePageKey,
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-    );
-  }
-
-  Widget _buildFAB() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 30.0),
-      child: FloatingActionButton(
-        backgroundColor: Colors.black,
-        onPressed: _toggleFAB,
-        heroTag: "mainFAB",
-        child: Center(
-          child:
-              Icon(_isFabOpen ? Icons.close : Icons.add, color: Colors.white),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildExtendedFAB() {
-    if (!_isFabOpen) return const SizedBox();
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 50),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: <Widget>[
-          FloatingActionButton(
-            backgroundColor: Colors.black,
-            mini: true,
-            onPressed: () {
-              _toggleFAB();
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => PostAddPage(
-                    onUpload: (String) {},
-                  ),
-                ),
-              );
-            },
-            heroTag: "FAB1",
-            child: const SizedBox(
-              width: 24,
-              height: 24,
-              child: Center(
-                child: Text(
-                  '자유',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
-          ),
-          FloatingActionButton(
-            backgroundColor: Colors.black,
-            mini: true,
-            onPressed: () {
-              _toggleFAB();
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ReviewAddPage(
-                    onUpload: (String) {},
-                  ),
-                ),
-              );
-            },
-            heroTag: "FAB2",
-            child: const SizedBox(
-              width: 24,
-              height: 24,
-              child: Center(
-                child: Text(
-                  '후기',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-        ],
-      ),
     );
   }
 }

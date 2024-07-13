@@ -9,7 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:wact/common/const/color.dart';
-import 'package:wact/main.dart';
+import 'package:wact/common/init.dart';
 
 class ReviewDetailPage extends StatefulWidget {
   final Map<String, dynamic> review;

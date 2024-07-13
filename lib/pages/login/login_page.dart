@@ -11,7 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:wact/main.dart';
+import 'package:wact/common/init.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -402,7 +402,7 @@ class _LoginPageState extends State<LoginPage> {
                   // ),
                   GestureDetector(
                     onTap: () async {
-                      if(!kIsWeb && (Platform.isAndroid || Platform.isIOS)){
+                      if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
                         await _nativeGoogleSignin();
                       }
                       await supabase.auth.signInWithOAuth(OAuthProvider.google);

@@ -3,7 +3,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:wact/main.dart';
+import 'package:wact/common/init.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});

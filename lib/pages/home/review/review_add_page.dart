@@ -10,7 +10,7 @@ import 'package:wact/common/const/color.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:wact/main.dart';
+import 'package:wact/common/init.dart';
 
 class ReviewAddPage extends StatefulWidget {
   final List<XFile>? images;
