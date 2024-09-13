@@ -15,6 +15,8 @@ class HomePage extends StatefulWidget {
 class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late final TabController _tabController;
   final GlobalKey<PostPageState> _postPageKey = GlobalKey<PostPageState>();
+  final GlobalKey<ReviewPageState> _reviewPageKey =
+      GlobalKey<ReviewPageState>();
 
   @override
   void initState() {
@@ -33,6 +35,11 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
     debugPrint('이제 곧 실제 refresh동작 실행');
     _postPageKey.currentState?.refresh();
     debugPrint('HomePage: PostPage refresh동작 실행완료');
+  }
+
+  void refreshReviewPage() {
+    _reviewPageKey.currentState?.refresh();
+    debugPrint('HomePage: ReviewPage refresh동작 실행완료');
   }
 
   @override
@@ -113,7 +120,9 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
         controller: _tabController,
         children: [
           PostPage(key: _postPageKey),
-          const ReviewPage(),
+          ReviewPage(
+            key: _reviewPageKey,
+          ),
         ],
       ),
     );

@@ -11,12 +11,18 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/init.dart';
+import 'package:wact/pages/home/home_page.dart';
 
 class ReviewAddPage extends StatefulWidget {
   final List<XFile>? images;
   final void Function(List<String>) onUpload;
+  final GlobalKey<HomePageState> homePageKey;
 
-  const ReviewAddPage({Key? key, this.images, required this.onUpload})
+  const ReviewAddPage(
+      {Key? key,
+      this.images,
+      required this.onUpload,
+      required this.homePageKey})
       : super(key: key);
 
   @override
@@ -80,8 +86,8 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
   }
 
   // 이미지 없이 업로드 가능
-  Future<void> _uploadPost() async {
-    if (_isLoading) return;
+  Future<bool> _uploadPost() async {
+    if (_isLoading) return false;
 
     try {
       setState(() => _isLoading = true);
@@ -203,12 +209,20 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
 
       if (mounted) {
         Navigator.pop(context, true);
+        return true; // 업로드 성공 시 true 반환
       }
+    } catch (e) {
+      // 오류 처리 로직
+      debugPrint('업로드 중 오류 발생: $e');
+      return false; // 오류 발생 시 false 반환
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+
+    // 모든 경우를 고려해, 아무 작업이 없더라도 false를 반환
+    return false;
   }
 
   @override
@@ -375,9 +389,14 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
                       _titleEditingController.text.isNotEmpty &&
                       _contentEditingController.text.isNotEmpty &&
                       _selectedParticipants != null) {
-                    await _uploadPost().then((_) {
-                      Navigator.pop(context);
-                    });
+                    // 게시글 업로드 시도
+                    bool result = await _uploadPost();
+                    if (result == true) {
+                      // HomePageState를 가져와서 ReviewPage 새로고침
+                      final homePageState = widget.homePageKey.currentState;
+                      homePageState?.refreshReviewPage(); // ReviewPage 새로고침 트리거
+                      Navigator.pop(context, true);
+                    }
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(

@@ -16,10 +16,10 @@ class ReviewPage extends StatefulWidget {
   const ReviewPage({super.key});
 
   @override
-  State<ReviewPage> createState() => _ReviewPageState();
+  State<ReviewPage> createState() => ReviewPageState();
 }
 
-class _ReviewPageState extends State<ReviewPage> {
+class ReviewPageState extends State<ReviewPage> {
   late Stream<List<Map<String, dynamic>>> _stream;
   late Future<List<Map<String, dynamic>>> _future;
   late ScrollController controller;
@@ -49,6 +49,13 @@ class _ReviewPageState extends State<ReviewPage> {
         .order('created_at', ascending: false);
 
     setState(() {});
+  }
+
+  void refresh() {
+    setState(() {
+      _stream = _loadDataStream();
+      debugPrint('ReviewPage 새로고침 실행됨');
+    });
   }
 
   @override

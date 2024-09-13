@@ -105,13 +105,16 @@ class _CustomFABState extends State<CustomFAB> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ReviewAddPage(onUpload: (String) {}),
+                  builder: (context) => ReviewAddPage(
+                    onUpload: (String) {},
+                    homePageKey: widget.homePageKey,
+                  ),
                 ),
               ).then((result) {
                 if (result == true) {
                   debugPrint('FAB2: 새로운 게시글 작성 후 ReviewPage를 새로고침');
                   // 새로운 게시글 작성 후 ReviewPage를 새로고침
-                  widget.onTabChange(1); // 수정
+                  widget.homePageKey.currentState?.refreshReviewPage();
                 }
               });
             },
