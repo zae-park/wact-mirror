@@ -13,6 +13,7 @@ final ThemeData appTheme = ThemeData(
   ),
   appBarTheme: const AppBarTheme(
     surfaceTintColor: Colors.white,
+    backgroundColor: Colors.white,
     systemOverlayStyle: SystemUiOverlayStyle(
       // 상태 표시줄 스타일 설정
       statusBarColor: Colors.white, // 상태 표시줄 배경색

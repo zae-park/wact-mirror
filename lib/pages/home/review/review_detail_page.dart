@@ -10,13 +10,18 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:wact/common/init.dart';
+import 'package:wact/pages/home/review/review_edit_page.dart';
 
 class ReviewDetailPage extends StatefulWidget {
-  final Map<String, dynamic> review;
+  Map<String, dynamic> review;
   final int currentIndex;
+  final Function onUpdateSuccess; // 콜백 추가
 
-  const ReviewDetailPage(
-      {Key? key, required this.review, required this.currentIndex})
+  ReviewDetailPage(
+      {Key? key,
+      required this.review,
+      required this.currentIndex,
+      required this.onUpdateSuccess})
       : super(key: key);
 
   @override
@@ -148,7 +153,6 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
 
     // 참석 멤버수 구하기 - ,를 기준으로,
     String members = widget.review['member'];
-    int memberCount = members.split(',').length;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -159,12 +163,44 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
         actions: isAuthor
             ? [
                 PopupMenuButton(
-                  onSelected: (value) {
-                    if (value == 'delete') {
+                  surfaceTintColor: Colors.white,
+                  color: Colors.white,
+                  onSelected: (value) async {
+                    // 수정 버튼 눌렀을 때의 로직
+                    if (value == 'edit') {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ReviewEditPage(
+                            review: widget.review,
+                            onUpdateSuccess: () {
+                              widget.onUpdateSuccess(); // 콜백 호출
+                            },
+                            onUpload: (String) {},
+                          ),
+                        ),
+                      );
+                      if (result != null && result is Map<String, dynamic>) {
+                        setState(() {
+                          widget.review = result;
+                          if (result.containsKey('compressed_image_urls')) {
+                            imageUrls = result['compressed_image_urls'];
+                          }
+                        });
+                      }
+                    } else if (value == 'delete') {
                       deletereview();
                     }
                   },
                   itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: ListTile(
+                        title: Text(
+                          '수정',
+                        ),
+                      ),
+                    ),
                     const PopupMenuItem(
                       value: 'delete',
                       child: ListTile(
@@ -269,7 +305,7 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        '참석 ',
+                        '참석 인원 ',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -289,6 +325,34 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
                   const SizedBox(
                     height: 4,
                   ),
+                  if (widget.review['member'] != '')
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '참석 ',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: primary,
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            members,
+                            style: const TextStyle(
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 4,
+                        ),
+                        const SizedBox(
+                          height: 4,
+                        ),
+                      ],
+                    ),
                   if (widget.review['bible'] != '')
                     Row(
                       children: [

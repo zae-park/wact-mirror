@@ -1,62 +1,91 @@
-// 두 번째 FAB누르면 나오는 후기 작성페이지
-// 240525 '인원'선택하여 명수 저장하는 기능 추가
-
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:wact/common/const/color.dart';
-import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:wact/common/const/color.dart';
 import 'package:wact/common/init.dart';
-import 'package:wact/pages/home/home_page.dart';
 
-class ReviewAddPage extends StatefulWidget {
-  final List<XFile>? images;
-  final void Function(List<String>) onUpload;
-  final GlobalKey<HomePageState> homePageKey;
+class ReviewEditPage extends StatefulWidget {
+  final Map<String, dynamic> review;
+  final void Function(String) onUpload;
+  final Function() onUpdateSuccess;
 
-  const ReviewAddPage(
-      {Key? key,
-      this.images,
-      required this.onUpload,
-      required this.homePageKey})
-      : super(key: key);
+  const ReviewEditPage({
+    Key? key,
+    required this.onUpload,
+    required this.review,
+    required this.onUpdateSuccess,
+  }) : super(key: key);
 
   @override
-  _ReviewAddPageState createState() => _ReviewAddPageState();
+  State<ReviewEditPage> createState() => _ReviewEditPageState();
 }
 
-class _ReviewAddPageState extends State<ReviewAddPage> {
-  final _titleEditingController = TextEditingController();
-  final _placeEditingController = TextEditingController();
-  final _memberEditingController = TextEditingController();
-  final _contentEditingController = TextEditingController();
-  final _teamController = TextEditingController();
-  final _bibleController = TextEditingController();
-  DateTime _selectedDate = DateTime.now();
+class _ReviewEditPageState extends State<ReviewEditPage> {
+  late TextEditingController _titleEditingController;
+  late TextEditingController _contentEditingController;
+  late TextEditingController _placeEditingController;
+  late TextEditingController _memberEditingController;
+  late TextEditingController _bibleController;
+  late List<XFile> images;
+  bool _isLoading = false;
   String? _selectedTeam;
-
-  // 240525 드롭다운 메뉴 리스트
+  DateTime _selectedDate = DateTime.now();
+  // 참가자 리스트
   List<String> participantsList =
       ['00명'] + List.generate(100, (index) => '$index명');
   String? _selectedParticipants;
 
-  List<XFile> _currentImages = [];
-  bool _isLoading = false;
+  @override
+  void initState() {
+    super.initState();
+
+    _titleEditingController =
+        TextEditingController(text: widget.review['title']);
+    _contentEditingController =
+        TextEditingController(text: widget.review['content']);
+    _placeEditingController =
+        TextEditingController(text: widget.review['place']);
+    _memberEditingController =
+        TextEditingController(text: widget.review['member']);
+    _selectedDate = DateTime.parse(widget.review['meet_date']);
+    _bibleController = TextEditingController(text: widget.review['bible']);
+    _selectedTeam = ['강남', '시내', '신촌', '인천', '태릉', '오비', '행사', '모임']
+            .contains(widget.review['team'])
+        ? widget.review['team']
+        : '강남'; // 기본값 설정
+    _selectedParticipants =
+        participantsList.contains('${widget.review['participants']}명')
+            ? '${widget.review['participants']}명'
+            : '00명';
+
+    var imageUrls = widget.review['compressed_image_urls'];
+    if (imageUrls is String) {
+      images = (jsonDecode(imageUrls) as List<dynamic>)
+          .map((item) => XFile(item as String))
+          .toList();
+    } else if (imageUrls is List<dynamic>) {
+      images = imageUrls.map((item) => XFile(item as String)).toList();
+    } else {
+      images = [];
+    }
+  }
 
   Future<void> _pickImages() async {
     final pickedFiles = await ImagePicker().pickMultiImage();
 
-    // 현재 이미지 수와 새로 선택된 이미지 수의 합이 6을 초과하는지 확인
-    if (_currentImages.length + pickedFiles.length > 6) {
+    if (images.length + pickedFiles.length > 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('최대 6장의 이미지만 선택할 수 있습니다.')));
+        const SnackBar(content: Text('최대 6장의 이미지만 선택할 수 있습니다.')),
+      );
     } else {
       setState(() {
-        _currentImages.addAll(pickedFiles);
+        images.addAll(pickedFiles);
       });
     }
   }
@@ -85,191 +114,145 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
     return pickedDate;
   }
 
-  // 이미지 없이 업로드 가능
-  Future<bool> _uploadPost() async {
-    if (_isLoading) return false;
+  Future<void> _updateReview() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) throw Exception('사용자를 찾지 못했습니다.');
 
-    try {
-      setState(() => _isLoading = true);
+    if (_isLoading) return;
 
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return const AlertDialog(
-            backgroundColor: Colors.black,
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '게시글을 저장중입니다.',
-                  style: TextStyle(color: Colors.white),
-                )
-              ],
-            ),
-          );
-        },
-      );
+    setState(() => _isLoading = true);
 
-      final user = supabase.auth.currentUser;
-      if (user == null) throw Exception('User not found');
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const AlertDialog(
+          backgroundColor: Colors.white,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [Text('수정된 정보를 저장중입니다•••')],
+          ),
+        );
+      },
+    );
 
-      List<String> imageUrls = [];
-      // 압축된 이미지의 URL 리스트
-      List<String> compressedImageUrls = [];
+    bool shouldUpdate = false;
+    Map<String, dynamic> updateData = {};
 
-      // 이미지가 있을 경우에만 업로드 로직 실행
-      if (_currentImages.isNotEmpty) {
-        // 파일 경로 리스트 생성
-        List<String> filePaths = _currentImages.map((imageFile) {
-          final fileExt = imageFile.path.split('.').last;
-          final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
-          return '${user.id}/$fileName';
-        }).toList();
+    if (_titleEditingController.text != widget.review['title']) {
+      updateData['title'] = _titleEditingController.text;
+      shouldUpdate = true;
+    }
+    if (_contentEditingController.text != widget.review['content']) {
+      updateData['content'] = _contentEditingController.text;
+      shouldUpdate = true;
+    }
+    if (_placeEditingController.text != widget.review['place']) {
+      updateData['place'] = _placeEditingController.text;
+      shouldUpdate = true;
+    }
+    if (_memberEditingController.text != widget.review['member']) {
+      updateData['member'] = _memberEditingController.text;
+      shouldUpdate = true;
+    }
+    if (_bibleController.text != widget.review['bible']) {
+      updateData['bible'] = _bibleController.text;
+      shouldUpdate = true;
+    }
+    if (_selectedTeam != widget.review['team']) {
+      updateData['team'] = _selectedTeam;
+      shouldUpdate = true;
+    }
+    if (_selectedParticipants != widget.review['participants']) {
+      updateData['participants'] = _selectedParticipants?.replaceAll('명', '');
+      shouldUpdate = true;
+    }
 
-        // 압축된 이미지의 경로 리스트 생성
-        List<String> compressedFilePaths = _currentImages.map((imageFile) {
-          final fileExt = imageFile.path.split('.').last;
-          final fileName =
-              '${DateTime.now().toIso8601String()}_compressed.$fileExt';
-          return '${user.id}/$fileName';
-        }).toList();
+    List<String> imageUrls = [];
+    List<String> compressedImageUrls = [];
 
-        // 이미지 업로드
-        for (int i = 0; i < _currentImages.length; i++) {
-          var imageFile = _currentImages[i];
-          var filePath = filePaths[i];
-          var compressedFilePath = compressedFilePaths[i];
-
-          final imageBytes = await imageFile.readAsBytes();
-          final fileExt = imageFile.path.split('.').last;
-
-          // 이미지 압축
+    if (images.isNotEmpty) {
+      for (XFile image in images) {
+        if (image.path.startsWith('http')) {
+          imageUrls.add(image.path);
+          compressedImageUrls.add(image.path);
+        } else {
+          final imageBytes = await image.readAsBytes();
           final compressedImageBytes =
               await FlutterImageCompress.compressWithList(
             imageBytes,
-            quality: 80, // 70% 품질로 압축
+            quality: 80,
           );
 
-          await supabase.storage.from('post_photo').uploadBinary(
-              filePath, imageBytes,
-              fileOptions: FileOptions(contentType: 'image/$fileExt'));
+          final fileExt = image.name.split('.').last;
+          final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
+          final compressedFileName =
+              '${DateTime.now().toIso8601String()}_compressed.$fileExt';
+          final filePath = 'review_images/$fileName';
+          final compressedFilePath =
+              'review_compressed_images/$compressedFileName';
 
-          // 압축된 이미지 업로드
-          await supabase.storage.from('post_compressed_photo').uploadBinary(
-              compressedFilePath, compressedImageBytes,
-              fileOptions:
-                  FileOptions(contentType: 'compressedImage/$fileExt'));
+          await supabase.storage
+              .from('review_photo')
+              .uploadBinary(filePath, imageBytes);
+          await supabase.storage
+              .from('review_compressed_photo')
+              .uploadBinary(compressedFilePath, compressedImageBytes);
+
+          final imageUrlResponse = await supabase.storage
+              .from('review_photo')
+              .createSignedUrl(filePath, 60 * 60 * 24 * 365 * 10);
+
+          final compressedImageUrlResponse = await supabase.storage
+              .from('review_compressed_photo')
+              .createSignedUrl(compressedFilePath, 60 * 60 * 24 * 365 * 10);
+
+          imageUrls.add(imageUrlResponse);
+          compressedImageUrls.add(compressedImageUrlResponse);
+          widget.onUpload(imageUrlResponse);
         }
-
-        // 이미지 업로드 후 서명된 URL 생성
-        List<SignedUrl> signedUrls = await supabase.storage
-            .from('post_photo')
-            .createSignedUrls(filePaths, 60 * 60 * 24 * 365 * 10);
-
-        // 서명된 URL 추출 및 저장
-        imageUrls.addAll(signedUrls.map((e) => e.signedUrl));
-
-        // 압축된 이미지의 서명된 URL 생성
-        List<SignedUrl> compressedSignedUrls = await supabase.storage
-            .from('post_compressed_photo')
-            .createSignedUrls(compressedFilePaths, 60 * 60 * 24 * 365 * 10);
-
-        compressedImageUrls
-            .addAll(compressedSignedUrls.map((e) => e.signedUrl));
       }
 
-      final profileResponse = await supabase
-          .from('profiles')
-          .select('username')
-          .match({'id': user.id}).single();
-
-      print('유저: $profileResponse');
-
-      final username = profileResponse['username'] as String?;
-      print('유저 이름: $username');
-      final team = _selectedTeam ?? '';
-
-      await supabase.from('reviews').insert({
-        'author_id': user.id,
-        'author': username,
-        'team': team,
-        'meet_date': _selectedDate.toIso8601String(),
-        'place': _placeEditingController.text,
-        'member': _memberEditingController.text,
-        'bible': _bibleController.text,
-        'title': _titleEditingController.text,
-        'content': _contentEditingController.text,
-        'image_urls': imageUrls,
-        'compressed_image_urls': compressedImageUrls,
-        'participants': _selectedParticipants?.replaceAll('명', ''),
-      });
-
-      widget.onUpload(imageUrls);
-
-      if (mounted) {
-        Navigator.pop(context, true);
-        return true; // 업로드 성공 시 true 반환
-      }
-    } catch (e) {
-      // 오류 처리 로직
-      debugPrint('업로드 중 오류 발생: $e');
-      return false; // 오류 발생 시 false 반환
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      updateData['image_urls'] = imageUrls;
+      updateData['compressed_image_urls'] = compressedImageUrls;
     }
 
-    // 모든 경우를 고려해, 아무 작업이 없더라도 false를 반환
-    return false;
-  }
+    if (shouldUpdate) {
+      final response = await supabase
+          .from('reviews')
+          .update(updateData)
+          .eq('id', widget.review['id']);
 
-  @override
-  void initState() {
-    super.initState();
-    if (widget.images != null) {
-      _currentImages = widget.images!;
+      final updatedReview = {
+        ...widget.review,
+        ...updateData,
+        'image_url': imageUrls,
+        'compressed_image_url': compressedImageUrls,
+      };
+
+      widget.onUpdateSuccess();
+
+      Navigator.of(context, rootNavigator: true).pop();
+
+      setState(() => _isLoading = false);
+      Navigator.of(context).pop(updatedReview);
+    } else {
+      Navigator.of(context).pop();
     }
-    _titleEditingController.addListener(() {
-      setState(() {});
-    });
-
-    _teamController.addListener(() {
-      setState(() {});
-    });
-
-    _placeEditingController.addListener(() {
-      setState(() {});
-    });
-
-    _memberEditingController.addListener(() {
-      setState(() {});
-    });
-
-    _contentEditingController.addListener(() {
-      setState(() {});
-    });
-
-    _bibleController.addListener(() {
-      setState(() {});
-    });
   }
 
   @override
   void dispose() {
     _titleEditingController.dispose();
-    _teamController.dispose();
+    _contentEditingController.dispose();
     _placeEditingController.dispose();
     _memberEditingController.dispose();
-    _contentEditingController.dispose();
     _bibleController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // 이미지 표시 부분
     Widget buildImageGrid() {
       return Padding(
         padding: const EdgeInsets.all(20.0),
@@ -281,59 +264,42 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
             mainAxisSpacing: 8.0,
             crossAxisSpacing: 8.0,
           ),
-          itemCount: min(_currentImages.length + 1, 6),
+          itemCount: min(images.length + 1, 6),
           itemBuilder: (BuildContext context, int index) {
-            if (index < _currentImages.length) {
-              return DragTarget<XFile>(
-                onWillAccept: (data) => true,
-                onAccept: (data) {
-                  setState(() {
-                    final oldIndex = _currentImages.indexOf(data);
-                    _currentImages.remove(data);
-                    if (index > oldIndex) {
-                      _currentImages.insert(index - 1, data);
-                    } else {
-                      _currentImages.insert(index, data);
-                    }
-                  });
-                },
-                builder: (context, candidateData, rejectedData) {
-                  return LongPressDraggable<XFile>(
-                    data: _currentImages[index],
-                    feedback: Material(
-                      child: Image.file(File(_currentImages[index].path),
-                          fit: BoxFit.cover, width: 100, height: 100),
+            if (index < images.length) {
+              Widget imageWidget;
+              if (Uri.parse(images[index].path).isAbsolute) {
+                imageWidget =
+                    Image.network(images[index].path, fit: BoxFit.cover);
+              } else {
+                imageWidget =
+                    Image.file(File(images[index].path), fit: BoxFit.cover);
+              }
+              return LongPressDraggable<XFile>(
+                data: images[index],
+                feedback: Material(child: imageWidget),
+                childWhenDragging: Container(),
+                child: Stack(
+                  children: [
+                    Positioned.fill(child: imageWidget),
+                    Positioned(
+                      right: -8,
+                      top: -8,
+                      child: IconButton(
+                        iconSize: 16,
+                        icon: const FaIcon(FontAwesomeIcons.circleMinus,
+                            color: Colors.white),
+                        onPressed: () {
+                          setState(() {
+                            images.removeAt(index);
+                          });
+                        },
+                      ),
                     ),
-                    childWhenDragging: Container(),
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: Image.file(File(_currentImages[index].path),
-                              fit: BoxFit.cover),
-                        ),
-                        // 삭제 버튼
-                        Positioned(
-                          right: -8,
-                          top: -8,
-                          child: IconButton(
-                            iconSize: 16,
-                            icon: const FaIcon(
-                              FontAwesomeIcons.circleMinus,
-                              color: Colors.white,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _currentImages.removeAt(index);
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                  ],
+                ),
               );
-            } else if (_currentImages.length < 6) {
+            } else if (images.length < 6) {
               return GestureDetector(
                 onTap: _pickImages,
                 child: Container(
@@ -355,78 +321,24 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        surfaceTintColor: Colors.white,
-        iconTheme: const IconThemeData(color: Color.fromARGB(255, 42, 31, 31)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: Transform.translate(
-          offset: const Offset(12, 0.0),
-          child: IconButton(
-            iconSize: 34,
-            icon: Image.asset('assets/imgs/icon/btn_back_grey@3x.png'),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-        ),
-        title: const Text(
-          '후기 작성',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        title: const Text('후기 수정'),
         centerTitle: true,
         actions: <Widget>[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(0, 9, 20, 9),
-            child: SizedBox(
-              width: 52,
-              child: GestureDetector(
-                onTap: () async {
-                  if (_selectedTeam != null &&
-                      _titleEditingController.text.isNotEmpty &&
-                      _contentEditingController.text.isNotEmpty &&
-                      _selectedParticipants != null) {
-                    // 게시글 업로드 시도
-                    bool result = await _uploadPost();
-                    if (result == true) {
-                      // HomePageState를 가져와서 ReviewPage 새로고침
-                      final homePageState = widget.homePageKey.currentState;
-                      homePageState?.refreshReviewPage(); // ReviewPage 새로고침 트리거
-                      Navigator.pop(context, true);
-                    }
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        backgroundColor: Colors.black,
-                        content: Text(
-                          '양식을 전부 작성해주세요.',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w500, color: Colors.white),
-                        ),
-                      ),
-                    );
-                  }
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(19),
-                      color: Colors.black),
-                  child: const Center(
-                    child: Text(
-                      '게시',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
+          IconButton(
+            onPressed: () async {
+              if (_titleEditingController.text.isNotEmpty &&
+                  _contentEditingController.text.isNotEmpty) {
+                await _updateReview();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    backgroundColor: primary,
+                    content: Text('빈 내용을 작성해주세요.'),
                   ),
-                ),
-              ),
-            ),
+                );
+              }
+            },
+            icon: const Icon(Icons.check),
           ),
         ],
       ),
@@ -435,7 +347,8 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
           children: <Widget>[
             buildImageGrid(),
             const Text('(사진은 최대 6장까지 선택 가능🙂)'),
-            // 제목과 내용 작성
+
+            // 제목과 내용
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: SizedBox(
@@ -443,7 +356,7 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 지부 & 날짜 선택
+                    // 지부 & 날짜
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -533,12 +446,12 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
                       height: 16,
                     ),
 
-                    // 참석 인원 작성
+                    // 참석 인원
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          '참석',
+                          '참석 인원',
                           style: TextStyle(
                             color: bg_90,
                             fontSize: 12,
@@ -571,6 +484,8 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
                         ),
                       ],
                     ),
+
+                    // 참석한 사람
                     TextFormField(
                       controller: _memberEditingController,
                       maxLines: 1,
@@ -595,7 +510,7 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
                       height: 16,
                     ),
 
-                    // 장소 작성
+                    // 장소
                     const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -641,7 +556,7 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
                       height: 16,
                     ),
 
-                    // 말씀 본문 작성
+                    // 말씀 본문
                     const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -688,7 +603,6 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
                       height: 16,
                     ),
 
-                    // 제목 작성
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -733,7 +647,6 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
                     const SizedBox(
                       height: 16,
                     ),
-
                     // 내용 작성
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

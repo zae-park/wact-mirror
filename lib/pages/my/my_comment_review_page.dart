@@ -60,6 +60,13 @@ class _MyCommentReviewPageState extends State<MyCommentReviewPage> {
     setState(() {});
   }
 
+  void refresh() {
+    setState(() {
+      _stream = _loadDataStream();
+      debugPrint('ReviewPage 새로고침 실행됨');
+    });
+  }
+
   @override
   void dispose() {
     controller.dispose(); // Dispose the ScrollController
@@ -136,6 +143,7 @@ class _MyCommentReviewPageState extends State<MyCommentReviewPage> {
                           builder: (context) => ReviewDetailPage(
                                 review: reviews[index],
                                 currentIndex: index,
+                                onUpdateSuccess: refresh, // 새로고침 함수 연결
                               )),
                     );
                     if (result == true) {

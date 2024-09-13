@@ -140,19 +140,16 @@ class ReviewPageState extends State<ReviewPage> {
 
                           return InkWell(
                             onTap: () async {
-                              final result = await Navigator.push(
+                              await Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => ReviewDetailPage(
-                                          review: reviews[index],
-                                          currentIndex: index,
-                                        )),
+                                  builder: (context) => ReviewDetailPage(
+                                    review: reviews[index],
+                                    currentIndex: index,
+                                    onUpdateSuccess: refresh, // 새로고침 함수 연결
+                                  ),
+                                ),
                               );
-                              if (result == true) {
-                                setState(() {
-                                  _stream = _loadDataStream();
-                                });
-                              }
                             },
                             child: Column(
                               children: [
@@ -442,6 +439,8 @@ class ReviewPageState extends State<ReviewPage> {
                                         () => ReviewDetailPage(
                                           review: entry.value,
                                           currentIndex: index,
+                                          onUpdateSuccess:
+                                              refresh, // 새로고침 함수 연결
                                         ),
                                       );
                                       if (result == true) {
