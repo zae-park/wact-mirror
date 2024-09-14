@@ -68,6 +68,54 @@ class ReviewPageState extends State<ReviewPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        toolbarHeight: 48,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: TextButton(
+          style: ButtonStyle(
+            overlayColor: MaterialStateProperty.all(Colors.transparent),
+          ),
+          onPressed: () {
+            setState(() {
+              isListView = !isListView; // 뷰 전환
+            });
+          },
+          child: isListView
+              ? const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '달력 보기',
+                      style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 16),
+                    ),
+                    Icon(
+                      Icons.keyboard_arrow_down,
+                      color: Colors.black,
+                    ),
+                  ],
+                )
+              : const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '달력 접기',
+                      style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 16),
+                    ),
+                    Icon(
+                      Icons.keyboard_arrow_up,
+                      color: Colors.black,
+                    ),
+                  ],
+                ),
+        ),
+      ),
       body: RefreshIndicator(
         color: Colors.white,
         backgroundColor: Colors.black,
@@ -496,26 +544,26 @@ class ReviewPageState extends State<ReviewPage> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            isListView = !isListView; // 뷰 전환
-          });
-        },
-        backgroundColor: Colors.black,
-        elevation: 6.0,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(40)),
-          side: BorderSide(color: Colors.white, width: 1),
-        ),
-        child: Image.asset(
-          isListView
-              ? 'assets/imgs/icon/btn_calendar_view@3x.png'
-              : 'assets/imgs/icon/btn_list_view@3x.png',
-          width: 30,
-          height: 30,
-        ),
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () {
+      //     setState(() {
+      //       isListView = !isListView; // 뷰 전환
+      //     });
+      //   },
+      //   backgroundColor: Colors.black,
+      //   elevation: 6.0,
+      //   shape: const RoundedRectangleBorder(
+      //     borderRadius: BorderRadius.all(Radius.circular(40)),
+      //     side: BorderSide(color: Colors.white, width: 1),
+      //   ),
+      //   child: Image.asset(
+      //     isListView
+      //         ? 'assets/imgs/icon/btn_calendar_view@3x.png'
+      //         : 'assets/imgs/icon/btn_list_view@3x.png',
+      //     width: 30,
+      //     height: 30,
+      //   ),
+      // ),
     );
   }
 }
