@@ -69,8 +69,8 @@ class ReviewPageState extends State<ReviewPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        toolbarHeight: 48,
-        backgroundColor: Colors.white,
+        toolbarHeight: 44,
+        backgroundColor: primary,
         elevation: 0,
         title: TextButton(
           style: ButtonStyle(
@@ -88,13 +88,13 @@ class ReviewPageState extends State<ReviewPage> {
                     Text(
                       '달력 보기',
                       style: TextStyle(
-                          color: Colors.black,
+                          color: Colors.white,
                           fontWeight: FontWeight.w500,
                           fontSize: 16),
                     ),
                     Icon(
                       Icons.keyboard_arrow_down,
-                      color: Colors.black,
+                      color: Colors.white,
                     ),
                   ],
                 )
@@ -104,13 +104,13 @@ class ReviewPageState extends State<ReviewPage> {
                     Text(
                       '달력 접기',
                       style: TextStyle(
-                          color: Colors.black,
+                          color: Colors.white,
                           fontWeight: FontWeight.w500,
                           fontSize: 16),
                     ),
                     Icon(
                       Icons.keyboard_arrow_up,
-                      color: Colors.black,
+                      color: Colors.white,
                     ),
                   ],
                 ),

@@ -50,7 +50,14 @@ class _RootLayoutState extends State<RootLayout>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: _screens[_selectedIndex], // 선택된 인덱스에 따른 화면 보여주기
+      body: GestureDetector(
+        onTap: () {
+          if (_isFabOpen) {
+            _toggleFAB(); // 스크린을 터치하면 FAB를 닫기
+          }
+        },
+        child: _screens[_selectedIndex], // 선택된 인덱스에 따른 화면 보여주기
+      ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
         items: const <BottomNavigationBarItem>[
@@ -81,6 +88,9 @@ class _RootLayoutState extends State<RootLayout>
         unselectedItemColor: Colors.grey, // 선택되지 않은 아이템의 색상
         onTap: (index) {
           setState(() {
+            if (_isFabOpen) {
+              _toggleFAB(); // 탭 전환 시 FAB가 열려있으면 닫기
+            }
             _selectedIndex = index;
           });
         },

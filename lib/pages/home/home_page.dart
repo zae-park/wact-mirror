@@ -69,6 +69,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     ),
                     color: bg_10),
                 child: TabBar(
+                  overlayColor: WidgetStateProperty.all(Colors.transparent),
                   dividerColor: Colors.transparent,
                   indicatorColor: Colors.transparent,
                   indicatorSize: TabBarIndicatorSize.tab,
