@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/init.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
@@ -20,6 +21,7 @@ class _AccountPageState extends State<AccountPage> {
   final _teamController = TextEditingController(); // 안 쓰는 것 같음
   String? _selectedGroup;
   String? _selectedTeam;
+  bool _isUsernameEmpty = true;
 
   var _loading = true;
 
@@ -32,7 +34,12 @@ class _AccountPageState extends State<AccountPage> {
       final userId = supabase.auth.currentUser!.id;
       final data =
           await supabase.from('profiles').select().eq('id', userId).single();
-      _usernameController.text = (data['username'] ?? '') as String;
+
+      // 이름 정보가 있는지 확인
+      final username = (data['username'] ?? '') as String;
+      _isUsernameEmpty = username.isEmpty;
+
+      _usernameController.text = username;
       _studentidController.text = (data['studentid'] ?? '') as String;
       _universityController.text = (data['university'] ?? '') as String;
       _selectedGroup = (data['group_name'] ?? '') as String;
@@ -85,6 +92,11 @@ class _AccountPageState extends State<AccountPage> {
     if (_groupCodeController.text == codeInfo) {
       try {
         await supabase.from('profiles').upsert(updates);
+
+        // 회원가입 완료 후 첫 로그인 플래그를 false로 설정
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('isFirstLogin', false);
+
         if (mounted) {
           const SnackBar(
             content: Text('Successfully updated profile!'),
@@ -212,11 +224,13 @@ class _AccountPageState extends State<AccountPage> {
           : ListView(
               padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
               children: [
-                TextFormField(
-                  controller: _usernameController,
-                  decoration: const InputDecoration(
-                      labelText: '이름', hintText: '성과 이름을 같이 입력해주세요.'),
-                ),
+                // 이름 입력 필드는 이름이 비어있을 때만 표시
+                if (_isUsernameEmpty)
+                  TextFormField(
+                    controller: _usernameController,
+                    decoration: const InputDecoration(
+                        labelText: '이름', hintText: '성과 이름을 같이 입력해주세요.'),
+                  ),
                 const SizedBox(height: 18),
                 TextFormField(
                   controller: _universityController,
@@ -238,7 +252,11 @@ class _AccountPageState extends State<AccountPage> {
                 DropdownButton<String>(
                   style: const TextStyle(color: Colors.black),
                   dropdownColor: Colors.white,
-                  value: _selectedGroup,
+                  value: _selectedGroup != null &&
+                          _selectedGroup!.isNotEmpty &&
+                          ['서중한액트', '동중한액트'].contains(_selectedGroup)
+                      ? _selectedGroup
+                      : null, // 유효하지 않은 값이거나 null이면 null로 설정
                   hint: const Text('합회'),
                   onChanged: (String? newValue) {
                     setState(() {
@@ -248,10 +266,6 @@ class _AccountPageState extends State<AccountPage> {
                   items: <String>[
                     '서중한액트',
                     '동중한액트',
-                    // '영남액트',
-                    // '충청액트',
-                    // '호남액트',
-                    // '제주액트',
                   ].map<DropdownMenuItem<String>>((String value) {
                     return DropdownMenuItem<String>(
                       value: value,
@@ -265,11 +279,17 @@ class _AccountPageState extends State<AccountPage> {
                     );
                   }).toList(),
                 ),
+
                 const SizedBox(height: 18),
                 DropdownButton<String>(
                   style: const TextStyle(color: Colors.black),
                   dropdownColor: Colors.white,
-                  value: _selectedTeam,
+                  value: _selectedTeam != null &&
+                          _selectedTeam!.isNotEmpty &&
+                          ['강남', '시내', '신촌', '인천', '태릉', '오비', '청년', '목회자']
+                              .contains(_selectedTeam)
+                      ? _selectedTeam
+                      : null, // 유효하지 않은 값이면 null로 설정
                   hint: const Text('소속'),
                   onChanged: (String? newValue) {
                     setState(() {

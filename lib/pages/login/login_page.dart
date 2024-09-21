@@ -51,7 +51,7 @@ class _LoginPageState extends State<LoginPage> {
       if (_redirecting) return;
       final session = data.session;
       if (session != null) {
-        // 사용자 프로필 조회하여 username 확인
+        // 사용자 프로필 조회
         final userProfile = await supabase
             .from('profiles')
             .select('username')
@@ -59,11 +59,23 @@ class _LoginPageState extends State<LoginPage> {
             .maybeSingle();
 
         debugPrint('사용자 프로필 조회: $userProfile');
-        if (userProfile == null) {
+
+        // 첫 로그인 여부 확인
+        final prefs = await SharedPreferences.getInstance();
+        final isFirstLogin = prefs.getBool('isFirstLogin') ?? true;
+
+        if (isFirstLogin ||
+            userProfile == null ||
+            userProfile['username'] == null) {
+          // 첫 로그인 또는 프로필에 이름 정보가 없을 경우 AccountPage로 이동
           Navigator.of(context).pushReplacementNamed('/account');
         } else {
+          // 이미 이름 정보가 있는 경우 홈으로 이동
           Navigator.of(context).pushReplacementNamed('/home');
         }
+
+        // 첫 로그인 처리 완료 플래그를 저장
+        await prefs.setBool('isFirstLogin', false);
       }
     });
   }
@@ -219,7 +231,7 @@ class _LoginPageState extends State<LoginPage> {
       final credential = await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
+          AppleIDAuthorizationScopes.fullName, // fullName 스코프 추가
         ],
         nonce: hashedNonce,
       );
@@ -238,8 +250,26 @@ class _LoginPageState extends State<LoginPage> {
         nonce: rawNonce,
       );
 
-      debugPrint('애플로그인성공');
-      // 스낵바가 사라질 때까지 기다린 후 페이지 이동
+      // 이름과 성을 조합하여 저장
+      final fullName = (credential.familyName != null &&
+              credential.givenName != null)
+          ? '${credential.familyName}${credential.givenName}' // 성 + 이름의 순서로 조합
+          : null;
+
+      if (fullName != null) {
+        final userId = supabase.auth.currentUser!.id;
+
+        // Supabase profiles 테이블에 fullName 저장
+        await supabase.from('profiles').upsert({
+          'id': userId,
+          'username': fullName,
+          'updated_at': DateTime.now().toIso8601String(),
+        });
+        debugPrint('사용자 이름 저장 완료: $fullName');
+      }
+
+      // Apple 로그인 성공 후 페이지 이동
+      Navigator.of(context).pushReplacementNamed('/home');
     } on SignInWithAppleAuthorizationException catch (e) {
       if (e.code == AuthorizationErrorCode.canceled) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -247,7 +277,6 @@ class _LoginPageState extends State<LoginPage> {
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          // SnackBar(content: Text('로그인 중 오류 발생: ${e.message}')),
           const SnackBar(content: Text('로그인을 취소했습니다.')),
         );
       }
