@@ -109,6 +109,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             ),
           ],
         ),
+        actions: [
+          SizedBox(width: 48), // trailing 자리에 아이콘 대신 빈 공간을 추가
+        ],
       ),
       body: TabBarView(
         controller: _tabController,

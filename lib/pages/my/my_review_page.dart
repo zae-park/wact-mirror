@@ -124,10 +124,6 @@ class _MyReviewPageState extends State<MyReviewPage> {
                       DateFormat('E', 'ko').format(parsedDate);
                   String formattedDay = DateFormat('d').format(parsedDate);
 
-                  // 참석자 수 ,값으로 세기
-                  String members = review['member'];
-                  int memberCount = members.split(',').length;
-
                   return InkWell(
                     onTap: () async {
                       final result = await Navigator.push(
@@ -240,9 +236,10 @@ class _MyReviewPageState extends State<MyReviewPage> {
                                               ),
                                               Row(
                                                 children: <Widget>[
-                                                  if (memberCount > 0)
+                                                  if (review['participants'] !=
+                                                      null)
                                                     Text(
-                                                      '$memberCount명 ',
+                                                      '${review['participants']}명 ',
                                                       style: const TextStyle(
                                                           fontSize: 12,
                                                           fontWeight:

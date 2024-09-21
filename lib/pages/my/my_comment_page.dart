@@ -63,6 +63,7 @@ class _MyCommentPageState extends State<MyCommentPage>
                     ),
                     color: bg_10),
                 child: TabBar(
+                  overlayColor: WidgetStateProperty.all(Colors.transparent),
                   dividerColor: Colors.transparent,
                   indicatorColor: Colors.transparent,
                   indicatorSize: TabBarIndicatorSize.tab,
@@ -109,6 +110,9 @@ class _MyCommentPageState extends State<MyCommentPage>
             ),
           ],
         ),
+        actions: [
+          SizedBox(width: 48), // trailing 자리에 아이콘 대신 빈 공간을 추가
+        ],
       ),
       body: TabBarView(
         controller: _tabController,
