@@ -60,22 +60,13 @@ class _LoginPageState extends State<LoginPage> {
 
         debugPrint('사용자 프로필 조회: $userProfile');
 
-        // 첫 로그인 여부 확인
-        final prefs = await SharedPreferences.getInstance();
-        final isFirstLogin = prefs.getBool('isFirstLogin') ?? true;
-
-        if (isFirstLogin ||
-            userProfile == null ||
-            userProfile['username'] == null) {
-          // 첫 로그인 또는 프로필에 이름 정보가 없을 경우 AccountPage로 이동
+        if (userProfile == null || userProfile['username'] == null) {
+          // 프로필에 이름 정보가 없을 경우 AccountPage로 이동
           Navigator.of(context).pushReplacementNamed('/account');
         } else {
           // 이미 이름 정보가 있는 경우 홈으로 이동
           Navigator.of(context).pushReplacementNamed('/home');
         }
-
-        // 첫 로그인 처리 완료 플래그를 저장
-        await prefs.setBool('isFirstLogin', false);
       }
     });
   }

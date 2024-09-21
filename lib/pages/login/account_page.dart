@@ -93,10 +93,6 @@ class _AccountPageState extends State<AccountPage> {
       try {
         await supabase.from('profiles').upsert(updates);
 
-        // 회원가입 완료 후 첫 로그인 플래그를 false로 설정
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('isFirstLogin', false);
-
         if (mounted) {
           const SnackBar(
             content: Text('Successfully updated profile!'),
