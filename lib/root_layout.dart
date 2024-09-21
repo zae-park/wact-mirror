@@ -91,7 +91,44 @@ class _RootLayoutState extends State<RootLayout>
             if (_isFabOpen) {
               _toggleFAB(); // 탭 전환 시 FAB가 열려있으면 닫기
             }
-            _selectedIndex = index;
+
+            if (_selectedIndex == 0) {
+              // 유저가 홈 탭에 있을 때
+              if (_homePageKey.currentState != null) {
+                if (_homePageKey.currentState!.tabController.index == 0) {
+                  // 유저가 '자유게시판'에 있을 때
+                  if (_homePageKey.currentState!.postPageKey.currentState
+                          ?.controller.position.pixels !=
+                      0) {
+                    // 위치가 최상단이 아니면 최상단으로 이동하면서 새로고침
+                    _homePageKey
+                        .currentState!.postPageKey.currentState?.controller
+                        .jumpTo(0);
+                    _homePageKey.currentState!.refreshPostPage();
+                  } else {
+                    // 최상단이면 '후기게시판'으로 이동
+                    _homePageKey.currentState!.tabController.animateTo(1);
+                  }
+                } else if (_homePageKey.currentState!.tabController.index ==
+                    1) {
+                  // 유저가 '후기게시판'에 있을 때
+                  if (_homePageKey.currentState!.reviewPageKey.currentState
+                          ?.controller.position.pixels !=
+                      0) {
+                    // 위치가 최상단이 아니면 최상단으로 이동하면서 새로고침
+                    _homePageKey
+                        .currentState!.reviewPageKey.currentState?.controller
+                        .jumpTo(0);
+                    _homePageKey.currentState!.refreshReviewPage();
+                  } else {
+                    // 최상단이면 '자유게시판'으로 이동
+                    _homePageKey.currentState!.tabController.animateTo(0);
+                  }
+                }
+              }
+            } else {
+              _selectedIndex = index; // 선택된 탭 인덱스를 업데이트
+            }
           });
         },
       ),

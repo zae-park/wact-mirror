@@ -1,4 +1,5 @@
 // 홈페이지로 자유게시판과 리뷰게시판 두 탭의 부모 위젯
+// 240921 외부에서 탭 컨트롤러에 접근할 수 있는 public getter 추가
 
 import 'package:flutter/material.dart';
 import 'package:wact/common/const/color.dart';
@@ -13,17 +14,17 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> with TickerProviderStateMixin {
-  late final TabController _tabController;
-  final GlobalKey<PostPageState> _postPageKey = GlobalKey<PostPageState>();
-  final GlobalKey<ReviewPageState> _reviewPageKey =
-      GlobalKey<ReviewPageState>();
+  late final TabController tabController;
+
+  final GlobalKey<PostPageState> postPageKey = GlobalKey<PostPageState>();
+  final GlobalKey<ReviewPageState> reviewPageKey = GlobalKey<ReviewPageState>();
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(vsync: this, length: 2);
+    tabController = TabController(vsync: this, length: 2);
     // TabController에 리스너 추가
-    _tabController.addListener(() {
+    tabController.addListener(() {
       if (!mounted) return;
       setState(() {
         // 탭이 변경될 때 UI를 갱신
@@ -33,18 +34,18 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   void refreshPostPage() {
     debugPrint('이제 곧 실제 refresh동작 실행');
-    _postPageKey.currentState?.refresh();
+    postPageKey.currentState?.refresh();
     debugPrint('HomePage: PostPage refresh동작 실행완료');
   }
 
   void refreshReviewPage() {
-    _reviewPageKey.currentState?.refresh();
+    reviewPageKey.currentState?.refresh();
     debugPrint('HomePage: ReviewPage refresh동작 실행완료');
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
+    tabController.dispose();
     super.dispose();
   }
 
@@ -89,7 +90,7 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ),
                     ],
                   ),
-                  controller: _tabController,
+                  controller: tabController,
 
                   labelColor: Colors.white, // 선택된 탭의 글씨색
                   unselectedLabelColor: bg_70,
@@ -118,11 +119,11 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
         ),
       ),
       body: TabBarView(
-        controller: _tabController,
+        controller: tabController,
         children: [
-          PostPage(key: _postPageKey),
+          PostPage(key: postPageKey),
           ReviewPage(
-            key: _reviewPageKey,
+            key: reviewPageKey,
           ),
         ],
       ),
