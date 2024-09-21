@@ -92,8 +92,8 @@ class _RootLayoutState extends State<RootLayout>
               _toggleFAB(); // 탭 전환 시 FAB가 열려있으면 닫기
             }
 
-            if (_selectedIndex == 0) {
-              // 유저가 홈 탭에 있을 때
+            if (index == 0) {
+              // '홈' 탭이 선택되었을 때 항상 실행되도록 수정
               if (_homePageKey.currentState != null) {
                 if (_homePageKey.currentState!.tabController.index == 0) {
                   // 유저가 '자유게시판'에 있을 때
@@ -126,9 +126,10 @@ class _RootLayoutState extends State<RootLayout>
                   }
                 }
               }
-            } else {
-              _selectedIndex = index; // 선택된 탭 인덱스를 업데이트
             }
+
+            // 현재 선택된 탭과 상관없이 'index' 업데이트 (홈/마이페이지 전환 처리)
+            _selectedIndex = index;
           });
         },
       ),
