@@ -33,31 +33,133 @@ class _PostAddPageState extends State<PostAddPage> {
   final _contentEditingController = TextEditingController();
   List<XFile> _currentImages = [];
   bool _isLoading = false;
+  bool _isUploading = false; // 업로드 상태 추적 플래그 추가
+  List<String> uploadedFilePaths = [];
+  List<String> uploadedCompressedFilePaths = [];
 
   Future<void> _pickImages() async {
     final pickedFiles = await ImagePicker().pickMultiImage();
 
-    // 현재 이미지 수와 새로 선택된 이미지 수의 합이 6을 초과하는지 확인
-    if (_currentImages.length + pickedFiles.length > 6) {
+    if (_currentImages.length + pickedFiles.length > 10) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('최대 6장의 이미지만 선택할 수 있습니다.')));
+          const SnackBar(content: Text('최대 10장의 이미지만 선택할 수 있습니다.')));
     } else {
       setState(() {
         _currentImages.addAll(pickedFiles);
       });
+
+      // 선택된 이미지를 바로 스토리지에 저장
+      await _uploadImages(pickedFiles);
     }
   }
 
-  // 이미지 없이 업로드 가능
-  Future<bool> _uploadPost() async {
+  // 이미지 선택 후 즉시 스토리지에 원본 및 압축본을 저장하는 함수
+  Future<void> _uploadImages(List<XFile> selectedImages) async {
+    final user = supabase.auth.currentUser;
+    if (user == null) throw Exception('User not found');
+
+    List<String> filePaths = selectedImages.map((imageFile) {
+      final fileExt = imageFile.path.split('.').last;
+      final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
+      return '${user.id}/$fileName';
+    }).toList();
+
+    List<String> compressedFilePaths = selectedImages.map((imageFile) {
+      final fileExt = imageFile.path.split('.').last;
+      final fileName =
+          '${DateTime.now().toIso8601String()}_compressed.$fileExt';
+      return '${user.id}/$fileName';
+    }).toList();
+
+    setState(() {
+      _isUploading = true; // 업로드 시작 시 상태 설정
+    });
+
+    try {
+      for (int i = 0; i < selectedImages.length; i++) {
+        var imageFile = selectedImages[i];
+        var filePath = filePaths[i];
+        var compressedFilePath = compressedFilePaths[i];
+
+        final imageBytes = await imageFile.readAsBytes();
+        final fileExt = imageFile.path.split('.').last;
+
+        // 이미지 압축
+        final compressedImageBytes =
+            await FlutterImageCompress.compressWithList(
+          imageBytes,
+          quality: 80, // 80% 품질로 압축
+        );
+
+        // 원본 이미지 업로드
+        await supabase.storage.from('post_photo').uploadBinary(
+              filePath,
+              imageBytes,
+              fileOptions: FileOptions(contentType: 'image/$fileExt'),
+            );
+        uploadedFilePaths.add(filePath); // 업로드된 파일 경로 저장
+
+        // 압축본 이미지 업로드
+        await supabase.storage.from('post_compressed_photo').uploadBinary(
+              compressedFilePath,
+              compressedImageBytes,
+              fileOptions: FileOptions(contentType: 'image/$fileExt'),
+            );
+        uploadedCompressedFilePaths.add(compressedFilePath); // 압축본 경로 저장
+      }
+    } catch (e) {
+      debugPrint('업로드 중 오류 발생: $e');
+    } finally {
+      setState(() {
+        _isUploading = false; // 업로드 종료 시 상태 변경
+      });
+    }
+  }
+
+  // 스토리지에서 이미지를 삭제하는 함수
+  Future<void> _deleteUploadedImages() async {
+    for (String filePath in uploadedFilePaths) {
+      try {
+        await supabase.storage.from('post_photo').remove([filePath]);
+        debugPrint('원본 이미지 삭제 완료: $filePath');
+      } catch (e) {
+        debugPrint('원본 이미지 삭제 중 오류 발생: $filePath, $e');
+      }
+    }
+    for (String compressedFilePath in uploadedCompressedFilePaths) {
+      try {
+        await supabase.storage
+            .from('post_compressed_photo')
+            .remove([compressedFilePath]);
+        debugPrint('압축 이미지 삭제 완료: $compressedFilePath');
+      } catch (e) {
+        debugPrint('압축 이미지 삭제 중 오류 발생: $compressedFilePath, $e');
+      }
+    }
+  }
+
+  // 업로드 중인 작업 중지 및 업로드된 이미지만 삭제하는 함수
+  Future<void> _cancelUploadAndDeleteImages() async {
+    // 업로드가 진행 중이면, 업로드된 이미지만 삭제
+    if (_isUploading) {
+      debugPrint('업로드가 진행 중입니다. 일부 업로드된 이미지를 삭제합니다.');
+      await _deleteUploadedImages();
+    } else {
+      debugPrint('모든 이미지가 이미 업로드된 상태입니다.');
+    }
+  }
+
+// 게시글 업로드 (이미지 업로드 완료 후 게시글 업로드)
+  Future<bool> _uploadPost(List<XFile> images) async {
     if (_isLoading) return false;
 
     try {
       setState(() => _isLoading = true);
 
+      // AlertDialog로 로딩 상태를 사용자에게 표시
       showDialog(
         context: context,
-        barrierDismissible: false,
+        barrierDismissible: false, // 사용자가 다이얼로그 외부를 터치해도 닫히지 않도록 설정
         builder: (BuildContext context) {
           return const AlertDialog(
             backgroundColor: Colors.black,
@@ -65,78 +167,42 @@ class _PostAddPageState extends State<PostAddPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '게시글을 저장중입니다.',
+                  '게시글을 저장중입니다...',
                   style: TextStyle(color: Colors.white),
-                ),
+                )
               ],
             ),
           );
         },
       );
 
+      // 모든 이미지가 업로드될 때까지 대기
+      await Future.doWhile(() async {
+        await Future.delayed(const Duration(milliseconds: 100));
+        return uploadedFilePaths.length != _currentImages.length ||
+            uploadedCompressedFilePaths.length != _currentImages.length;
+      });
+
       final user = supabase.auth.currentUser;
       if (user == null) throw Exception('User not found');
 
       List<String> imageUrls = [];
-      // 압축된 이미지의 URL 리스트
       List<String> compressedImageUrls = [];
 
-      // 이미지가 있을 경우에만 업로드 로직 실행
-      if (_currentImages.isNotEmpty) {
-        // 파일 경로 리스트 생성
-        List<String> filePaths = _currentImages.map((imageFile) {
-          final fileExt = imageFile.path.split('.').last;
-          final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
-          return '${user.id}/$fileName';
-        }).toList();
-
-        // 압축된 이미지의 경로 리스트 생성
-        List<String> compressedFilePaths = _currentImages.map((imageFile) {
-          final fileExt = imageFile.path.split('.').last;
-          final fileName =
-              '${DateTime.now().toIso8601String()}_compressed.$fileExt';
-          return '${user.id}/$fileName';
-        }).toList();
-
-        // 이미지 업로드
-        for (int i = 0; i < _currentImages.length; i++) {
-          var imageFile = _currentImages[i];
-          var filePath = filePaths[i];
-          var compressedFilePath = compressedFilePaths[i];
-
-          final imageBytes = await imageFile.readAsBytes();
-          final fileExt = imageFile.path.split('.').last;
-
-          // 이미지 압축
-          final compressedImageBytes =
-              await FlutterImageCompress.compressWithList(
-            imageBytes,
-            quality: 80, // 70% 품질로 압축
-          );
-
-          await supabase.storage.from('post_photo').uploadBinary(
-              filePath, imageBytes,
-              fileOptions: FileOptions(contentType: 'image/$fileExt'));
-
-          // 압축된 이미지 업로드
-          await supabase.storage.from('post_compressed_photo').uploadBinary(
-              compressedFilePath, compressedImageBytes,
-              fileOptions:
-                  FileOptions(contentType: 'compressedImage/$fileExt'));
-        }
-
-        // 이미지 업로드 후 서명된 URL 생성
+      // 이미지가 있으면 이미지의 경로로 서명된 URL 생성
+      if (uploadedFilePaths.isNotEmpty) {
+        // 원본 이미지의 서명된 URL 생성
         List<SignedUrl> signedUrls = await supabase.storage
             .from('post_photo')
-            .createSignedUrls(filePaths, 60 * 60 * 24 * 365 * 10);
+            .createSignedUrls(uploadedFilePaths, 60 * 60 * 24 * 365 * 10);
 
-        // 서명된 URL 추출 및 저장
         imageUrls.addAll(signedUrls.map((e) => e.signedUrl));
 
-        // 압축된 이미지의 서명된 URL 생성
+        // 압축 이미지의 서명된 URL 생성
         List<SignedUrl> compressedSignedUrls = await supabase.storage
             .from('post_compressed_photo')
-            .createSignedUrls(compressedFilePaths, 60 * 60 * 24 * 365 * 10);
+            .createSignedUrls(
+                uploadedCompressedFilePaths, 60 * 60 * 24 * 365 * 10);
 
         compressedImageUrls
             .addAll(compressedSignedUrls.map((e) => e.signedUrl));
@@ -147,11 +213,9 @@ class _PostAddPageState extends State<PostAddPage> {
           .select('username')
           .match({'id': user.id}).single();
 
-      print('유저: $profileResponse');
-
       final username = profileResponse['username'] as String?;
-      print('유저 이름: $username');
 
+      // 게시글 데이터 DB에 저장
       await supabase.from('posts').insert({
         'author_id': user.id,
         'author': username,
@@ -163,17 +227,13 @@ class _PostAddPageState extends State<PostAddPage> {
 
       widget.onUpload(imageUrls);
 
-      if (mounted) {
-        Navigator.pop(context); // 다이얼로그 닫기
-        return true;
-        debugPrint('게시글 업로드 성공');
-      }
+      return true;
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
+        Navigator.pop(context); // AlertDialog 닫기
       }
     }
-    return false; // 모든 조건이 충족되지 않을 경우 false 반환
   }
 
   @override
@@ -193,6 +253,10 @@ class _PostAddPageState extends State<PostAddPage> {
 
   @override
   void dispose() {
+    if (_currentImages.isNotEmpty) {
+      // '게시' 버튼을 누르지 않고 페이지를 벗어날 경우 업로드를 중단하고 이미지를 삭제
+      _cancelUploadAndDeleteImages();
+    }
     _titleEditingController.dispose();
     _contentEditingController.dispose();
     super.dispose();
@@ -212,7 +276,7 @@ class _PostAddPageState extends State<PostAddPage> {
             mainAxisSpacing: 8.0,
             crossAxisSpacing: 8.0,
           ),
-          itemCount: min(_currentImages.length + 1, 6),
+          itemCount: min(_currentImages.length + 1, 10),
           itemBuilder: (BuildContext context, int index) {
             if (index < _currentImages.length) {
               return DragTarget<XFile>(
@@ -264,7 +328,7 @@ class _PostAddPageState extends State<PostAddPage> {
                   );
                 },
               );
-            } else if (_currentImages.length < 6) {
+            } else if (_currentImages.length < 10) {
               return GestureDetector(
                 onTap: _pickImages,
                 child: Container(
@@ -283,175 +347,144 @@ class _PostAddPageState extends State<PostAddPage> {
       );
     }
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        surfaceTintColor: Colors.white,
-        iconTheme: const IconThemeData(color: Color.fromARGB(255, 42, 31, 31)),
+    return WillPopScope(
+      onWillPop: () async {
+        if (_currentImages.isNotEmpty) {
+          // 뒤로가기 누르면 업로드 중지 및 이미지 삭제
+          await _cancelUploadAndDeleteImages();
+        }
+        return true; // true를 반환하여 실제로 뒤로가기를 수행
+      },
+      child: Scaffold(
         backgroundColor: Colors.white,
-        elevation: 0,
-        leading: Transform.translate(
-          offset: const Offset(12, 0.0),
-          child: IconButton(
-            iconSize: 34,
-            icon: Image.asset('assets/imgs/icon/btn_back_grey@3x.png'),
-            onPressed: () {
-              Navigator.pop(context);
-            },
+        appBar: AppBar(
+          surfaceTintColor: Colors.white,
+          iconTheme:
+              const IconThemeData(color: Color.fromARGB(255, 42, 31, 31)),
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: Transform.translate(
+            offset: const Offset(12, 0.0),
+            child: IconButton(
+              iconSize: 34,
+              icon: Image.asset('assets/imgs/icon/btn_back_grey@3x.png'),
+              onPressed: () async {
+                if (_currentImages.isNotEmpty) {
+                  // AppBar 뒤로가기 버튼 클릭 시 이미지 삭제
+                  await _deleteUploadedImages();
+                }
+                Navigator.pop(context); // 페이지에서 벗어남
+              },
+            ),
           ),
-        ),
-        title: const Text(
-          '글쓰기',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
+          title: const Text(
+            '글쓰기',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-        centerTitle: true,
-        actions: <Widget>[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(0, 9, 20, 9),
-            child: SizedBox(
-              width: 52,
-              child: GestureDetector(
-                onTap: () async {
-                  if (_titleEditingController.text.isNotEmpty ||
-                      _contentEditingController.text.isNotEmpty) {
-                    debugPrint('게시글 업로드 버튼 클릭');
-                    // await _uploadPost().then((_) {
-                    //   debugPrint('게시글 업로드 성공');
-                    //   // context.findAncestorStateOfType<HomePageState>()를 사용하는 대신 전달된 GlobalKey를 활용합니다.
-                    //   final homePageState = widget.homePageKey.currentState;
-                    //   debugPrint('homePageState: $homePageState');
-                    //   // if (homePageState != null) {
-                    //   homePageState?.refreshPostPage();
-                    //   debugPrint('PostPage 새로고침 완료');
-                    //   // }
-                    //   Navigator.pop(context, true);
-                    // });
-                    bool result = await _uploadPost();
-                    Navigator.pop(
-                        context, result); // 여기서 새로고침 로직을 제거하고, 결과만 반환합니다.
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        backgroundColor: Colors.black,
-                        content: Text(
-                          '내용을 작성해주세요.',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w500, color: Colors.white),
+          centerTitle: true,
+          actions: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(0, 9, 20, 9),
+              child: SizedBox(
+                width: 52,
+                child: GestureDetector(
+                  onTap: () async {
+                    if (_titleEditingController.text.isNotEmpty ||
+                        _contentEditingController.text.isNotEmpty) {
+                      debugPrint('게시글 업로드 버튼 클릭');
+                      // await _uploadPost().then((_) {
+                      //   debugPrint('게시글 업로드 성공');
+                      //   // context.findAncestorStateOfType<HomePageState>()를 사용하는 대신 전달된 GlobalKey를 활용합니다.
+                      //   final homePageState = widget.homePageKey.currentState;
+                      //   debugPrint('homePageState: $homePageState');
+                      //   // if (homePageState != null) {
+                      //   homePageState?.refreshPostPage();
+                      //   debugPrint('PostPage 새로고침 완료');
+                      //   // }
+                      //   Navigator.pop(context, true);
+                      // });
+                      bool result = await _uploadPost(_currentImages);
+                      Navigator.pop(
+                          context, result); // 여기서 새로고침 로직을 제거하고, 결과만 반환합니다.
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          backgroundColor: Colors.black,
+                          content: Text(
+                            '내용을 작성해주세요.',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white),
+                          ),
                         ),
-                      ),
-                    );
-                  }
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(19),
-                      color: Colors.black),
-                  child: const Center(
-                    child: Text(
-                      '게시',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
+                      );
+                    }
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(19),
+                        color: Colors.black),
+                    child: const Center(
+                      child: Text(
+                        '게시',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: <Widget>[
-            buildImageGrid(),
+          ],
+        ),
+        body: SingleChildScrollView(
+          child: Column(
+            children: <Widget>[
+              buildImageGrid(),
 
-            // 제목과 내용 입력
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: SizedBox(
-                height: (MediaQuery.of(context).size.height * 0.65 - 56),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          '제목',
-                          style: TextStyle(
-                            color: bg_90,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
+              // 제목과 내용 입력
+              Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: SizedBox(
+                  height: (MediaQuery.of(context).size.height * 0.65 - 56),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            '제목',
+                            style: TextStyle(
+                              color: bg_90,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                            ),
                           ),
-                        ),
-                        Text(
-                          '${_titleEditingController.text.length}/15',
-                          style: const TextStyle(
-                            color: bg_90,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
+                          Text(
+                            '${_titleEditingController.text.length}/15',
+                            style: const TextStyle(
+                              color: bg_90,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    TextFormField(
-                      controller: _titleEditingController,
-                      maxLines: 1,
-                      maxLength: 15,
-                      cursorColor: primary,
-                      decoration: const InputDecoration(
-                        hintText: '제목을 입력해주세요.',
-                        hintStyle: TextStyle(
-                          color: bg_70,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 15,
-                        ),
-                        border: InputBorder.none,
-                        counterText: '',
+                        ],
                       ),
-                    ),
-                    // 색상 정보 복사 버튼과 사진 정보 복사 버튼
-                    const Divider(
-                      color: bg_30,
-                    ),
-                    const SizedBox(
-                      height: 16,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          '내용',
-                          style: TextStyle(
-                            color: bg_90,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                        Text(
-                          '${_contentEditingController.text.length}/150',
-                          style: const TextStyle(
-                            color: bg_90,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _contentEditingController,
-                        maxLines: 5,
-                        maxLength: 150,
+                      TextFormField(
+                        controller: _titleEditingController,
+                        maxLines: 1,
+                        maxLength: 15,
                         cursorColor: primary,
                         decoration: const InputDecoration(
-                          hintText: '내용을 작성해주세요.',
+                          hintText: '제목을 입력해주세요.',
                           hintStyle: TextStyle(
                             color: bg_70,
                             fontWeight: FontWeight.w500,
@@ -459,15 +492,61 @@ class _PostAddPageState extends State<PostAddPage> {
                           ),
                           border: InputBorder.none,
                           counterText: '',
-                          focusColor: primary,
                         ),
                       ),
-                    ),
-                  ],
+                      // 색상 정보 복사 버튼과 사진 정보 복사 버튼
+                      const Divider(
+                        color: bg_30,
+                      ),
+                      const SizedBox(
+                        height: 16,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            '내용',
+                            style: TextStyle(
+                              color: bg_90,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                          Text(
+                            '${_contentEditingController.text.length}/150',
+                            style: const TextStyle(
+                              color: bg_90,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _contentEditingController,
+                          maxLines: 5,
+                          maxLength: 150,
+                          cursorColor: primary,
+                          decoration: const InputDecoration(
+                            hintText: '내용을 작성해주세요.',
+                            hintStyle: TextStyle(
+                              color: bg_70,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 15,
+                            ),
+                            border: InputBorder.none,
+                            counterText: '',
+                            focusColor: primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
