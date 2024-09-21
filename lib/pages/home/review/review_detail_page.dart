@@ -78,7 +78,7 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
         .match({'id': widget.review['id']}).select();
     print('supabase 삭제: $response');
     // 삭제 성공
-    Navigator.of(context).pop(true); // 삭제 후 이전 화면으로 돌아감
+    Navigator.of(context).pop(true); // 삭제 후 이전 화면으로 돌아가며 true 값 전달
   }
 
   // 댓글 추가 함수

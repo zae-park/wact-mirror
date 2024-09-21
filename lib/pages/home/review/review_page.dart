@@ -188,7 +188,7 @@ class ReviewPageState extends State<ReviewPage> {
 
                           return InkWell(
                             onTap: () async {
-                              await Navigator.push(
+                              final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => ReviewDetailPage(
@@ -198,6 +198,10 @@ class ReviewPageState extends State<ReviewPage> {
                                   ),
                                 ),
                               );
+
+                              if (result == true) {
+                                refresh(); // 게시글 삭제 후 새로고침 실행
+                              }
                             },
                             child: Column(
                               children: [
