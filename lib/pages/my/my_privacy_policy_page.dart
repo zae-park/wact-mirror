@@ -46,7 +46,10 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
         foregroundColor: Colors.black,
       ),
       body: _pdfPath == null
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(
+              color: Colors.black,
+            ))
           : PDFView(
               filePath: _pdfPath,
             ),

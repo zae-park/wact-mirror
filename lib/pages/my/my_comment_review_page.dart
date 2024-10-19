@@ -89,7 +89,10 @@ class _MyCommentReviewPageState extends State<MyCommentReviewPage> {
           stream: _stream,
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(
+                  child: CircularProgressIndicator(
+                color: Colors.black,
+              ));
             }
             final reviews = snapshot.data!;
             return ListView.builder(

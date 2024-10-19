@@ -70,7 +70,10 @@ class _MyCommentPostPageState extends State<MyCommentPostPage> {
             stream: _stream,
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(
+                    child: CircularProgressIndicator(
+                  color: Colors.black,
+                ));
               }
               final posts = snapshot.data!;
               return ListView.builder(

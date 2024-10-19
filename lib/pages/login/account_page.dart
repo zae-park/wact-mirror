@@ -216,7 +216,10 @@ class _AccountPageState extends State<AccountPage> {
         backgroundColor: Colors.white,
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(
+              color: Colors.black,
+            ))
           : ListView(
               padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
               children: [
