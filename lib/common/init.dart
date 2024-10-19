@@ -1,9 +1,14 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:wact/firebase_options.dart';
 
 Future<void> initializeApp() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // 카톡앱 '캄피-TEST' 키
   KakaoSdk.init(

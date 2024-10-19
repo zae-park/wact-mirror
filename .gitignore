@@ -49,3 +49,5 @@ app.*.map.json
 linux/**
 macos/**
 windows/**
+
+/supabase/functions/service-account.json

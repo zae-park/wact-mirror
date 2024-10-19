@@ -1,5 +1,8 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:wact/common/init.dart';
 import 'package:wact/pages/home/home_page.dart';
 import 'package:wact/pages/home/post/post_add_page.dart';
 import 'package:wact/pages/home/review/review_add_page.dart';
@@ -25,12 +28,62 @@ class _RootLayoutState extends State<RootLayout>
   @override
   void initState() {
     super.initState();
+
+    supabase.auth.onAuthStateChange.listen((event) async {
+      if (event.event == AuthChangeEvent.signedIn) {
+        await FirebaseMessaging.instance.requestPermission();
+
+        await FirebaseMessaging.instance.getAPNSToken();
+        final fcmToken = await FirebaseMessaging.instance.getToken();
+        if (fcmToken != null) {
+          await _setFcmToken(fcmToken);
+        }
+      }
+    });
+    FirebaseMessaging.instance.onTokenRefresh.listen((fcmToken) {
+      _setFcmToken(fcmToken);
+    });
+
+    FirebaseMessaging.onMessage.listen((payload) {
+      final notification = payload.notification;
+      if (notification != null) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text(notification.title ?? 'Notification'),
+              content: Text(notification.body ?? 'No content'),
+              actions: [
+                TextButton(
+                  child: Text('OK'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      }
+    });
+
     _scrollController = ScrollController();
     _screens = [
       HomePage(key: _homePageKey), // initState에서 _screens를 초기화합니다.
       // const QTRoom(),
       const MyPage(),
     ];
+  }
+
+  // 241019 FCM 토큰 설정
+  Future<void> _setFcmToken(String fcmToken) async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId != null) {
+      await supabase.from('profiles').upsert({
+        'id': userId,
+        'fcm_token': fcmToken,
+      });
+    }
   }
 
   void _toggleFAB() {

@@ -420,25 +420,25 @@ class _LoginPageState extends State<LoginPage> {
                   // const SizedBox(
                   //   width: 20,
                   // ),
-                  GestureDetector(
-                    onTap: () async {
-                      if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
-                        await _nativeGoogleSignin();
-                      }
-                      await supabase.auth.signInWithOAuth(OAuthProvider.google);
-                    },
-                    child: SizedBox(
-                      width: 54,
-                      height: 54,
-                      child: Image.asset(
-                        'assets/imgs/logo/sns/google.png',
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    width: 20,
-                  ),
+                  // GestureDetector(
+                  //   onTap: () async {
+                  //     if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+                  //       await _nativeGoogleSignin();
+                  //     }
+                  //     await supabase.auth.signInWithOAuth(OAuthProvider.google);
+                  //   },
+                  //   child: SizedBox(
+                  //     width: 54,
+                  //     height: 54,
+                  //     child: Image.asset(
+                  //       'assets/imgs/logo/sns/google.png',
+                  //       fit: BoxFit.contain,
+                  //     ),
+                  //   ),
+                  // ),
+                  // const SizedBox(
+                  //   width: 20,
+                  // ),
                   if (Platform.isIOS)
                     GestureDetector(
                       onTap: _isLoading ? null : _appleSignIn,
