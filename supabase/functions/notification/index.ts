@@ -101,13 +101,18 @@ Deno.serve(async (req) => {
               title: notificationTitle,    // 분기된 제목 사용
               body: notificationBody,       // 분기된 본문 사용
             },
-          },
+            data: {
+              click_action: payload.table === 'posts'
+                ? `post_detail?id=${payload.record.id}`
+                : `review_detail?id=${payload.record.id}`,
+            },
+          }, 
         }),
       }
     )
 
     const resData = await res.json()
-    if (res.status < 200 || 299 < res.status) {
+    if (res.status < 200 || res.status > 299) {
       console.error('푸시 알림 전송 실패:', resData)
     }
   }

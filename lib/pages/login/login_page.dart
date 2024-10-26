@@ -301,9 +301,7 @@ class _LoginPageState extends State<LoginPage> {
       await prefs.setBool('isLoggedIn', true);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('애플 로그인 성공')),
-        );
+        debugPrint('애플 로그인 성공');
       }
     } on AuthException catch (error) {
       debugPrint('애플 로그인 AuthException 오류: $error');
