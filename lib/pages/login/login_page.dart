@@ -253,7 +253,7 @@ class _LoginPageState extends State<LoginPage> {
         // Supabase profiles 테이블에 fullName 저장
         await supabase.from('profiles').upsert({
           'id': userId,
-          'username': fullName,
+          'full_name': fullName,
           'updated_at': DateTime.now().toIso8601String(),
         });
         debugPrint('사용자 이름 저장 완료: $fullName');

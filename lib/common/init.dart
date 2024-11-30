@@ -7,6 +7,7 @@ import 'package:wact/firebase_options.dart';
 Future<void> initializeApp() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
+    name: 'actapp',
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
