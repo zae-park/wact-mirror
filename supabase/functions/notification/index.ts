@@ -19,7 +19,8 @@ interface Review {
 
 interface Comment {
   id: string
-  post_id: number
+  target_table: 'posts' | 'reviews'
+  target_id: number
   author_id: string
   content: string
 }
@@ -50,12 +51,24 @@ Deno.serve(async (req) => {
   if (payload.table === 'posts') {
     // 일반 게시글
     const postRecord = payload.record as Post
+
+     // 작성자 본인에게는 알림 제외
+     if (postRecord.author_id === postRecord.author_id) {
+      return new Response('작성자가 본인이므로 알림 제외', { status: 200 })
+    }
+
     notificationTitle = '새 글!'
     notificationBody = `[${postRecord.title}]`
     notificationTargetAuthorId = postRecord.author_id
   } else if (payload.table === 'reviews') {
     // 후기 게시글
     const reviewRecord = payload.record as Review
+
+    // 작성자 본인에게는 알림 제외
+    if (reviewRecord.author_id === reviewRecord.author_id) {
+      return new Response('작성자가 본인이므로 알림 제외', { status: 200 })
+    }
+    
     const branches = ['강남', '시내', '신촌', '인천', '태릉']
     if (branches.includes(reviewRecord.team)) {
       notificationTitle = `[${reviewRecord.team}지부] 후기`
@@ -67,25 +80,26 @@ Deno.serve(async (req) => {
   } else if (payload.table === 'comments') {
     // 댓글
     const commentRecord = payload.record as Comment
-    // 댓글 대상 게시글의 작성자 가져오기
-    const { data: post, error } = await supabase
-      .from('posts')
-      .select('author_id, title')
-      .eq('id', commentRecord.post_id)
+
+    // 댓글 대상 게시글 또는 후기의 작성자 가져오기
+    const { data: target, error } = await supabase
+      .from(commentRecord.target_table)
+      .select('author_id, title, author')
+      .eq('id', commentRecord.target_id)
       .single()
 
-    if (error || !post) {
-      return new Response('댓글 대상 게시글 정보를 가져오지 못했습니다.', { status: 400 })
+    if (error || !target) {
+      return new Response('댓글 대상 정보를 가져오지 못했습니다.', { status: 400 })
     }
 
-    // 댓글 작성자가 글 작성자인 경우 알림 생략
-    if (post.author_id === commentRecord.author_id) {
-      return new Response('댓글 작성자가 글 작성자이므로 알림 생략', { status: 200 })
+    // 댓글 작성자가 대상 작성자인 경우 알림 생략
+    if (target.author_id === commentRecord.author_id) {
+      return new Response('댓글 작성자가 대상 작성자이므로 알림 생략', { status: 200 })
     }
 
-    notificationTitle = '새 댓글!'
-    notificationBody = `게시글 [${post.title}]에 새로운 댓글이 있습니다.`
-    notificationTargetAuthorId = post.author_id
+    notificationTitle = `'${target.author}'님의 댓글!`
+    notificationBody = `[${target.title}]에 새로운 댓글이 있습니다.`
+    notificationTargetAuthorId = target.author_id
   } else {
     return new Response('알 수 없는 테이블', { status: 400 })
   }
@@ -131,10 +145,12 @@ Deno.serve(async (req) => {
           },
           data: {
             click_action: payload.table === 'posts'
-              ? `post_detail?id=${(payload.record as Post).id}`
-              : payload.table === 'reviews'
-              ? `review_detail?id=${(payload.record as Review).id}`
-              : `post_detail?id=${(payload.record as Comment).post_id}`,
+            ? `post_detail?id=${(payload.record as Post).id}`
+            : payload.table === 'reviews'
+            ? `review_detail?id=${(payload.record as Review).id}`
+            : payload.table === 'comments'
+            ? `post_detail?id=${(payload.record as Comment).target_id}` // 댓글의 대상 게시글/후기로 이동
+            : '', // fallback 경로
           },
         },
       }),

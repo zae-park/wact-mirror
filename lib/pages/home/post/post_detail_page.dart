@@ -60,12 +60,13 @@ class _PostDetailPageState extends State<PostDetailPage> {
   Future<void> fetchComments() async {
     final response = await Supabase.instance.client
         .from('comments')
-        .select()
-        .eq('post_id', widget.post['id'])
+        .select('*') // 필드를 명시적으로 지정 가능
+        .eq('target_id', widget.post['id'])
+        .eq('target_table', 'posts') // target_table 추가
         .order('created_at', ascending: true);
 
     setState(() {
-      comments = response as List<dynamic>;
+      comments = List<dynamic>.from(response);
     });
   }
 
@@ -156,10 +157,10 @@ class _PostDetailPageState extends State<PostDetailPage> {
       final username = profileResponse['username'] as String?;
       print('유저 이름: $username');
 
-      // post_id 타입 확인 및 변환
+      // target_id 타입 확인 및 변환
       final postId = widget.post['id'];
       if (postId == null || !(postId is int || postId is String)) {
-        throw Exception('올바르지 않은 post_id: $postId');
+        throw Exception('올바르지 않은 target_id: $postId');
       }
       print('Post ID: $postId');
 
@@ -167,7 +168,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
       var uuid = const Uuid();
       // final newComment = {
       //   'id': uuid.v4(), // UUID 생성
-      //   'post_id': postId, // 게시글 ID
+      //   'target_id': postId, // 게시글 ID
       //   'author_id': user?.id, // 작성자 ID
       //   'author': username, // 작성자 이름
       //   'content': content, // 댓글 내용
@@ -179,7 +180,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
       // 댓글 추가
       final response = await Supabase.instance.client.from('comments').insert({
         'id': uuid.v4(), // UUID 생성
-        'post_id': postId, // 게시글 ID
+        'target_id': widget.post['id'], // 게시글 ID
+        'target_table': 'posts', // target_table 설정
         'author_id': user!.id, // 작성자 ID
         'author': username, // 작성자 이름
         'content': content, // 댓글 내용
@@ -210,7 +212,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
     print('댓글 삭제 응답: $response');
 
-    setState(() {}); // UI 업데이트를 위해 호출
+    fetchComments(); // 댓글 목록 다시 로드
   }
 
   // 문자열 필터링
@@ -447,6 +449,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
               ),
 
             // 댓글 목록
+// 댓글 표시
             Column(
               children: List.generate(
                 comments.length,
@@ -494,9 +497,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                   icon: const Icon(Icons.delete_outline,
                                       size: 16),
                                   onPressed: () {
-                                    if (comment['id'] != null) {
-                                      deleteComment(comment['id'], context);
-                                    }
+                                    deleteComment(comment['id'], context);
                                   })
                               : null,
                         ),

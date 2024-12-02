@@ -41,15 +41,16 @@ class PostPageState extends State<PostPage> {
   Stream<Map<int, int>> _loadCommentCountStream() {
     return Supabase.instance.client
         .from('comments')
-        .stream(primaryKey: ['id']).map((data) {
-      // 댓글 개수를 계산하여 Map으로 반환 (post_id: 댓글 수)
-      final counts = <int, int>{};
-      for (var comment in data) {
-        final postId = comment['post_id'] as int;
-        counts[postId] = (counts[postId] ?? 0) + 1;
-      }
-      return counts;
-    });
+        .stream(primaryKey: ['id'])
+        .eq('target_table', 'posts') // posts 테이블에 해당하는 댓글만 필터링
+        .map((data) {
+          final counts = <int, int>{};
+          for (var comment in data) {
+            final postId = comment['target_id'] as int; // target_id에 매핑
+            counts[postId] = (counts[postId] ?? 0) + 1;
+          }
+          return counts;
+        });
   }
 
   void refresh() {

@@ -33,6 +33,7 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
   late User? user;
   late bool isAuthor;
   List<dynamic>? imageUrls;
+  List<Map<String, dynamic>> comments = [];
 
   @override
   void initState() {
@@ -53,15 +54,76 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
       imageUrls = [];
     }
 
-    // 로그 출력
-    print('User ID: ${user?.id}');
-    print('Author ID: ${widget.review['author_id']}');
+    fetchComments();
   }
 
   void updateAuthorStatus() {
     setState(() {
       isAuthor = user?.id == widget.review['author_id'];
     });
+  }
+
+  Future<void> fetchComments() async {
+    final response = await Supabase.instance.client
+        .from('comments')
+        .select('*')
+        .eq('target_table', 'reviews') // reviews 타겟
+        .eq('target_id', widget.review['id']) // 리뷰 ID
+        .order('created_at', ascending: true);
+
+    setState(() {
+      comments = List<Map<String, dynamic>>.from(response);
+    });
+  }
+
+  Future<void> addComment(String content, BuildContext context) async {
+    if (user == null) return;
+
+    try {
+      final profileResponse = await Supabase.instance.client
+          .from('profiles')
+          .select('username')
+          .eq('id', user!.id)
+          .single();
+
+      final username = profileResponse['username'] as String;
+
+      final newComment = {
+        'id': const Uuid().v4(),
+        'target_table': 'reviews', // 대상 테이블
+        'target_id': widget.review['id'], // 리뷰 ID
+        'author_id': user!.id, // 작성자 ID
+        'author': username, // 작성자 이름
+        'content': content, // 댓글 내용
+        'created_at': DateTime.now().toIso8601String(), // 생성 시간
+      };
+
+      final response =
+          await Supabase.instance.client.from('comments').insert(newComment);
+
+      print('댓글 추가 성공: $response');
+
+      // 키보드 숨기기
+      FocusScope.of(context).unfocus();
+
+      // UI 갱신
+      setState(() {
+        fetchComments(); // 댓글 목록 다시 불러오기
+      });
+    } catch (error) {
+      print('댓글 추가 오류: $error');
+    }
+  }
+
+  Future<void> deleteComment(String commentId, BuildContext context) async {
+    final response = await Supabase.instance.client
+        .from('comments')
+        .delete()
+        .eq('id', commentId);
+
+    print('댓글 삭제 응답: $response');
+
+    fetchComments(); // 댓글 목록 다시 로드
   }
 
   @override
@@ -79,63 +141,6 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
     print('supabase 삭제: $response');
     // 삭제 성공
     Navigator.of(context).pop(true); // 삭제 후 이전 화면으로 돌아가며 true 값 전달
-  }
-
-  // 댓글 추가 함수
-  Future<void> addComment(String content, BuildContext context) async {
-    final profileResponse = await supabase
-        .from('profiles')
-        .select('username')
-        .match({'id': user!.id}).single();
-
-    print('유저: $profileResponse');
-
-    final username = profileResponse['username'] as String?;
-    print('유저 이름: $username');
-
-    var existingComments = List<Map<String, dynamic>>.from(
-        widget.review['comments'] as List<dynamic>? ?? []);
-    var uuid = const Uuid();
-
-    // 새 댓글에 고유 ID 할당
-    existingComments.add({
-      'id': uuid.v4(), // UUID 생성
-      'author_id': user?.id,
-      'author': username,
-      'content': content,
-      'created_at': DateTime.now().toIso8601String()
-    });
-
-    print('새 댓글: $existingComments');
-
-    // 'reviews' 테이블에 업데이트
-    await Supabase.instance.client.from('reviews').update(
-        {'comments': existingComments}).match({'id': widget.review['id']});
-
-    // 키보드 숨기기
-    FocusScope.of(context).unfocus();
-
-    setState(() {
-      widget.review['comments'] = existingComments;
-    });
-  }
-
-// 댓글 삭제 함수
-  Future<void> deleteComment(String commentId, BuildContext context) async {
-    var existingComments = List<Map<String, dynamic>>.from(
-        widget.review['comments'] as List<dynamic>? ?? []);
-
-    // 삭제할 댓글을 찾아 목록에서 제거
-    existingComments.removeWhere((comment) => comment['id'] == commentId);
-
-    // 'reviews' 테이블에 업데이트
-    final response = await Supabase.instance.client
-        .from('reviews')
-        .update({'comments': existingComments}).eq('id', widget.review['id']);
-
-    setState(() {
-      widget.review['comments'] = existingComments;
-    });
   }
 
   // 선택한 이미지를 팝업으로 표시
@@ -466,13 +471,11 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
             // 댓글 목록
             Column(
               children: List.generate(
-                (widget.review['comments'] as List<dynamic>?)?.length ?? 0,
+                comments.length,
                 (index) {
-                  var comment = widget.review['comments'][index];
-                  bool isCommentAuthor = user?.id == comment['author_id'];
-
-                  // 날짜 형식 변환
-                  String formattedDate = DateFormat('MM/dd HH:mm')
+                  final comment = comments[index];
+                  final isCommentAuthor = user?.id == comment['author_id'];
+                  final formattedDate = DateFormat('MM/dd HH:mm')
                       .format(DateTime.parse(comment['created_at']));
 
                   return Column(
@@ -483,25 +486,19 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
                         ),
                         child: ListTile(
                           title: Text(
-                            comment['author'] ?? '',
+                            comment['author'],
                             style: const TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.w500),
                           ),
                           subtitle: Column(
-                            mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                comment['content'],
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                ),
-                              ),
+                              Text(comment['content']),
                               Text(
                                 formattedDate,
                                 style: const TextStyle(
-                                  fontSize: 9,
-                                  color: bg_70,
+                                  fontSize: 10,
+                                  color: Colors.grey,
                                 ),
                               ),
                             ],
@@ -511,10 +508,9 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
                                   icon: const Icon(Icons.delete_outline,
                                       size: 16),
                                   onPressed: () {
-                                    if (comment['id'] != null) {
-                                      deleteComment(comment['id'], context);
-                                    }
-                                  })
+                                    deleteComment(comment['id'], context);
+                                  },
+                                )
                               : null,
                         ),
                       ),
