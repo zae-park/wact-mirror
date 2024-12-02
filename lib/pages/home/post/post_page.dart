@@ -1,5 +1,3 @@
-// 홈 > 자유게시판 홈
-
 import 'dart:convert';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -18,7 +16,8 @@ class PostPage extends StatefulWidget {
 }
 
 class PostPageState extends State<PostPage> {
-  late Stream<List<Map<String, dynamic>>> _stream;
+  late Stream<List<Map<String, dynamic>>> _postStream;
+  late Stream<Map<int, int>> _commentCountStream;
   late ScrollController controller;
 
   @override
@@ -26,10 +25,11 @@ class PostPageState extends State<PostPage> {
     super.initState();
     controller = ScrollController();
 
-    _stream = _loadDataStream();
+    _postStream = _loadPostStream();
+    _commentCountStream = _loadCommentCountStream();
   }
 
-  Stream<List<Map<String, dynamic>>> _loadDataStream() {
+  Stream<List<Map<String, dynamic>>> _loadPostStream() {
     return Supabase.instance.client
         .from('posts')
         .stream(primaryKey: ['id'])
@@ -38,19 +38,25 @@ class PostPageState extends State<PostPage> {
         .map((data) => List<Map<String, dynamic>>.from(data));
   }
 
-  void refresh() {
-    setState(() {
-      _stream = _loadDataStream();
-      debugPrint('PostPage 새로고침 실행됨');
+  Stream<Map<int, int>> _loadCommentCountStream() {
+    return Supabase.instance.client
+        .from('comments')
+        .stream(primaryKey: ['id']).map((data) {
+      // 댓글 개수를 계산하여 Map으로 반환 (post_id: 댓글 수)
+      final counts = <int, int>{};
+      for (var comment in data) {
+        final postId = comment['post_id'] as int;
+        counts[postId] = (counts[postId] ?? 0) + 1;
+      }
+      return counts;
     });
   }
 
-  @override
-  void didUpdateWidget(PostPage oldWidget) {
-    super.didUpdateWidget(oldWidget);
+  void refresh() {
     setState(() {
-      _stream = _loadDataStream();
-      debugPrint('PostPage 위젯 업데이트됨');
+      _postStream = _loadPostStream();
+      _commentCountStream = _loadCommentCountStream();
+      debugPrint('PostPage 새로고침 실행됨');
     });
   }
 
@@ -71,206 +77,193 @@ class PostPageState extends State<PostPage> {
       child: Stack(
         children: [
           StreamBuilder<List<Map<String, dynamic>>>(
-            stream: _stream,
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
+            stream: _postStream,
+            builder: (context, postSnapshot) {
+              if (!postSnapshot.hasData) {
                 return const Center(
-                    child: CircularProgressIndicator(
-                  color: Colors.black,
-                ));
+                  child: CircularProgressIndicator(
+                    color: Colors.black,
+                  ),
+                );
               }
-              final posts = snapshot.data!;
-              return ListView.builder(
-                controller: controller,
-                scrollDirection: Axis.vertical,
-                itemCount: posts.length,
-                itemBuilder: (context, index) {
-                  final post = posts[index];
-                  // 이미지 URL 처리
-                  List<dynamic> imageUrls = [];
-                  // post['compressed_image_urls']가 List<dynamic>이면 직접 사용
-                  if (post['compressed_image_urls'] is List<dynamic>) {
-                    imageUrls = post['compressed_image_urls'];
-                  }
-                  // post['compressed_image_urls']가 String이면 JSON 파싱
-                  else if (post['compressed_image_urls'] is String) {
-                    String imageUrlString = post['compressed_image_urls'];
-                    imageUrls = json.decode(imageUrlString);
-                  }
+              final posts = postSnapshot.data!;
 
-                  // 첫 번째 이미지 URL 추출
-                  final imageUrl = imageUrls.isNotEmpty ? imageUrls[0] : null;
+              return StreamBuilder<Map<int, int>>(
+                stream: _commentCountStream,
+                builder: (context, commentSnapshot) {
+                  final commentCounts = commentSnapshot.data ?? {};
 
-                  if (imageUrl != null) {
-                    precacheImage(NetworkImage(imageUrl), context);
-                  }
+                  return ListView.builder(
+                    controller: controller,
+                    scrollDirection: Axis.vertical,
+                    itemCount: posts.length,
+                    itemBuilder: (context, index) {
+                      final post = posts[index];
 
-                  // 댓글 개수 처리
-                  final commentCount =
-                      (post['comments'] as List<dynamic>?)?.length ?? 0;
-
-                  // 날짜 형식 변경
-                  final createdAt = DateTime.parse(post['created_at']);
-                  final formattedDate = DateFormat('MM/dd').format(createdAt);
-
-                  return InkWell(
-                    onTap: () async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => PostDetailPage(
-                            post: posts[index],
-                            refreshCallback: () {
-                              setState(() {
-                                _stream = _loadDataStream(); // 데이터 스트림 갱신
-                                debugPrint('PostDetailPage에서 돌아옴: 새로고침');
-                              });
-                            },
-                          ),
-                        ),
-                      );
-                      if (result == true) {
-                        setState(() {
-                          _stream = _loadDataStream();
-                          debugPrint('PostDetailPage에서 result true: 새로고침');
-                        });
+                      // 이미지 URL 처리
+                      List<dynamic> imageUrls = [];
+                      if (post['compressed_image_urls'] is List<dynamic>) {
+                        imageUrls = post['compressed_image_urls'];
+                      } else if (post['compressed_image_urls'] is String) {
+                        imageUrls = json.decode(post['compressed_image_urls']);
                       }
-                    },
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width - 40,
-                            height: 90,
-                            child: GestureDetector(
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  SizedBox(
-                                    width: MediaQuery.of(context).size.width -
-                                        40 -
-                                        60 -
-                                        10,
-                                    height: 90,
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          post['title'],
-                                          style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w600),
-                                        ),
-                                        const SizedBox(
-                                          height: 2,
-                                        ),
-                                        Text(
-                                          post['content'],
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(fontSize: 14),
-                                        ),
-                                        const SizedBox(
-                                          height: 5,
-                                        ),
-                                        Row(
-                                          children: [
-                                            if (commentCount > 0)
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.center,
-                                                children: [
-                                                  const Icon(
-                                                    FontAwesomeIcons.comment,
-                                                    color: Colors.black,
-                                                    size: 9,
-                                                  ),
-                                                  const SizedBox(
-                                                    width: 3,
-                                                  ),
-                                                  Text(
-                                                    '$commentCount',
-                                                    style: const TextStyle(
-                                                        fontSize: 9,
-                                                        color: bg_90),
-                                                  ),
-                                                  const SizedBox(
-                                                    width: 3,
-                                                  ),
-                                                  const Center(
-                                                    child: Text(
-                                                      'ㅣ',
-                                                      style: TextStyle(
-                                                          fontSize: 8,
-                                                          color: bg_90),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(
-                                                    width: 3,
-                                                  ),
-                                                ],
-                                              ),
-                                            Text(
-                                              formattedDate,
-                                              style: const TextStyle(
-                                                  fontSize: 9, color: bg_70),
-                                            ),
-                                            const SizedBox(
-                                              width: 3,
-                                            ),
-                                            const Text(
-                                              'ㅣ',
-                                              style: TextStyle(
-                                                  fontSize: 8, color: bg_70),
-                                            ),
-                                            const SizedBox(
-                                              width: 3,
-                                            ),
-                                            Text(
-                                              post['author'],
-                                              style: const TextStyle(
-                                                  fontSize: 9, color: bg_90),
-                                            ),
-                                          ],
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                  if (imageUrl != null)
-                                    SizedBox(
-                                      width: 60,
-                                      height: 60,
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(20),
-                                        child: CachedNetworkImage(
-                                          imageUrl: imageUrl,
-                                          width: 60,
-                                          height: 60,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                    ),
-                                ],
+                      final imageUrl =
+                          imageUrls.isNotEmpty ? imageUrls[0] : null;
+                      if (imageUrl != null) {
+                        precacheImage(NetworkImage(imageUrl), context);
+                      }
+
+                      // 댓글 개수 처리
+                      final commentCount = commentCounts[post['id']] ?? 0;
+
+                      // 날짜 형식 변경
+                      final createdAt = DateTime.parse(post['created_at']);
+                      final formattedDate =
+                          DateFormat('MM/dd').format(createdAt);
+
+                      return InkWell(
+                        onTap: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PostDetailPage(
+                                post: posts[index],
+                                refreshCallback: () {
+                                  refresh();
+                                  debugPrint('PostDetailPage에서 돌아옴: 새로고침');
+                                },
                               ),
                             ),
-                          ),
+                          );
+                          if (result == true) {
+                            refresh();
+                          }
+                        },
+                        child: Column(
+                          children: [
+                            Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                              child: SizedBox(
+                                width: MediaQuery.of(context).size.width - 40,
+                                height: 90,
+                                child: GestureDetector(
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width -
+                                                40 -
+                                                60 -
+                                                10,
+                                        height: 90,
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              post['title'],
+                                              style: const TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.w600),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              post['content'],
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style:
+                                                  const TextStyle(fontSize: 14),
+                                            ),
+                                            const SizedBox(height: 5),
+                                            Row(
+                                              children: [
+                                                if (commentCount > 0)
+                                                  Row(
+                                                    children: [
+                                                      const Icon(
+                                                        FontAwesomeIcons
+                                                            .comment,
+                                                        color: Colors.black,
+                                                        size: 9,
+                                                      ),
+                                                      const SizedBox(width: 3),
+                                                      Text(
+                                                        '$commentCount',
+                                                        style: const TextStyle(
+                                                            fontSize: 9,
+                                                            color: bg_90),
+                                                      ),
+                                                      const SizedBox(width: 3),
+                                                      const Text(
+                                                        'ㅣ',
+                                                        style: TextStyle(
+                                                            fontSize: 8,
+                                                            color: bg_90),
+                                                      ),
+                                                      const SizedBox(width: 3),
+                                                    ],
+                                                  ),
+                                                Text(
+                                                  formattedDate,
+                                                  style: const TextStyle(
+                                                      fontSize: 9,
+                                                      color: bg_70),
+                                                ),
+                                                const SizedBox(width: 3),
+                                                const Text(
+                                                  'ㅣ',
+                                                  style: TextStyle(
+                                                      fontSize: 8,
+                                                      color: bg_70),
+                                                ),
+                                                const SizedBox(width: 3),
+                                                Text(
+                                                  post['author'],
+                                                  style: const TextStyle(
+                                                      fontSize: 9,
+                                                      color: bg_90),
+                                                ),
+                                              ],
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                      if (imageUrl != null)
+                                        SizedBox(
+                                          width: 60,
+                                          height: 60,
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            child: CachedNetworkImage(
+                                              imageUrl: imageUrl,
+                                              width: 60,
+                                              height: 60,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.fromLTRB(20, 0, 20, 0),
+                              child: Divider(
+                                color: bg_10,
+                                height: 1,
+                              ),
+                            ),
+                          ],
                         ),
-                        const Padding(
-                          padding: EdgeInsets.fromLTRB(20, 0, 20, 0),
-                          child: Divider(
-                            color: bg_10,
-                            height: 1,
-                          ),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   );
                 },
               );
