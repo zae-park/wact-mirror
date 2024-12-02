@@ -4,12 +4,10 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:wact/common/const/color.dart';
-import 'package:wact/common/init.dart';
 import 'package:wact/pages/home/post/post_edit_page.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
@@ -29,6 +27,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
   late User? user;
   late bool isAuthor;
   List<dynamic>? imageUrls;
+  List<dynamic> comments = [];
 
   // 현재 페이지 인덱스를 추적하기 위한 변수
   int currentPageIndex = 0;
@@ -51,10 +50,23 @@ class _PostDetailPageState extends State<PostDetailPage> {
       // null 또는 다른 타입인 경우 빈 리스트 할당
       imageUrls = [];
     }
+    fetchComments(); // 댓글 로드
 
     // 로그 출력
     print('User ID: ${user?.id}');
     print('Author ID: ${widget.post['author_id']}');
+  }
+
+  Future<void> fetchComments() async {
+    final response = await Supabase.instance.client
+        .from('comments')
+        .select()
+        .eq('post_id', widget.post['id'])
+        .order('created_at', ascending: true);
+
+    setState(() {
+      comments = response as List<dynamic>;
+    });
   }
 
   void updateAuthorStatus() {
@@ -128,61 +140,77 @@ class _PostDetailPageState extends State<PostDetailPage> {
     Navigator.of(context).pop(true); // 삭제 후 이전 화면으로 돌아감
   }
 
-  // 댓글 추가 함수
   Future<void> addComment(String content, BuildContext context) async {
-    final profileResponse = await supabase
-        .from('profiles')
-        .select('username')
-        .match({'id': user!.id}).single();
+    try {
+      // 사용자 정보 가져오기
+      final profileResponse = await Supabase.instance.client
+          .from('profiles')
+          .select('username')
+          .eq('id', user!.id)
+          .single();
 
-    print('유저: $profileResponse');
+      if (profileResponse == null) {
+        throw Exception('유저 정보를 가져오지 못했습니다.');
+      }
 
-    final username = profileResponse['username'] as String?;
-    print('유저 이름: $username');
+      final username = profileResponse['username'] as String?;
+      print('유저 이름: $username');
 
-    var existingComments = List<Map<String, dynamic>>.from(
-        widget.post['comments'] as List<dynamic>? ?? []);
-    var uuid = const Uuid();
+      // post_id 타입 확인 및 변환
+      final postId = widget.post['id'];
+      if (postId == null || !(postId is int || postId is String)) {
+        throw Exception('올바르지 않은 post_id: $postId');
+      }
+      print('Post ID: $postId');
 
-    // 새 댓글에 고유 ID 할당
-    existingComments.add({
-      'id': uuid.v4(), // UUID 생성
-      'author_id': user?.id,
-      'author': username,
-      'content': content,
-      'created_at': DateTime.now().toIso8601String()
-    });
+      // 댓글 데이터 준비
+      var uuid = const Uuid();
+      // final newComment = {
+      //   'id': uuid.v4(), // UUID 생성
+      //   'post_id': postId, // 게시글 ID
+      //   'author_id': user?.id, // 작성자 ID
+      //   'author': username, // 작성자 이름
+      //   'content': content, // 댓글 내용
+      //   'created_at': DateTime.now().toIso8601String(), // 생성 시간
+      // };
 
-    print('새 댓글: $existingComments');
+      // print('댓글 데이터: $newComment');
 
-    // 'posts' 테이블에 업데이트
-    await Supabase.instance.client.from('posts').update(
-        {'comments': existingComments}).match({'id': widget.post['id']});
+      // 댓글 추가
+      final response = await Supabase.instance.client.from('comments').insert({
+        'id': uuid.v4(), // UUID 생성
+        'post_id': postId, // 게시글 ID
+        'author_id': user!.id, // 작성자 ID
+        'author': username, // 작성자 이름
+        'content': content, // 댓글 내용
+        'created_at': DateTime.now().toIso8601String(), // 생성 시간
+      });
 
-    // 키보드 숨기기
-    FocusScope.of(context).unfocus();
+      print('댓글 추가 성공: $response');
 
-    setState(() {
-      widget.post['comments'] = existingComments;
-    });
+      // 키보드 숨기기
+      FocusScope.of(context).unfocus();
+
+      // UI 갱신
+      setState(() {
+        fetchComments(); // 댓글 목록 다시 불러오기
+      });
+    } catch (error) {
+      print('댓글 추가 오류: $error');
+    }
   }
 
 // 댓글 삭제 함수
   Future<void> deleteComment(String commentId, BuildContext context) async {
-    var existingComments = List<Map<String, dynamic>>.from(
-        widget.post['comments'] as List<dynamic>? ?? []);
-
-    // 삭제할 댓글을 찾아 목록에서 제거
-    existingComments.removeWhere((comment) => comment['id'] == commentId);
-
-    // 'posts' 테이블에 업데이트
+    // comments 테이블에서 댓글 삭제
     final response = await Supabase.instance.client
-        .from('posts')
-        .update({'comments': existingComments}).eq('id', widget.post['id']);
+        .from('comments')
+        .delete()
+        .eq('id', commentId);
 
-    setState(() {
-      widget.post['comments'] = existingComments;
-    });
+    print('댓글 삭제 응답: $response');
+
+    setState(() {}); // UI 업데이트를 위해 호출
   }
 
   // 문자열 필터링
@@ -421,9 +449,9 @@ class _PostDetailPageState extends State<PostDetailPage> {
             // 댓글 목록
             Column(
               children: List.generate(
-                (widget.post['comments'] as List<dynamic>?)?.length ?? 0,
+                comments.length,
                 (index) {
-                  var comment = widget.post['comments'][index];
+                  var comment = comments[index];
                   bool isCommentAuthor = user?.id == comment['author_id'];
 
                   // 날짜 형식 변환
