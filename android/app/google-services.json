@@ -2,7 +2,7 @@
   "project_info": {
     "project_number": "866308159640",
     "project_id": "wact-b34ab",
-    "storage_bucket": "wact-b34ab.appspot.com"
+    "storage_bucket": "wact-b34ab.firebasestorage.app"
   },
   "client": [
     {
@@ -13,6 +13,14 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "866308159640-nrcokahnl6fk3hcqie4t0efa0cdf2tf5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.one.wact",
+            "certificate_hash": "a39e8b876ac2f1c33310e01f530f4dc27706b075"
+          }
+        },
         {
           "client_id": "866308159640-c6kart9c7vjerhoq103elk36ltcjr9g6.apps.googleusercontent.com",
           "client_type": 3

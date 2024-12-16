@@ -361,6 +361,69 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  Future<AuthResponse> _googleSignIn() async {
+    try {
+      // 로딩 상태 시작
+      setState(() {
+        _isLoading = true;
+      });
+
+      // 구글 로그인 시작 로그
+      debugPrint('구글 로그인 시도 시작');
+
+      const webClientId =
+          '866308159640-c6kart9c7vjerhoq103elk36ltcjr9g6.apps.googleusercontent.com';
+
+      const iosClientId =
+          '866308159640-eo30bqc5ssl849h0h3jpao25pf06qg2u.apps.googleusercontent.com';
+
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        clientId: iosClientId,
+        serverClientId: webClientId,
+      );
+
+      final googleUser = await googleSignIn.signIn();
+
+      // 구글 사용자 로그인 실패 확인
+      if (googleUser == null) {
+        debugPrint('구글 사용자 로그인 실패');
+        throw Exception('구글 사용자 로그인 실패');
+      }
+
+      debugPrint('구글 사용자 로그인 성공');
+      final googleAuth = await googleUser.authentication;
+
+      // 토큰이 없는 경우 확인
+      if (googleAuth.accessToken == null || googleAuth.idToken == null) {
+        debugPrint('구글 인증 토큰이 없음');
+        throw Exception('구글 로그인 인증 토큰을 가져오지 못함');
+      }
+
+      // Supabase를 통한 구글 로그인
+      debugPrint('Supabase를 통한 구글 로그인 시작');
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isLoggedIn', true);
+
+      return supabase.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: googleAuth.idToken!,
+        accessToken: googleAuth.accessToken!,
+      );
+    } catch (error) {
+      // 오류 로그
+      debugPrint('구글 로그인 중 오류 발생: $error');
+      rethrow;
+    } finally {
+      // 로딩 상태 종료
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _authStateSubscription?.cancel();
@@ -418,49 +481,44 @@ class _LoginPageState extends State<LoginPage> {
                   // const SizedBox(
                   //   width: 20,
                   // ),
-                  // GestureDetector(
-                  //   onTap: () async {
-                  //     if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
-                  //       await _nativeGoogleSignin();
-                  //     }
-                  //     await supabase.auth.signInWithOAuth(OAuthProvider.google);
-                  //   },
-                  //   child: SizedBox(
-                  //     width: 54,
-                  //     height: 54,
-                  //     child: Image.asset(
-                  //       'assets/imgs/logo/sns/google.png',
-                  //       fit: BoxFit.contain,
-                  //     ),
-                  //   ),
-                  // ),
+                  GestureDetector(
+                    onTap: _nativeGoogleSignin,
+                    child: SizedBox(
+                      width: 54,
+                      height: 54,
+                      child: Image.asset(
+                        'assets/imgs/logo/sns/google.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
                   // const SizedBox(
                   //   width: 20,
                   // ),
-                  if (Platform.isIOS)
-                    GestureDetector(
-                      onTap: _isLoading ? null : _appleSignIn,
-                      child: SizedBox(
-                        width: 54,
-                        height: 54,
-                        child: Image.asset(
-                          'assets/imgs/logo/sns/apple.png',
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    )
-                  else
-                    GestureDetector(
-                      onTap: _isLoading ? null : _appleSignInAndroid,
-                      child: SizedBox(
-                        width: 54,
-                        height: 54,
-                        child: Image.asset(
-                          'assets/imgs/logo/sns/apple.png',
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
+                  // if (Platform.isIOS)
+                  //   GestureDetector(
+                  //     onTap: _isLoading ? null : _appleSignIn,
+                  //     child: SizedBox(
+                  //       width: 54,
+                  //       height: 54,
+                  //       child: Image.asset(
+                  //         'assets/imgs/logo/sns/apple.png',
+                  //         fit: BoxFit.contain,
+                  //       ),
+                  //     ),
+                  //   )
+                  // else
+                  //   GestureDetector(
+                  //     onTap: _isLoading ? null : _appleSignInAndroid,
+                  //     child: SizedBox(
+                  //       width: 54,
+                  //       height: 54,
+                  //       child: Image.asset(
+                  //         'assets/imgs/logo/sns/apple.png',
+                  //         fit: BoxFit.contain,
+                  //       ),
+                  //     ),
+                  //   ),
                 ],
               ),
             ]),

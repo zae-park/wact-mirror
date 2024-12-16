@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:wact/pages/my/add_sermon_note_page.dart';
 import 'package:wact/pages/my/my_bug_report_page.dart';
@@ -391,7 +392,21 @@ class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
           ),
           GestureDetector(
             onTap: _showDeleteAccountDialog, // 로그아웃 대화상자 표시
+
             child: ListTile(
+              leading: GestureDetector(
+                onTap: () async {
+                  const url =
+                      'https://calmpy.notion.site/WACT-14e07d757e788047bd80ddc5e16e0cdb';
+                  if (await canLaunchUrl(Uri.parse(url))) {
+                    await launchUrl(Uri.parse(url),
+                        mode: LaunchMode.externalApplication);
+                  } else {
+                    throw 'Could not launch $url';
+                  }
+                },
+                child: const Icon(Icons.info_outline_rounded),
+              ),
               title: const Text('탈퇴'),
               trailing: _scheduledDeletionDate != null
                   ? Text(_formatRemainingTime(_scheduledDeletionDate!))

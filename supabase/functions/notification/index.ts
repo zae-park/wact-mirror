@@ -25,7 +25,7 @@ interface Comment {
   content: string
 }
 
-// WebhookNewpost 인터페이스 정의
+// WebhookPayload 인터페이스 정의
 interface WebhookPayload {
   type: 'INSERT'
   table: string
@@ -43,42 +43,65 @@ const supabase = createClient(
 Deno.serve(async (req) => {
   const payload: WebhookPayload = await req.json()
 
-  // 알림 제목과 본문 초기화
   let notificationTitle = ''
   let notificationBody = ''
-  let notificationTargetAuthorId: string | null = null
 
   if (payload.table === 'posts') {
-    // 일반 게시글
-    const postRecord = payload.record as Post
-
-     // 작성자 본인에게는 알림 제외
-     if (postRecord.author_id === postRecord.author_id) {
-      return new Response('작성자가 본인이므로 알림 제외', { status: 200 })
-    }
+    // 새 글 알림 로직
+    const record = payload.record as Post
 
     notificationTitle = '새 글!'
-    notificationBody = `[${postRecord.title}]`
-    notificationTargetAuthorId = postRecord.author_id
-  } else if (payload.table === 'reviews') {
-    // 후기 게시글
-    const reviewRecord = payload.record as Review
+    notificationBody = `[${record.title}]`
 
-    // 작성자 본인에게는 알림 제외
-    if (reviewRecord.author_id === reviewRecord.author_id) {
-      return new Response('작성자가 본인이므로 알림 제외', { status: 200 })
+    // 작성자 제외 모든 사용자 가져오기
+    const { data: users, error } = await supabase
+      .from('profiles')
+      .select('id, fcm_token')
+      .not('id', 'eq', record.author_id) // 작성자 제외
+
+    if (error || !users) {
+      return new Response('사용자 목록을 가져올 수 없습니다.', { status: 400 })
     }
-    
+
+    // 각 사용자에게 푸시 알림 전송
+    for (const user of users) {
+      if (!user.fcm_token) continue
+      await sendPushNotification(user.fcm_token, notificationTitle, notificationBody)
+    }
+
+    return new Response('새 글 알림 전송 완료', { status: 200 })
+
+  } else if (payload.table === 'reviews') {
+    // 새 글 알림 로직
+    const record = payload.record as Review
     const branches = ['강남', '시내', '신촌', '인천', '태릉']
-    if (branches.includes(reviewRecord.team)) {
-      notificationTitle = `[${reviewRecord.team}지부] 후기`
+
+    if (branches.includes(record.team)) {
+      notificationTitle = `[${record.team}지부] 후기`
     } else {
-      notificationTitle = `[${reviewRecord.team}] 후기`
+      notificationTitle = `[${record.team}] 후기`
     }
-    notificationBody = `${reviewRecord.title}`
-    notificationTargetAuthorId = reviewRecord.author_id
+    notificationBody = `${record.title}`
+
+    // 작성자 제외 모든 사용자 가져오기
+    const { data: users, error } = await supabase
+      .from('profiles')
+      .select('id, fcm_token')
+      .not('id', 'eq', record.author_id) // 작성자 제외
+
+    if (error || !users) {
+      return new Response('사용자 목록을 가져올 수 없습니다.', { status: 400 })
+    }
+
+    // 각 사용자에게 푸시 알림 전송
+    for (const user of users) {
+      if (!user.fcm_token) continue
+      await sendPushNotification(user.fcm_token, notificationTitle, notificationBody)
+    }
+
+    return new Response('새 글 알림 전송 완료', { status: 200 })
   } else if (payload.table === 'comments') {
-    // 댓글
+    // 댓글 알림 로직
     const commentRecord = payload.record as Comment
 
     // 댓글 대상 게시글 또는 후기의 작성자 가져오기
@@ -99,25 +122,33 @@ Deno.serve(async (req) => {
 
     notificationTitle = `'${target.author}'님의 댓글!`
     notificationBody = `[${target.title}]에 새로운 댓글이 있습니다.`
-    notificationTargetAuthorId = target.author_id
+
+    // 대상 작성자의 FCM 토큰 가져오기
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('fcm_token')
+      .eq('id', target.author_id)
+      .single()
+
+    if (profileError || !profile || !profile.fcm_token) {
+      return new Response('FCM 토큰을 찾을 수 없습니다.', { status: 404 })
+    }
+
+    // 댓글 알림 전송
+    await sendPushNotification(profile.fcm_token, notificationTitle, notificationBody)
+
+    return new Response('댓글 알림 전송 완료', { status: 200 })
   } else {
     return new Response('알 수 없는 테이블', { status: 400 })
   }
+})
 
-  // 푸시 알림 대상 유저의 FCM 토큰 가져오기
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('fcm_token')
-    .eq('id', notificationTargetAuthorId)
-    .single()
-
-  if (profileError || !profile || !profile.fcm_token) {
-    return new Response('FCM 토큰을 찾을 수 없습니다.', { status: 404 })
-  }
-
-  const fcmToken = profile.fcm_token
-
-  // Firebase Service Account 로드
+// 공통 푸시 알림 함수
+async function sendPushNotification(
+  fcmToken: string,
+  title: string,
+  body: string
+) {
   const { default: serviceAccount } = await import('../service-account.json', {
     with: { type: 'json' },
   })
@@ -127,7 +158,6 @@ Deno.serve(async (req) => {
     privateKey: serviceAccount.private_key,
   })
 
-  // 푸시 알림 전송
   const res = await fetch(
     `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`,
     {
@@ -140,17 +170,8 @@ Deno.serve(async (req) => {
         message: {
           token: fcmToken,
           notification: {
-            title: notificationTitle,
-            body: notificationBody,
-          },
-          data: {
-            click_action: payload.table === 'posts'
-            ? `post_detail?id=${(payload.record as Post).id}`
-            : payload.table === 'reviews'
-            ? `review_detail?id=${(payload.record as Review).id}`
-            : payload.table === 'comments'
-            ? `post_detail?id=${(payload.record as Comment).target_id}` // 댓글의 대상 게시글/후기로 이동
-            : '', // fallback 경로
+            title,
+            body,
           },
         },
       }),
@@ -161,12 +182,9 @@ Deno.serve(async (req) => {
   if (res.status < 200 || res.status > 299) {
     console.error('푸시 알림 전송 실패:', resData)
   }
+}
 
-  return new Response('푸시 알림 전송 완료', {
-    headers: { 'Content-Type': 'application/json' },
-  })
-})
-
+// Firebase Access Token 함수
 const getAccessToken = ({
   clientEmail,
   privateKey,
