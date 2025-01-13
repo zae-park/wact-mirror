@@ -18,30 +18,30 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   Future<void> _redirect() async {
-    await Future.delayed(Duration.zero);
+    await Future.delayed(Duration.zero); // UI 안정화를 위한 지연
 
     if (!mounted) return;
 
     final session = supabase.auth.currentSession;
     if (session != null) {
-      // 사용자의 프로필 정보 가져오기
+      // 세션이 존재할 경우
       final response = await supabase
           .from('profiles')
-          .select('username, university')
+          .select('username')
           .eq('id', session.user.id)
-          .single();
-      // 여기서 다시 mounted 체크
+          .maybeSingle();
 
       if (!mounted) return;
 
-      if (response.isNotEmpty) {
-        // username과 website가 있는 경우 RootLayout으로 이동
-        Navigator.of(context).pushReplacementNamed('/home');
-      } else {
-        // 없는 경우 AccountPage로 이동
+      if (response == null || response['username'] == null) {
+        // 프로필 정보가 없으면 '프로필' 페이지로 이동
         Navigator.of(context).pushReplacementNamed('/account');
+      } else {
+        // 프로필 정보가 있으면 홈 화면으로 이동
+        Navigator.of(context).pushReplacementNamed('/home');
       }
     } else {
+      // 세션이 없으면 로그인 페이지로 이동
       Navigator.of(context).pushReplacementNamed('/login');
     }
   }

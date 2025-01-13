@@ -82,19 +82,21 @@ class ReviewPageState extends State<ReviewPage> {
             });
           },
           child: isListView
-              ? const Row(
+              ? Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      '달력 보기',
+                    Image.asset(
+                      'assets/imgs/icon/icon_calendar.png',
+                      width: 22,
+                      height: 22,
+                      color: Colors.white,
+                    ),
+                    const Text(
+                      '서액트 달력',
                       style: TextStyle(
                           color: Colors.white,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                           fontSize: 16),
-                    ),
-                    Icon(
-                      Icons.keyboard_arrow_down,
-                      color: Colors.white,
                     ),
                   ],
                 )
@@ -174,7 +176,7 @@ class ReviewPageState extends State<ReviewPage> {
                           final createdAt =
                               DateTime.parse(review['created_at']);
                           final formattedDate =
-                              DateFormat('MM/dd').format(createdAt);
+                              DateFormat('MM.dd').format(createdAt);
 
                           DateTime parsedDate =
                               DateTime.parse(review['meet_date']);
@@ -233,26 +235,40 @@ class ReviewPageState extends State<ReviewPage> {
                                                 // const SizedBox(
                                                 //   height: 5,
                                                 // ),
-                                                Text(
-                                                  review['team'],
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  style: const TextStyle(
-                                                      fontSize: 16,
-                                                      fontWeight:
-                                                          FontWeight.w800),
+                                                Container(
+                                                  width: 40,
+                                                  height: 20,
+                                                  decoration: BoxDecoration(
+                                                    color: bg_10,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            5),
+                                                  ),
+                                                  child: Center(
+                                                    child: Text(
+                                                      review['team'],
+                                                      style: const TextStyle(
+                                                          color: primary,
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.w800),
+                                                    ),
+                                                  ),
                                                 ),
-
                                                 const SizedBox(
-                                                  height: 3,
+                                                  height: 5,
                                                 ),
                                                 SizedBox(
                                                   width: 40,
-                                                  child: Text(
-                                                    formattedDate,
-                                                    style: const TextStyle(
-                                                        fontSize: 12,
-                                                        color: bg_70),
+                                                  child: Center(
+                                                    child: Text(
+                                                      formattedDate,
+                                                      style: const TextStyle(
+                                                          fontSize: 12.5,
+                                                          color: Colors.black,
+                                                          fontWeight:
+                                                              FontWeight.w600),
+                                                    ),
                                                   ),
                                                 ),
                                                 // Text(
@@ -291,40 +307,63 @@ class ReviewPageState extends State<ReviewPage> {
                                                       45,
                                                   child: Column(
                                                     mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
+                                                        MainAxisAlignment.start,
                                                     crossAxisAlignment:
                                                         CrossAxisAlignment
                                                             .start,
                                                     children: [
-                                                      Text(
-                                                        review['title'],
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: const TextStyle(
-                                                            fontSize: 16,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .w500),
+                                                      const SizedBox(
+                                                        height: 3,
+                                                      ),
+                                                      SizedBox(
+                                                        height: 25,
+                                                        child: Align(
+                                                          alignment: Alignment
+                                                              .bottomLeft,
+                                                          child: Text(
+                                                            review['title'],
+                                                            maxLines: 1,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            style: const TextStyle(
+                                                                fontSize: 16,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600),
+                                                          ),
+                                                        ),
                                                       ),
                                                       const SizedBox(
-                                                        height: 3.5,
+                                                        height: 3,
                                                       ),
                                                       Row(
                                                         children: <Widget>[
                                                           if (review[
                                                                   'participants'] !=
                                                               null)
-                                                            Text(
-                                                              '${review['participants']}명 ',
-                                                              style: const TextStyle(
-                                                                  fontSize: 12,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  color:
-                                                                      primary), // 여기에 원하는 스타일 적용
+                                                            Row(
+                                                              children: [
+                                                                Image.asset(
+                                                                  'assets/imgs/icon/bottomnavigation/mypage_selected.png',
+                                                                  width: 15,
+                                                                  height: 15,
+                                                                ),
+                                                                SizedBox(
+                                                                  width: 2,
+                                                                ),
+                                                                Text(
+                                                                  '${review['participants']}명 ',
+                                                                  style: const TextStyle(
+                                                                      fontSize:
+                                                                          12,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w500,
+                                                                      color: Colors
+                                                                          .black), // 여기에 원하는 스타일 적용
+                                                                ),
+                                                              ],
                                                             )
                                                           else
                                                             const Text(
@@ -337,19 +376,19 @@ class ReviewPageState extends State<ReviewPage> {
                                                                   color:
                                                                       primary), // 여기에 원하는 스타일 적용
                                                             ),
-                                                          Expanded(
-                                                            child: Text(
-                                                              '${review['member']}',
-                                                              style:
-                                                                  const TextStyle(
-                                                                fontSize: 12,
-                                                              ),
-                                                              maxLines: 1,
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                            ),
-                                                          ),
+                                                          // Expanded(
+                                                          //   child: Text(
+                                                          //     '${review['member']}',
+                                                          //     style:
+                                                          //         const TextStyle(
+                                                          //       fontSize: 12,
+                                                          //     ),
+                                                          //     maxLines: 1,
+                                                          //     overflow:
+                                                          //         TextOverflow
+                                                          //             .ellipsis,
+                                                          //   ),
+                                                          // ),
                                                         ],
                                                       ),
                                                     ],
@@ -398,154 +437,165 @@ class ReviewPageState extends State<ReviewPage> {
                   )
 
                 // 오른쪽 하단의 아이콘 클릭 시 나오는 캘린더 뷰
-                : TableCalendar(
-                    locale: 'ko_KR',
-                    headerVisible: true,
-                    daysOfWeekHeight: 50,
-                    rowHeight: 85,
-                    daysOfWeekStyle: const DaysOfWeekStyle(
-                      weekdayStyle: TextStyle(color: bg_70, fontSize: 12),
-                      weekendStyle: TextStyle(color: bg_70, fontSize: 12),
-                    ),
-                    calendarStyle: const CalendarStyle(
-                      cellAlignment: Alignment.topCenter,
-                      tableBorder: TableBorder(
-                        horizontalInside: BorderSide(
-                          width: 1,
-                          color: Color(0xfff1f3f6),
+                : SingleChildScrollView(
+                    child: TableCalendar(
+                      locale: 'ko_KR',
+                      headerVisible: true,
+                      daysOfWeekHeight: 30,
+                      rowHeight: 85,
+                      daysOfWeekStyle: const DaysOfWeekStyle(
+                        weekdayStyle: TextStyle(color: bg_70, fontSize: 12),
+                        weekendStyle: TextStyle(color: bg_70, fontSize: 12),
+                      ),
+                      calendarStyle: const CalendarStyle(
+                        cellAlignment: Alignment.topCenter,
+                        tableBorder: TableBorder(
+                          horizontalInside: BorderSide(
+                            width: 1,
+                            color: Color(0xfff1f3f6),
+                          ),
                         ),
                       ),
-                    ),
-                    focusedDay: DateTime.now(),
-                    firstDay: DateTime.utc(2000, 01, 01),
-                    lastDay: DateTime.utc(2999, 12, 31),
-                    headerStyle: const HeaderStyle(
-                        leftChevronVisible: false,
-                        rightChevronVisible: false,
-                        formatButtonVisible: false,
-                        titleCentered: true),
-                    calendarBuilders: CalendarBuilders(
-                      todayBuilder: (context, date, events) {
-                        return Align(
-                          alignment: Alignment.topCenter,
-                          child: Container(
-                            margin: const EdgeInsets.only(top: 4),
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: bg_70, // 원하는 색상 지정
-                            ),
-                            width: 24, // 원의 크기 조정
-                            height: 24,
-                            child: Center(
-                              child: Text(
-                                "${date.day}", // 오늘 날짜의 일(day) 표시
-                                style: const TextStyle(
-                                  fontSize: 14, // 폰트 크기 조정
-                                  color: Colors.white, // 폰트 색상 지정
+                      focusedDay: DateTime.now(),
+                      firstDay: DateTime.utc(2000, 01, 01),
+                      lastDay: DateTime.utc(2999, 12, 31),
+                      headerStyle: const HeaderStyle(
+                          leftChevronVisible: false,
+                          rightChevronVisible: false,
+                          formatButtonVisible: false,
+                          titleCentered: true),
+                      calendarBuilders: CalendarBuilders(
+                        todayBuilder: (context, date, events) {
+                          return Align(
+                            alignment: Alignment.topCenter,
+                            child: Container(
+                              margin: const EdgeInsets.only(top: 4),
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: bg_70, // 원하는 색상 지정
+                              ),
+                              width: 24, // 원의 크기 조정
+                              height: 24,
+                              child: Center(
+                                child: Text(
+                                  "${date.day}", // 오늘 날짜의 일(day) 표시
+                                  style: const TextStyle(
+                                    fontSize: 14, // 폰트 크기 조정
+                                    color: Colors.white, // 폰트 색상 지정
+                                  ),
                                 ),
-                              ),
-                            ), // 원의 크기 조정
-                          ),
-                        );
-                      },
-                      markerBuilder: (context, date, reviews) {
-                        return FutureBuilder(
-                          future: _future,
-                          builder: (context, snapshot) {
-                            if (!snapshot.hasData) {
-                              return Container();
-                            }
-                            final reviews = snapshot.data!;
-                            print(reviews);
-                            for (var review in reviews) {
-                              print(
-                                  review['team']); // 각 리뷰의 'team' 필드 값을 출력해봅니다.
-                            }
-                            // 해당 날짜에 해당하는 일기들을 필터링
-                            var filteredreviews = reviews.where((review) {
-                              DateTime reviewDate =
-                                  DateTime.parse(review['meet_date']);
-                              return reviewDate.year == date.year &&
-                                  reviewDate.month == date.month &&
-                                  reviewDate.day == date.day;
-                            }).toList();
+                              ), // 원의 크기 조정
+                            ),
+                          );
+                        },
+                        markerBuilder: (context, date, reviews) {
+                          return FutureBuilder(
+                            future: _future,
+                            builder: (context, snapshot) {
+                              if (!snapshot.hasData) {
+                                return Container();
+                              }
+                              final reviews = snapshot.data!;
+                              print(reviews);
+                              for (var review in reviews) {
+                                print(review[
+                                    'team']); // 각 리뷰의 'team' 필드 값을 출력해봅니다.
+                              }
+                              // 해당 날짜에 해당하는 일기들을 필터링
+                              final filteredReviews = reviews.where((review) {
+                                DateTime reviewDate =
+                                    DateTime.parse(review['meet_date']);
+                                return reviewDate.year == date.year &&
+                                    reviewDate.month == date.month &&
+                                    reviewDate.day == date.day;
+                              }).toList();
 
-                            // 해당 날짜에 일기가 2개 이상인 경우 top 값을 30으로 설정
-                            double topValue =
-                                filteredreviews.length >= 2 ? 30.0 : 30.0;
+                              // 해당 날짜에 일기가 2개 이상인 경우 top 값을 30으로 설정
+                              double topValue =
+                                  filteredReviews.length >= 2 ? 30.0 : 30.0;
 
-                            return Positioned(
-                              top: topValue,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: filteredreviews
-                                    .asMap()
-                                    .entries
-                                    .map((entry) {
-                                  int index = entry.key;
-                                  var review = entry.value;
+                              return Positioned(
+                                top: topValue,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: filteredReviews
+                                      .asMap()
+                                      .entries
+                                      .map((entry) {
+                                    int index = entry.key;
+                                    var review = entry.value;
 
-                                  String imageUrl =
-                                      entry.value['compressed_image_urls'][0];
-                                  String teamName = review['team'];
-                                  return InkWell(
-                                    onTap: () async {
-                                      final result = await Get.to(
-                                        () => ReviewDetailPage(
-                                          review: entry.value,
-                                          currentIndex: index,
-                                          onUpdateSuccess:
-                                              refresh, // 새로고침 함수 연결
-                                        ),
-                                      );
-                                      if (result == true) {
-                                        _loadData();
-                                      }
-                                    },
-                                    child: Column(
-                                      children: [
-                                        Container(
-                                          width: 28,
-                                          height: 28,
-                                          margin:
-                                              const EdgeInsets.only(bottom: 3),
-                                          decoration: BoxDecoration(
-                                            image: DecorationImage(
-                                              image: NetworkImage(imageUrl),
-                                              fit: BoxFit.cover,
+                                    // 이미지 URL 확인 및 team 이름 가져오기
+                                    String? imageUrl =
+                                        review['compressed_image_urls']
+                                                    is List<dynamic> &&
+                                                review['compressed_image_urls']
+                                                    .isNotEmpty
+                                            ? review['compressed_image_urls'][0]
+                                            : '';
+                                    String teamName = review['team'];
+                                    return InkWell(
+                                      onTap: () async {
+                                        final result = await Get.to(
+                                          () => ReviewDetailPage(
+                                            review: entry.value,
+                                            currentIndex: index,
+                                            onUpdateSuccess:
+                                                refresh, // 새로고침 함수 연결
+                                          ),
+                                        );
+                                        if (result == true) {
+                                          _loadData();
+                                        }
+                                      },
+                                      child: Column(
+                                        children: [
+                                          if (imageUrl != '')
+                                            Container(
+                                              width: 28,
+                                              height: 28,
+                                              margin: const EdgeInsets.only(
+                                                  bottom: 3),
+                                              decoration: BoxDecoration(
+                                                image: DecorationImage(
+                                                  image:
+                                                      NetworkImage(imageUrl!),
+                                                  fit: BoxFit.cover,
+                                                ),
+                                                shape: BoxShape.circle,
+                                                // borderRadius:
+                                                //     BorderRadius.circular(10),
+                                              ),
                                             ),
-                                            shape: BoxShape.circle,
-                                            // borderRadius:
-                                            //     BorderRadius.circular(10),
-                                          ),
-                                        ),
-                                        Container(
-                                          width: 27,
-                                          height: 16,
-                                          decoration: BoxDecoration(
-                                            color: primary,
-                                            borderRadius:
-                                                BorderRadius.circular(3),
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              teamName,
-                                              style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 9,
-                                                  fontWeight: FontWeight.w800),
+                                          Container(
+                                            width: 27,
+                                            height: 16,
+                                            decoration: BoxDecoration(
+                                              color: primary,
+                                              borderRadius:
+                                                  BorderRadius.circular(3),
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                teamName,
+                                                style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 9,
+                                                    fontWeight:
+                                                        FontWeight.w800),
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            );
-                          },
-                        );
-                      },
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
                     ),
                   ),
           ],

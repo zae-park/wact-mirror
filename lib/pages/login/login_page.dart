@@ -31,40 +31,33 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _checkCurrentSession();
     _setupAuthListener();
-  }
-
-  void _checkCurrentSession() async {
-    final currentSession = supabase.auth.currentSession;
-    if (currentSession != null) {
-      // 현재 세션이 유효하므로 홈 화면으로 바로 넘어감.
-      _redirecting = true;
-
-      Navigator.of(context).pushReplacementNamed('/home');
-    }
   }
 
   void _setupAuthListener() {
     _authStateSubscription =
         supabase.auth.onAuthStateChange.listen((data) async {
+      // 중복 이동 방지
       if (_redirecting) return;
+
       final session = data.session;
       if (session != null) {
-        // 사용자 프로필 조회
+        _redirecting = true; // 중복 호출 방지 플래그 설정
+
+        // 사용자 프로필 확인
         final userProfile = await supabase
             .from('profiles')
             .select('username')
             .eq('id', session.user.id)
             .maybeSingle();
 
-        debugPrint('사용자 프로필 조회: $userProfile');
+        if (!mounted) return;
 
         if (userProfile == null || userProfile['username'] == null) {
-          // 프로필에 이름 정보가 없을 경우 AccountPage로 이동
+          // 프로필 정보가 없으면 '프로필' 페이지로 이동
           Navigator.of(context).pushReplacementNamed('/account');
         } else {
-          // 이미 이름 정보가 있는 경우 홈으로 이동
+          // 프로필 정보가 있으면 홈 화면으로 이동
           Navigator.of(context).pushReplacementNamed('/home');
         }
       }
@@ -222,59 +215,41 @@ class _LoginPageState extends State<LoginPage> {
       final credential = await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName, // fullName 스코프 추가
+          AppleIDAuthorizationScopes.fullName,
         ],
         nonce: hashedNonce,
       );
 
       final idToken = credential.identityToken;
       if (idToken == null) {
-        throw const AuthException(
-            'Could not find ID Token from generated credential.');
+        throw const AuthException('Could not find ID Token.');
       }
 
-      verifyTokenAndNonce(idToken, hashedNonce);
-
-      final response = await supabase.auth.signInWithIdToken(
+      await supabase.auth.signInWithIdToken(
         provider: OAuthProvider.apple,
         idToken: idToken,
         nonce: rawNonce,
       );
 
-      // 이름과 성을 조합하여 저장
-      final fullName = (credential.familyName != null &&
-              credential.givenName != null)
-          ? '${credential.familyName}${credential.givenName}' // 성 + 이름의 순서로 조합
-          : null;
+      // 프로필 정보 확인 및 이동
+      final session = supabase.auth.currentSession;
+      if (session != null) {
+        final userProfile = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('id', session.user.id)
+            .maybeSingle();
 
-      if (fullName != null) {
-        final userId = supabase.auth.currentUser!.id;
+        if (!mounted) return;
 
-        // Supabase profiles 테이블에 fullName 저장
-        await supabase.from('profiles').upsert({
-          'id': userId,
-          'full_name': fullName,
-          'updated_at': DateTime.now().toIso8601String(),
-        });
-        debugPrint('사용자 이름 저장 완료: $fullName');
-      }
-
-      // Apple 로그인 성공 후 페이지 이동
-      Navigator.of(context).pushReplacementNamed('/home');
-    } on SignInWithAppleAuthorizationException catch (e) {
-      if (e.code == AuthorizationErrorCode.canceled) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('로그인 프로세스가 사용자에 의해 취소되었습니다.')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('로그인을 취소했습니다.')),
-        );
+        if (userProfile == null || userProfile['username'] == null) {
+          Navigator.of(context).pushReplacementNamed('/account');
+        } else {
+          Navigator.of(context).pushReplacementNamed('/home');
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('애플 로그인 중 예기치 않은 오류 발생: ${e.toString()}')),
-      );
+      debugPrint('애플 로그인 오류: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -492,33 +467,33 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
-                  // const SizedBox(
-                  //   width: 20,
-                  // ),
-                  // if (Platform.isIOS)
-                  //   GestureDetector(
-                  //     onTap: _isLoading ? null : _appleSignIn,
-                  //     child: SizedBox(
-                  //       width: 54,
-                  //       height: 54,
-                  //       child: Image.asset(
-                  //         'assets/imgs/logo/sns/apple.png',
-                  //         fit: BoxFit.contain,
-                  //       ),
-                  //     ),
-                  //   )
-                  // else
-                  //   GestureDetector(
-                  //     onTap: _isLoading ? null : _appleSignInAndroid,
-                  //     child: SizedBox(
-                  //       width: 54,
-                  //       height: 54,
-                  //       child: Image.asset(
-                  //         'assets/imgs/logo/sns/apple.png',
-                  //         fit: BoxFit.contain,
-                  //       ),
-                  //     ),
-                  //   ),
+                  const SizedBox(
+                    width: 20,
+                  ),
+                  if (Platform.isIOS)
+                    GestureDetector(
+                      onTap: _isLoading ? null : _appleSignIn,
+                      child: SizedBox(
+                        width: 54,
+                        height: 54,
+                        child: Image.asset(
+                          'assets/imgs/logo/sns/apple.png',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    )
+                  else
+                    GestureDetector(
+                      onTap: _isLoading ? null : _appleSignInAndroid,
+                      child: SizedBox(
+                        width: 54,
+                        height: 54,
+                        child: Image.asset(
+                          'assets/imgs/logo/sns/apple.png',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ]),

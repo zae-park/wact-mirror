@@ -660,7 +660,7 @@ class _ReviewEditPageState extends State<ReviewEditPage> {
                           ),
                         ),
                         Text(
-                          '${_contentEditingController.text.length}/500',
+                          '${_contentEditingController.text.length}/1000',
                           style: const TextStyle(
                             color: bg_90,
                             fontSize: 12,
@@ -673,7 +673,7 @@ class _ReviewEditPageState extends State<ReviewEditPage> {
                       child: TextFormField(
                         controller: _contentEditingController,
                         maxLines: 10,
-                        maxLength: 500,
+                        maxLength: 1000,
                         cursorColor: primary,
                         decoration: const InputDecoration(
                           hintText: '내용을 작성해주세요.',

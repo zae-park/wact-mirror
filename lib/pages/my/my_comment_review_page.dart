@@ -33,21 +33,39 @@ class _MyCommentReviewPageState extends State<MyCommentReviewPage> {
   }
 
   Stream<List<Map<String, dynamic>>> _loadDataStream() {
-    final userId =
-        Supabase.instance.client.auth.currentUser!.id; // 현재 로그인한 사용자의 ID 가져오기
+    final userId = Supabase.instance.client.auth.currentUser!.id;
 
     return Supabase.instance.client
         .from('reviews')
         .stream(primaryKey: ['id'])
         .order('created_at', ascending: false)
-        .asyncMap((data) {
-          var filteredData =
-              List<Map<String, dynamic>>.from(data).where((post) {
-            var comments = post['comments'] as List<dynamic>?;
-            return comments?.any((comment) => comment['author_id'] == userId) ??
-                false;
+        .asyncMap((reviewsData) async {
+          // 모든 리뷰 데이터 가져오기
+          final reviewList = List<Map<String, dynamic>>.from(reviewsData);
+
+          // 리뷰 ID 리스트 가져오기
+          final reviewIds = reviewList.map((review) => review['id']).toList();
+
+          // comments 테이블에서 리뷰 ID(target_id)와 author_id 기준으로 댓글 필터링
+          final commentsResponse = await Supabase.instance.client
+              .from('comments')
+              .select()
+              .or(reviewIds
+                  .map((id) => 'target_id.eq.$id')
+                  .join(',')) // 리뷰 ID 필터링
+              .eq('author_id', userId); // 본인의 댓글만 조회
+
+          final userComments =
+              List<Map<String, dynamic>>.from(commentsResponse);
+
+          // 본인의 댓글이 포함된 리뷰만 필터링
+          var filteredReviews = reviewList.where((review) {
+            return userComments
+                .any((comment) => comment['target_id'] == review['id']);
           }).toList();
-          return filteredData;
+
+          debugPrint('내 댓글 리뷰: $filteredReviews');
+          return filteredReviews;
         });
   }
 
@@ -178,25 +196,40 @@ class _MyCommentReviewPageState extends State<MyCommentReviewPage> {
                                       // const SizedBox(
                                       //   height: 5,
                                       // ),
-                                      Text(
-                                        review['team'],
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w800),
+                                      Container(
+                                        width: 40,
+                                        height: 20,
+                                        decoration: BoxDecoration(
+                                          color: bg_10,
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            review['team'],
+                                            style: const TextStyle(
+                                                color: primary,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w800),
+                                          ),
+                                        ),
                                       ),
-
                                       const SizedBox(
-                                        height: 3,
+                                        height: 5,
                                       ),
                                       SizedBox(
                                         width: 40,
-                                        child: Text(
-                                          formattedDate,
-                                          style: const TextStyle(
-                                              fontSize: 12, color: bg_70),
+                                        child: Center(
+                                          child: Text(
+                                            formattedDate,
+                                            style: const TextStyle(
+                                                fontSize: 12.5,
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.w600),
+                                          ),
                                         ),
                                       ),
+
                                       // Text(
                                       //   '$formattedDay($formattedDayOfWeek)',
                                       //   maxLines: 1,
@@ -207,7 +240,6 @@ class _MyCommentReviewPageState extends State<MyCommentReviewPage> {
                                   ),
                                 ),
                                 // 썸네일 이미지(업로드한 이미지 중 첫번째 이미지)
-
                                 SizedBox(
                                   width: MediaQuery.of(context).size.width -
                                       40 -
@@ -229,32 +261,56 @@ class _MyCommentReviewPageState extends State<MyCommentReviewPage> {
                                                 45,
                                         child: Column(
                                           mainAxisAlignment:
-                                              MainAxisAlignment.center,
+                                              MainAxisAlignment.start,
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            Text(
-                                              review['title'],
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.w500),
+                                            const SizedBox(
+                                              height: 3,
+                                            ),
+                                            SizedBox(
+                                              height: 25,
+                                              child: Align(
+                                                alignment: Alignment.bottomLeft,
+                                                child: Text(
+                                                  review['title'],
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.w600),
+                                                ),
+                                              ),
                                             ),
                                             const SizedBox(
-                                              height: 3.5,
+                                              height: 3,
                                             ),
                                             Row(
                                               children: <Widget>[
-                                                if (memberCount > 0)
-                                                  Text(
-                                                    '$memberCount명 ',
-                                                    style: const TextStyle(
-                                                        fontSize: 12,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color:
-                                                            primary), // 여기에 원하는 스타일 적용
+                                                if (review['participants'] !=
+                                                    null)
+                                                  Row(
+                                                    children: [
+                                                      Image.asset(
+                                                        'assets/imgs/icon/bottomnavigation/mypage_selected.png',
+                                                        width: 15,
+                                                        height: 15,
+                                                      ),
+                                                      SizedBox(
+                                                        width: 2,
+                                                      ),
+                                                      Text(
+                                                        '${review['participants']}명 ',
+                                                        style: const TextStyle(
+                                                            fontSize: 12,
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                            color: Colors
+                                                                .black), // 여기에 원하는 스타일 적용
+                                                      ),
+                                                    ],
                                                   )
                                                 else
                                                   const Text(
@@ -266,17 +322,17 @@ class _MyCommentReviewPageState extends State<MyCommentReviewPage> {
                                                         color:
                                                             primary), // 여기에 원하는 스타일 적용
                                                   ),
-                                                Expanded(
-                                                  child: Text(
-                                                    '${review['member']}',
-                                                    style: const TextStyle(
-                                                      fontSize: 12,
-                                                    ),
-                                                    maxLines: 1,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                ),
+                                                // Expanded(
+                                                //   child: Text(
+                                                //     '${review['member']}',
+                                                //     style: const TextStyle(
+                                                //       fontSize: 12,
+                                                //     ),
+                                                //     maxLines: 1,
+                                                //     overflow:
+                                                //         TextOverflow.ellipsis,
+                                                //   ),
+                                                // ),
                                               ],
                                             ),
                                           ],

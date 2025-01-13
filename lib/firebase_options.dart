@@ -64,8 +64,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '866308159640',
     projectId: 'wact-b34ab',
     storageBucket: 'wact-b34ab.appspot.com',
-    androidClientId: '866308159640-nrcokahnl6fk3hcqie4t0efa0cdf2tf5.apps.googleusercontent.com',
-    iosClientId: '866308159640-eo30bqc5ssl849h0h3jpao25pf06qg2u.apps.googleusercontent.com',
+    androidClientId:
+        '866308159640-nrcokahnl6fk3hcqie4t0efa0cdf2tf5.apps.googleusercontent.com',
+    iosClientId:
+        '866308159640-eo30bqc5ssl849h0h3jpao25pf06qg2u.apps.googleusercontent.com',
     iosBundleId: 'com.one.wact',
   );
 
@@ -75,8 +77,9 @@ class DefaultFirebaseOptions {
     messagingSenderId: '866308159640',
     projectId: 'wact-b34ab',
     storageBucket: 'wact-b34ab.appspot.com',
-    androidClientId: '866308159640-nrcokahnl6fk3hcqie4t0efa0cdf2tf5.apps.googleusercontent.com',
-    iosBundleId: 'com.example.wact',
+    androidClientId:
+        '866308159640-nrcokahnl6fk3hcqie4t0efa0cdf2tf5.apps.googleusercontent.com',
+    iosBundleId: 'com.one.wact',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
@@ -88,5 +91,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'wact-b34ab.appspot.com',
     measurementId: 'G-WL567XGGSP',
   );
-
 }

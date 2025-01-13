@@ -30,21 +30,39 @@ class _MyCommentPostPageState extends State<MyCommentPostPage> {
   }
 
   Stream<List<Map<String, dynamic>>> _loadDataStream() {
-    final userId =
-        Supabase.instance.client.auth.currentUser!.id; // 현재 로그인한 사용자의 ID 가져오기
+    final userId = Supabase.instance.client.auth.currentUser!.id;
 
     return Supabase.instance.client
         .from('posts')
         .stream(primaryKey: ['id'])
         .order('created_at', ascending: false)
-        .asyncMap((data) {
-          var filteredData =
-              List<Map<String, dynamic>>.from(data).where((post) {
-            var comments = post['comments'] as List<dynamic>?;
-            return comments?.any((comment) => comment['author_id'] == userId) ??
-                false;
+        .asyncMap((postsData) async {
+          // 모든 게시글 데이터 가져옴
+          final postList = List<Map<String, dynamic>>.from(postsData);
+
+          // 게시글 ID 리스트 가져오기
+          final postIds = postList.map((post) => post['id']).toList();
+
+          // target_id가 postIds에 해당하고, author_id가 현재 사용자인 댓글 조회
+          final commentsResponse = await Supabase.instance.client
+              .from('comments')
+              .select()
+              .or(postIds
+                  .map((id) => 'target_id.eq.$id')
+                  .join(',')) // target_id 조건
+              .eq('author_id', userId); // 현재 사용자의 댓글만 조회
+
+          final userComments =
+              List<Map<String, dynamic>>.from(commentsResponse);
+
+          // 본인의 댓글이 포함된 게시글만 필터링
+          var filteredPosts = postList.where((post) {
+            return userComments
+                .any((comment) => comment['target_id'] == post['id']);
           }).toList();
-          return filteredData;
+
+          debugPrint('내 댓글 게시글: $filteredPosts');
+          return filteredPosts;
         });
   }
 
@@ -160,77 +178,81 @@ class _MyCommentPostPageState extends State<MyCommentPostPage> {
                                               fontSize: 18,
                                               fontWeight: FontWeight.w600),
                                         ),
-                                        const SizedBox(
-                                          height: 2,
-                                        ),
+                                        const SizedBox(height: 2),
                                         Text(
                                           post['content'],
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(fontSize: 14),
+                                          style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              color: bg_90),
                                         ),
-                                        const SizedBox(
-                                          height: 5,
-                                        ),
+                                        const SizedBox(height: 5),
                                         Row(
                                           children: [
                                             if (commentCount > 0)
                                               Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.center,
                                                 children: [
-                                                  const Icon(
-                                                    FontAwesomeIcons.comment,
-                                                    color: Colors.black,
-                                                    size: 9,
+                                                  Icon(
+                                                    Icons.comment_outlined,
+                                                    size: 12,
                                                   ),
-                                                  const SizedBox(
-                                                    width: 3,
-                                                  ),
+                                                  const SizedBox(width: 3),
                                                   Text(
                                                     '$commentCount',
                                                     style: const TextStyle(
-                                                        fontSize: 9,
-                                                        color: bg_90),
+                                                        fontSize: 10,
+                                                        color: blueGrey),
                                                   ),
-                                                  const SizedBox(
-                                                    width: 3,
-                                                  ),
-                                                  const Center(
-                                                    child: Text(
-                                                      'ㅣ',
-                                                      style: TextStyle(
-                                                          fontSize: 8,
-                                                          color: bg_90),
+                                                  const SizedBox(width: 5),
+                                                  // const Text(
+                                                  //   'ㅣ',
+                                                  //   style: TextStyle(
+                                                  //       fontSize:
+                                                  //           8,
+                                                  //       color:
+                                                  //           bg_90),
+                                                  // ),
+                                                  Container(
+                                                    width: 2,
+                                                    height: 2,
+                                                    decoration: BoxDecoration(
+                                                      color: blueGrey,
+                                                      shape:
+                                                          BoxShape.circle, // 원형
                                                     ),
                                                   ),
-                                                  const SizedBox(
-                                                    width: 3,
-                                                  ),
+                                                  const SizedBox(width: 5),
                                                 ],
                                               ),
                                             Text(
                                               formattedDate,
                                               style: const TextStyle(
-                                                  fontSize: 9, color: bg_70),
+                                                  fontSize: 10,
+                                                  color: blueGrey),
                                             ),
-                                            const SizedBox(
-                                              width: 3,
+                                            const SizedBox(width: 5),
+                                            // const Text(
+                                            //   'ㅣ',
+                                            //   style: TextStyle(
+                                            //       fontSize: 8,
+                                            //       color: bg_70),
+                                            // ),
+                                            Container(
+                                              width: 2,
+                                              height: 2,
+                                              decoration: BoxDecoration(
+                                                color: blueGrey,
+                                                shape: BoxShape.circle, // 원형
+                                              ),
                                             ),
-                                            const Text(
-                                              'ㅣ',
-                                              style: TextStyle(
-                                                  fontSize: 8, color: bg_70),
-                                            ),
-                                            const SizedBox(
-                                              width: 3,
-                                            ),
+                                            const SizedBox(width: 5),
                                             Text(
-                                              post['author'],
+                                              post['current_author'],
                                               style: const TextStyle(
-                                                  fontSize: 9, color: bg_90),
+                                                  fontSize: 10,
+                                                  color: blueGrey),
                                             ),
                                           ],
                                         )

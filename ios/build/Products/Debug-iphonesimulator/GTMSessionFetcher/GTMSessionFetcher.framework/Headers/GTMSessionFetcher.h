@@ -519,7 +519,7 @@ void GTMSessionFetcherAssertValidSelector(id _Nullable obj, SEL _Nullable sel, .
 NSString *GTMFetcherStandardUserAgentString(NSBundle *_Nullable bundle);
 
 // Make a generic name and version for the current application, like
-// com.example.MyApp/1.2.3 relying on the bundle identifier and the
+// com.one.MyApp/1.2.3 relying on the bundle identifier and the
 // CFBundleShortVersionString or CFBundleVersion.
 //
 // The bundle ID may be overridden as the base identifier string by

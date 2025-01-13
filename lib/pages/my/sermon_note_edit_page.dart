@@ -10,12 +10,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:wact/common/init.dart';
 
-class PostEditPage extends StatefulWidget {
+class SermonNoteEditPage extends StatefulWidget {
   final Map<String, dynamic> post;
   final void Function(String) onUpload;
   final Function() onUpdateSuccess;
 
-  const PostEditPage(
+  const SermonNoteEditPage(
       {Key? key,
       required this.onUpload,
       required this.post,
@@ -23,10 +23,10 @@ class PostEditPage extends StatefulWidget {
       : super(key: key);
 
   @override
-  State<PostEditPage> createState() => _PostEditPageState();
+  State<SermonNoteEditPage> createState() => _SermonNoteEditPageState();
 }
 
-class _PostEditPageState extends State<PostEditPage> {
+class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
   late TextEditingController _titleEditingController;
   late TextEditingController _contentEditingController;
   late List<XFile> images;

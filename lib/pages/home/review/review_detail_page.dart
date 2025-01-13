@@ -42,6 +42,7 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
     user = Supabase.instance.client.auth.currentUser;
     updateAuthorStatus();
     isAuthor = user?.id == widget.review['author_id'];
+    fetchTeamName;
     // 타입 확인 및 처리
     if (widget.review['compressed_image_urls'] is String) {
       String jsonString = widget.review['compressed_image_urls'];
@@ -74,6 +75,25 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
     setState(() {
       comments = List<Map<String, dynamic>>.from(response);
     });
+  }
+
+  Future<String> fetchTeamName(String authorId) async {
+    try {
+      final response = await Supabase.instance.client
+          .from('profiles')
+          .select('team')
+          .eq('id', authorId)
+          .single();
+
+      if (response.isNotEmpty && response['team'] != null) {
+        return response['team'];
+      } else {
+        return 'No Team';
+      }
+    } catch (e) {
+      print('팀 이름 가져오기 오류: $e');
+      return 'No Team';
+    }
   }
 
   Future<void> addComment(String content, BuildContext context) async {
@@ -210,8 +230,25 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        toolbarHeight: 60,
+        leading: Transform.translate(
+          offset: const Offset(12, 0.0),
+          child: IconButton(
+            iconSize: 34,
+            icon: Image.asset('assets/imgs/icon/btn_back_grey@3x.png'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ),
         backgroundColor: Colors.white,
-        title: Text(widget.review['team']),
+        title: Text(
+          widget.review['team'],
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
+          ),
+        ),
         centerTitle: true,
         actions: isAuthor
             ? [
@@ -278,27 +315,40 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    children: [
-                      Text(
-                        widget.review['title'],
-                        style: const TextStyle(
-                            fontSize: 22, fontWeight: FontWeight.w600),
-                      ),
-                    ],
+                  SizedBox(
+                    width: (MediaQuery.of(context).size.width * 2 / 3) - 15,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.review['title'],
+                          style: const TextStyle(
+                              fontSize: 22, fontWeight: FontWeight.w600),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
                   ),
-                  Column(
-                    children: [
-                      Text(
-                        '${widget.review['author']}',
-                        style: const TextStyle(
-                            fontSize: 10, fontWeight: FontWeight.w600),
-                      ),
-                      Text(
-                        createdAt,
-                        style: const TextStyle(fontSize: 9, color: bg_70),
-                      ),
-                    ],
+                  SizedBox(
+                    width: 5,
+                  ),
+                  SizedBox(
+                    width: (MediaQuery.of(context).size.width * 1 / 3) - 30,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${widget.review['current_author']}',
+                          style: const TextStyle(
+                              fontSize: 10, fontWeight: FontWeight.w600),
+                        ),
+                        Text(
+                          createdAt,
+                          style: const TextStyle(fontSize: 9, color: bg_70),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -428,13 +478,13 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 40),
             Padding(
               padding: const EdgeInsets.only(left: 20, right: 20),
               child: Text(
                 widget.review['content'],
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 16,
                 ),
               ),
             ),
@@ -467,61 +517,150 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
                   },
                 ),
               ),
+            const Padding(
+              padding: EdgeInsets.only(left: 20, right: 20),
+              child: Divider(
+                height: 30,
+                color: bg_10,
+              ),
+            ),
 
+            // 댓글 영역 시작
+            if (comments.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text(
+                      '댓글',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                    ),
+                    SizedBox(
+                      width: 5,
+                    ),
+                    Text(
+                      '${comments.length}',
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          color: primary),
+                    ),
+                  ],
+                ),
+              ),
             // 댓글 목록
             Column(
               children: List.generate(
                 comments.length,
                 (index) {
-                  final comment = comments[index];
-                  final isCommentAuthor = user?.id == comment['author_id'];
-                  final formattedDate = DateFormat('MM/dd HH:mm')
+                  var comment = comments[index];
+                  bool isCommentAuthor = user?.id == comment['author_id'];
+                  bool isPostAuthor =
+                      comment['author_id'] == widget.review['author_id'];
+
+                  // 날짜 형식 변환
+                  String formattedDate = DateFormat('MM/dd HH:mm')
                       .format(DateTime.parse(comment['created_at']));
 
-                  return Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          left: 4,
-                        ),
-                        child: ListTile(
-                          title: Text(
-                            comment['author'],
-                            style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w500),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(comment['content']),
-                              Text(
-                                formattedDate,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey,
+                  return FutureBuilder(
+                    future: fetchTeamName(comment['author_id']),
+                    builder: (context, snapshot) {
+                      String teamName = snapshot.data ?? 'No Team';
+
+                      return Column(
+                        children: [
+                          Container(
+                            color: Colors.transparent,
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 4),
+                              child: ListTile(
+                                title: Row(
+                                  children: [
+                                    Text(
+                                      comment['author'] ?? '',
+                                      style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: isPostAuthor
+                                              ? FontWeight.w600
+                                              : FontWeight.w500,
+                                          color: isPostAuthor
+                                              ? primary
+                                              : Colors.black),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    SizedBox(
+                                      width: (teamName == '목회자') ? 35 : 30,
+                                      height: 18,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: (teamName == '오비')
+                                              ? bg_10
+                                              : (teamName == '목회자')
+                                                  ? Colors.black
+                                                  : primary,
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            teamName,
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: (teamName == '목회자')
+                                                  ? FontWeight.w600
+                                                  : FontWeight.w800,
+                                              color: (teamName == '오비')
+                                                  ? primary
+                                                  : Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                                subtitle: Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      comment['content'],
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    Text(
+                                      formattedDate,
+                                      style: const TextStyle(
+                                        fontSize: 9,
+                                        color: bg_70,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                trailing: isCommentAuthor
+                                    ? IconButton(
+                                        icon: const Icon(Icons.delete_outline,
+                                            size: 16),
+                                        onPressed: () {
+                                          deleteComment(comment['id'], context);
+                                        })
+                                    : null,
                               ),
-                            ],
+                            ),
                           ),
-                          trailing: isCommentAuthor
-                              ? IconButton(
-                                  icon: const Icon(Icons.delete_outline,
-                                      size: 16),
-                                  onPressed: () {
-                                    deleteComment(comment['id'], context);
-                                  },
-                                )
-                              : null,
-                        ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.only(left: 20, right: 20),
-                        child: Divider(
-                          height: 1,
-                          color: bg_30,
-                        ),
-                      ),
-                    ],
+                          const Padding(
+                            padding: EdgeInsets.only(left: 20, right: 20),
+                            child: Divider(
+                              height: 1,
+                              color: bg_10,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   );
                 },
               ),
@@ -536,7 +675,7 @@ class _ReviewDetailPageState extends State<ReviewDetailPage> {
         padding: EdgeInsets.only(
             left: 10.0,
             right: 10.0,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 10),
+            bottom: MediaQuery.of(context).viewInsets.bottom + 36),
         child: TextField(
           controller: commentController,
           decoration: InputDecoration(

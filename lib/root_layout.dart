@@ -2,6 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:wact/common/const/color.dart';
 import 'package:wact/common/init.dart';
 import 'package:wact/pages/home/home_page.dart';
 import 'package:wact/pages/home/post/post_add_page.dart';
@@ -111,80 +112,98 @@ class _RootLayoutState extends State<RootLayout>
         },
         child: _screens[_selectedIndex], // 선택된 인덱스에 따른 화면 보여주기
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.white,
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(
-              FontAwesomeIcons.house,
-              size: 16,
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: bg_10,
+              width: 0.5,
             ),
-            label: '홈',
           ),
-          // BottomNavigationBarItem(
-          //   icon: Icon(
-          //     FontAwesomeIcons.bookBible,
-          //     size: 16,
-          //   ),
-          //   label: '말묵방',
-          // ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              FontAwesomeIcons.userLarge,
-              size: 16,
+        ),
+        child: BottomNavigationBar(
+          elevation: 0,
+          backgroundColor: Colors.white,
+          items: <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Image.asset(
+                'assets/imgs/icon/bottomnavigation/btn_nav_home_off.png', // 비활성화 아이콘
+                width: 34,
+                height: 34,
+              ),
+              activeIcon: Image.asset(
+                'assets/imgs/icon/bottomnavigation/btn_nav_home_on.png', // 활성화 아이콘
+                width: 34,
+                height: 34,
+              ),
+              label: 'HOME',
             ),
-            label: '마이페이지',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.black, // 선택된 아이템의 색상
-        unselectedItemColor: Colors.grey, // 선택되지 않은 아이템의 색상
-        onTap: (index) {
-          setState(() {
-            if (_isFabOpen) {
-              _toggleFAB(); // 탭 전환 시 FAB가 열려있으면 닫기
-            }
+            BottomNavigationBarItem(
+              icon: Image.asset(
+                'assets/imgs/icon/bottomnavigation/btn_nav_my_off.png', // 비활성화 아이콘
+                width: 34,
+                height: 34,
+              ),
+              activeIcon: Image.asset(
+                'assets/imgs/icon/bottomnavigation/btn_nav_my_on.png', // 활성화 아이콘
+                width: 34,
+                height: 34,
+              ),
+              label: 'MY',
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: Colors.black, // 선택된 아이템의 색상
+          unselectedItemColor: Colors.grey, // 선택되지 않은 아이템의 색상
+          selectedFontSize: 12, // 활성화 상태 글씨 크기
+          unselectedFontSize: 12, // 비활성화 상태 글씨 크기
+          onTap: (index) {
+            setState(() {
+              if (_isFabOpen) {
+                _toggleFAB(); // 탭 전환 시 FAB가 열려있으면 닫기
+              }
 
-            if (index == 0) {
-              // '홈' 탭이 선택되었을 때 항상 실행되도록 수정
-              if (_homePageKey.currentState != null) {
-                if (_homePageKey.currentState!.tabController.index == 0) {
-                  // 유저가 '자유게시판'에 있을 때
-                  if (_homePageKey.currentState!.postPageKey.currentState
-                          ?.controller.position.pixels !=
-                      0) {
-                    // 위치가 최상단이 아니면 최상단으로 이동하면서 새로고침
-                    _homePageKey
-                        .currentState!.postPageKey.currentState?.controller
-                        .jumpTo(0);
-                    _homePageKey.currentState!.refreshPostPage();
-                  } else {
-                    // 최상단이면 '후기게시판'으로 이동
-                    _homePageKey.currentState!.tabController.animateTo(1);
-                  }
-                } else if (_homePageKey.currentState!.tabController.index ==
-                    1) {
-                  // 유저가 '후기게시판'에 있을 때
-                  if (_homePageKey.currentState!.reviewPageKey.currentState
-                          ?.controller.position.pixels !=
-                      0) {
-                    // 위치가 최상단이 아니면 최상단으로 이동하면서 새로고침
-                    _homePageKey
-                        .currentState!.reviewPageKey.currentState?.controller
-                        .jumpTo(0);
-                    _homePageKey.currentState!.refreshReviewPage();
-                  } else {
-                    // 최상단이면 '자유게시판'으로 이동
-                    _homePageKey.currentState!.tabController.animateTo(0);
+              if (index == 0) {
+                // '홈' 탭이 선택되었을 때 항상 실행되도록 수정
+                if (_homePageKey.currentState != null) {
+                  if (_homePageKey.currentState!.tabController.index == 0) {
+                    // 유저가 '자유게시판'에 있을 때
+                    if (_homePageKey.currentState!.postPageKey.currentState
+                            ?.controller.position.pixels !=
+                        0) {
+                      // 위치가 최상단이 아니면 최상단으로 이동하면서 새로고침
+                      _homePageKey
+                          .currentState!.postPageKey.currentState?.controller
+                          .jumpTo(0);
+                      _homePageKey.currentState!.refreshPostPage();
+                    } else {
+                      // 최상단이면 '후기게시판'으로 이동
+                      _homePageKey.currentState!.tabController.animateTo(1);
+                    }
+                  } else if (_homePageKey.currentState!.tabController.index ==
+                      1) {
+                    // 유저가 '후기게시판'에 있을 때
+                    if (_homePageKey.currentState!.reviewPageKey.currentState
+                            ?.controller.position.pixels !=
+                        0) {
+                      // 위치가 최상단이 아니면 최상단으로 이동하면서 새로고침
+                      _homePageKey
+                          .currentState!.reviewPageKey.currentState?.controller
+                          .jumpTo(0);
+                      _homePageKey.currentState!.refreshReviewPage();
+                    } else {
+                      // 최상단이면 '자유게시판'으로 이동
+                      _homePageKey.currentState!.tabController.animateTo(0);
+                    }
                   }
                 }
               }
-            }
 
-            // 현재 선택된 탭과 상관없이 'index' 업데이트 (홈/마이페이지 전환 처리)
-            _selectedIndex = index;
-          });
-        },
+              // 현재 선택된 탭과 상관없이 'index' 업데이트 (홈/마이페이지 전환 처리)
+              _selectedIndex = index;
+            });
+          },
+        ),
       ),
       floatingActionButton: CustomFAB(
         isFABVisible: true,

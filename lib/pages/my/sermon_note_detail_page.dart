@@ -12,18 +12,19 @@ import 'package:wact/common/const/color.dart';
 import 'package:wact/pages/home/post/post_edit_page.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
-class PostDetailPage extends StatefulWidget {
+class SermonNoteDetailPage extends StatefulWidget {
   Map<String, dynamic> post;
   final Function refreshCallback;
 
-  PostDetailPage({Key? key, required this.post, required this.refreshCallback})
+  SermonNoteDetailPage(
+      {Key? key, required this.post, required this.refreshCallback})
       : super(key: key);
 
   @override
-  State<PostDetailPage> createState() => _PostDetailPageState();
+  State<SermonNoteDetailPage> createState() => _SermonNoteDetailPageState();
 }
 
-class _PostDetailPageState extends State<PostDetailPage> {
+class _SermonNoteDetailPageState extends State<SermonNoteDetailPage> {
   late TextEditingController commentController;
   late User? user;
   late bool isAuthor;

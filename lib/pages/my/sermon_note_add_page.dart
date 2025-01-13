@@ -12,23 +12,21 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/init.dart';
 import 'package:wact/pages/home/home_page.dart';
 
-class PostAddPage extends StatefulWidget {
+class SermonNoteAddPage extends StatefulWidget {
   final List<XFile>? images;
   final void Function(List<String>) onUpload;
-  final GlobalKey<HomePageState> homePageKey;
 
-  const PostAddPage(
-      {Key? key,
-      this.images,
-      required this.onUpload,
-      required this.homePageKey})
-      : super(key: key);
+  const SermonNoteAddPage({
+    Key? key,
+    this.images,
+    required this.onUpload,
+  }) : super(key: key);
 
   @override
-  _PostAddPageState createState() => _PostAddPageState();
+  _SermonNoteAddPageState createState() => _SermonNoteAddPageState();
 }
 
-class _PostAddPageState extends State<PostAddPage> {
+class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
   final _titleEditingController = TextEditingController();
   final _contentEditingController = TextEditingController();
   List<XFile> _currentImages = [];
@@ -406,7 +404,7 @@ class _PostAddPageState extends State<PostAddPage> {
             ),
           ),
           title: const Text(
-            '글쓰기',
+            '설교노트',
             style: TextStyle(
               color: Colors.black,
               fontSize: 20,
@@ -454,13 +452,12 @@ class _PostAddPageState extends State<PostAddPage> {
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(19),
-                        color: Colors.black),
+                        borderRadius: BorderRadius.circular(19), color: bg_10),
                     child: const Center(
                       child: Text(
-                        '게시',
+                        '작성',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: primary,
                           fontSize: 13,
                           fontWeight: FontWeight.w400,
                         ),
@@ -485,43 +482,43 @@ class _PostAddPageState extends State<PostAddPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (isAdmin)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  isChecked = !isChecked;
-                                  debugPrint('체크 여부: $isChecked');
-                                });
-                              },
-                              icon: isChecked
-                                  ? Icon(
-                                      Icons.check_box_rounded,
-                                      color: Colors.red,
-                                    )
-                                  : Icon(
-                                      Icons.check_box_outline_blank_rounded,
-                                      color: bg_90,
-                                    ),
-                            ),
-                            Text(
-                              '공지',
-                              style: isChecked
-                                  ? TextStyle(
-                                      color: Colors.red,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                    )
-                                  : TextStyle(
-                                      color: bg_90,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                            ),
-                          ],
-                        ),
+                      // if (isAdmin)
+                      //   Row(
+                      //     mainAxisAlignment: MainAxisAlignment.end,
+                      //     children: [
+                      //       IconButton(
+                      //         onPressed: () {
+                      //           setState(() {
+                      //             isChecked = !isChecked;
+                      //             debugPrint('체크 여부: $isChecked');
+                      //           });
+                      //         },
+                      //         icon: isChecked
+                      //             ? Icon(
+                      //                 Icons.check_box_rounded,
+                      //                 color: Colors.red,
+                      //               )
+                      //             : Icon(
+                      //                 Icons.check_box_outline_blank_rounded,
+                      //                 color: bg_90,
+                      //               ),
+                      //       ),
+                      //       Text(
+                      //         '공지',
+                      //         style: isChecked
+                      //             ? TextStyle(
+                      //                 color: Colors.red,
+                      //                 fontSize: 14,
+                      //                 fontWeight: FontWeight.w700,
+                      //               )
+                      //             : TextStyle(
+                      //                 color: bg_90,
+                      //                 fontSize: 14,
+                      //                 fontWeight: FontWeight.w500,
+                      //               ),
+                      //       ),
+                      //     ],
+                      //   ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [

@@ -1,6 +1,8 @@
+import 'package:url_launcher/url_launcher.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:wact/common/init.dart';
 import 'package:wact/common/init.dart';
+import 'package:wact/pages/my/account_deletion_page.dart';
 import 'package:wact/root_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -19,12 +21,40 @@ class _UserEditPageState extends State<UserEditPage> {
   bool _isUsernameAvailable = false; // 중복 확인 결과 저장
   bool _usernameValid = true; // 형식 유효성 검사
   bool _isSubmitButtonEnabled = false; // 완료 버튼 활성화 상태
+  DateTime? _scheduledDeletionDate;
 
   @override
   void initState() {
     super.initState();
     _fetchCurrentUsername();
+    _fetchScheduledDeletionDate();
     _usernameController.addListener(_onUsernameChanged);
+  }
+
+  Future<void> _fetchScheduledDeletionDate() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      final response = await Supabase.instance.client
+          .from('profiles')
+          .select('scheduled_deletion_date')
+          .eq('id', user.id)
+          .single();
+
+      setState(() {
+        if (response['scheduled_deletion_date'] != null) {
+          _scheduledDeletionDate =
+              DateTime.parse(response['scheduled_deletion_date'] as String);
+        } else {
+          _scheduledDeletionDate = null;
+        }
+      });
+    }
+  }
+
+  String _formatRemainingTime(DateTime scheduledDate) {
+    final now = DateTime.now();
+    final difference = scheduledDate.difference(now).inDays;
+    return '$difference일 후 탈퇴 예정';
   }
 
   void _onUsernameChanged() {
@@ -223,6 +253,29 @@ class _UserEditPageState extends State<UserEditPage> {
                 child: Text(
                   _isLoading ? '확인중...' : '중복 확인',
                   style: const TextStyle(color: Colors.white),
+                ),
+              ),
+              Spacer(),
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => AccountDeletionPage()));
+                },
+                child: Column(
+                  children: [
+                    Container(
+                      child: ListTile(
+                        title: const Text('탈퇴'),
+                        trailing: _scheduledDeletionDate != null
+                            ? Text(
+                                _formatRemainingTime(_scheduledDeletionDate!))
+                            : const Icon(Icons.cancel_outlined),
+                      ),
+                    ),
+                    SizedBox(
+                      height: 16,
+                    ),
+                  ],
                 ),
               ),
             ],

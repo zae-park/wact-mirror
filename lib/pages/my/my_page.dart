@@ -12,9 +12,12 @@ import 'package:wact/pages/my/add_sermon_note_page.dart';
 import 'package:wact/pages/my/my_bug_report_page.dart';
 import 'package:wact/pages/my/my_comment_page.dart';
 import 'package:wact/pages/my/my_home_page.dart';
+import 'package:wact/pages/my/my_post_page.dart';
 import 'package:wact/pages/my/my_privacy_policy_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wact/pages/my/my_review_page.dart';
 import 'package:wact/pages/my/my_user_edit_page.dart';
+import 'package:wact/pages/my/sermon_note_add_page.dart';
 
 class MyPage extends StatefulWidget {
   const MyPage({
@@ -26,10 +29,13 @@ class MyPage extends StatefulWidget {
 }
 
 class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
-  late Future<List<Map<String, dynamic>>>? _future;
   late Future<String> _usernameFuture;
   late final TabController _tabController;
   DateTime? _scheduledDeletionDate;
+  // 상태 변수 추가
+  int postCount = 0;
+  int reviewCount = 0;
+  int commentCount = 0;
 
   @override
   void initState() {
@@ -37,8 +43,55 @@ class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
     _tabController = TabController(vsync: this, length: 2);
 
     _usernameFuture = _getUsername();
-    _loadData();
-    _fetchScheduledDeletionDate();
+
+    _fetchPostCount();
+    _fetchReviewCount();
+    _fetchCommentsCount();
+  }
+
+// posts 테이블에서 해당 유저가 작성한 글 개수 가져오기
+  Future<void> _fetchPostCount() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId != null) {
+      final response = await Supabase.instance.client
+          .from('posts')
+          .select()
+          .eq('author_id', userId);
+
+      setState(() {
+        postCount = response.length;
+      });
+    }
+  }
+
+// reviews 테이블에서 해당 유저가 작성한 글 개수 가져오기
+  Future<void> _fetchReviewCount() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId != null) {
+      final response = await Supabase.instance.client
+          .from('reviews')
+          .select()
+          .eq('author_id', userId);
+      ;
+      setState(() {
+        reviewCount = response.length;
+      });
+    }
+  }
+
+  // comments 테이블에서 해당 유저가 작성한 글 개수 가져오기
+  Future<void> _fetchCommentsCount() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId != null) {
+      final response = await Supabase.instance.client
+          .from('comments')
+          .select()
+          .eq('author_id', userId);
+      ;
+      setState(() {
+        commentCount = response.length;
+      });
+    }
   }
 
   Future<String> _getUsername() async {
@@ -55,143 +108,6 @@ class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
 
     final data = response;
     return data['team'] + ' ' + data['username'] ?? 'No username';
-  }
-
-  Future<void> _loadData() async {
-    final userId =
-        Supabase.instance.client.auth.currentUser!.id; // 현재 로그인한 사용자의 ID 가져오기
-
-    _future = Supabase.instance.client
-        .from('posts')
-        .select()
-        .eq('author_id', userId)
-        .order('created_at', ascending: false);
-    setState(() {});
-  }
-
-  Future<void> _fetchScheduledDeletionDate() async {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user != null) {
-      final response = await Supabase.instance.client
-          .from('profiles')
-          .select('scheduled_deletion_date')
-          .eq('id', user.id)
-          .single();
-
-      setState(() {
-        if (response['scheduled_deletion_date'] != null) {
-          _scheduledDeletionDate =
-              DateTime.parse(response['scheduled_deletion_date'] as String);
-        } else {
-          _scheduledDeletionDate = null;
-        }
-      });
-    }
-  }
-
-  // 탈퇴 요청 대화상자를 표시하는 함수
-  void _showDeleteAccountDialog() {
-    // 이미 탈퇴 예정일이 설정되어 있는 경우
-    if (_scheduledDeletionDate != null) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            surfaceTintColor: Colors.white,
-            backgroundColor: Colors.white,
-            title: const Text('탈퇴 취소'),
-            content: const Text('탈퇴를 취소하시겠습니까?'),
-            actions: <Widget>[
-              TextButton(
-                child: const Text(
-                  '아니오',
-                  style: TextStyle(color: bg_90, fontWeight: FontWeight.w500),
-                ),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-              TextButton(
-                child: const Text(
-                  '예',
-                  style: TextStyle(color: primary, fontWeight: FontWeight.w500),
-                ),
-                onPressed: () async {
-                  Navigator.of(context).pop(); // 대화상자를 닫고
-                  await _cancelAccountDeletion(); // 탈퇴 취소 처리 함수 호출
-                },
-              ),
-            ],
-          );
-        },
-      );
-    } else {
-      // 탈퇴 예정일이 설정되어 있지 않은 경우, 탈퇴 요청 대화상자를 표시
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            surfaceTintColor: Colors.white,
-            backgroundColor: Colors.white,
-            title: const Text('계정 탈퇴'),
-            content: const Text(
-                '정말로 탈퇴하시겠습니까? \n탈퇴를 진행할 경우, 30일의 유예 기간이 부여되며, 이 기간 동안은 탈퇴를 취소할 수 있습니다. \n또한 기존에 작성한 모든 글이 비활성화되어, 다른 유저에게 보이지 않습니다.\n유예 기간이 만료되면 계정 정보와 모든 사진은 영구적으로 삭제됩니다.'),
-            actions: <Widget>[
-              TextButton(
-                child: const Text(
-                  '취소',
-                  style: TextStyle(color: primary, fontWeight: FontWeight.w500),
-                ),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-              TextButton(
-                child: const Text(
-                  '탈퇴',
-                  style: TextStyle(color: bg_90, fontWeight: FontWeight.w500),
-                ),
-                onPressed: () async {
-                  Navigator.of(context).pop(); // 대화상자를 닫고
-                  await _requestAccountDeletion(); // 탈퇴 요청 처리 함수 호출
-                },
-              ),
-            ],
-          );
-        },
-      );
-    }
-  }
-
-  // 탈퇴 취소를 처리하는 함수
-  Future<void> _cancelAccountDeletion() async {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user != null) {
-      // Supabase에서 scheduled_deletion_date 항목을 제거
-      await Supabase.instance.client
-          .from('profiles')
-          .update({'scheduled_deletion_date': null}).eq('id', user.id);
-
-      // 상태 업데이트
-      setState(() {
-        _scheduledDeletionDate = null;
-      });
-    }
-  }
-
-// 탈퇴 요청을 처리하는 함수
-  Future<void> _requestAccountDeletion() async {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user != null) {
-      final deletionDate =
-          DateTime.now().add(Duration(days: 30)); // 30일 후의 날짜 계산
-      await Supabase.instance.client.from('profiles').update({
-        'scheduled_deletion_date': deletionDate.toIso8601String()
-      }).eq('id', user.id);
-      _fetchScheduledDeletionDate(); // 업데이트된 삭제 예정일을 다시 불러옴
-    }
-  }
-
-  String _formatRemainingTime(DateTime scheduledDate) {
-    final now = DateTime.now();
-    final difference = scheduledDate.difference(now).inDays;
-    return '$difference일 후 탈퇴 예정';
   }
 
   // 로그아웃 기능을 가진 함수
@@ -250,172 +166,335 @@ class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Colors.white,
+        backgroundColor: Color(0xffF1F2FF),
         surfaceTintColor: Colors.white,
         elevation: 0, // 앱바 그림자 제거
-        centerTitle: true,
-        title: FutureBuilder<String>(
-          future: _usernameFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Text('');
-            }
-            if (snapshot.hasError) {
-              return const Text('X');
-            }
-            return Text(
-              snapshot.data ?? '',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            );
-          },
+        centerTitle: false,
+        title: Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: FutureBuilder<String>(
+            future: _usernameFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Text('');
+              }
+              if (snapshot.hasError) {
+                return const Text('X');
+              }
+              return Text(
+                snapshot.data ?? '',
+                style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600),
+              );
+            },
+          ),
         ),
       ),
       backgroundColor: Colors.white,
-      body: ListView(
-        shrinkWrap: true,
-        children: <Widget>[
-          GestureDetector(
-            onTap: () {
-              Get.to(
-                () => const MyHomePage(),
-              );
-            },
-            child: const ListTile(
-              title: Text('내 글 보기'),
-              trailing: Icon(
-                Icons.list_alt,
-                size: 20,
-                color: Colors.black,
+      body: Column(
+        children: [
+          Container(
+            color: Color(0xffF1F2FF),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Container(
+                width: MediaQuery.of(context).size.width - 40,
+                height: 82,
+                decoration: BoxDecoration(
+                  color: Colors.white, // 버튼 배경색
+                  borderRadius: BorderRadius.circular(10), // 둥근 모서리
+                  border: Border.all(color: primary, width: 1),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        Get.to(
+                          () => const MyHomePage(),
+                        );
+                      },
+                      child: Column(
+                        mainAxisAlignment:
+                            MainAxisAlignment.center, // 세로축 중앙 정렬
+
+                        children: [
+                          Text(
+                            '내 글',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: blueGrey),
+                          ),
+                          Text(
+                            '${postCount + commentCount}',
+                            style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black),
+                          ),
+                        ],
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Get.to(
+                          () => (),
+                        );
+                      },
+                      child: Column(
+                        mainAxisAlignment:
+                            MainAxisAlignment.center, // 세로축 중앙 정렬
+
+                        children: [
+                          Text(
+                            '설교노트',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: blueGrey),
+                          ),
+                          Text(
+                            '$reviewCount', // 50페이지 이상 포토북 개수
+                            style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black),
+                          ),
+                        ],
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Get.to(
+                          () => const MyCommentPage(),
+                        );
+                      },
+                      child: Column(
+                        mainAxisAlignment:
+                            MainAxisAlignment.center, // 세로축 중앙 정렬
+
+                        children: [
+                          Text(
+                            '댓글',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: blueGrey),
+                          ),
+                          Text(
+                            '$commentCount',
+                            style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-          Divider(
-            thickness: 0.5,
-            height: 0,
-          ),
-          GestureDetector(
-            onTap: () {
-              Get.to(
-                () => const MyCommentPage(),
-              );
-            },
-            child: const ListTile(
-              title: Text('내 댓글 보기'),
-              trailing: Icon(
-                FontAwesomeIcons.comment,
-                color: Colors.black,
-                size: 17,
+          const Padding(
+            padding: EdgeInsets.only(left: 20, top: 30, right: 20, bottom: 10),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '신앙',
+                style: TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w500, color: blueGrey),
               ),
             ),
           ),
-          Divider(
-            thickness: 0.5,
-            height: 0,
-          ),
-          GestureDetector(
-            onTap: () {
-              Get.to(
-                () => const UserEditPage(),
-              );
-            },
-            child: const ListTile(
-              title: Text('정보 수정'),
-              trailing: Icon(
-                Icons.edit,
-                size: 20,
-                color: Colors.black,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: GestureDetector(
+              onTap: () {
+                // Get.to(
+                //   () => SermonNoteAddPage(
+                //     onUpload: (List<String> urls) {}, // 이 부분은 필요에 따라 조정
+                //   ),
+                // );
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      backgroundColor: Colors.white,
+                      title: Text('설교노트 작성'),
+                      content: Text('다음 업데이트에 추가 될 예정입니다.\n조금만 기다려주세요 :)'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text('확인', style: TextStyle(color: primary)),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+              child: Container(
+                height: 50, color: Colors.transparent, // 투명 배경으로 설정
+
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/imgs/icon/ic_question.png',
+                      width: 22,
+                      height: 22,
+                    ),
+                    SizedBox(
+                      width: 10,
+                    ),
+                    Text(
+                      '설교노트 작성',
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-          Divider(
-            thickness: 0.5,
-            height: 0,
-          ),
-          GestureDetector(
-            onTap: () {
-              Get.to(
-                () => BugReportPage(),
-              );
-            },
-            child: const ListTile(
-              title: Text('고객센터'),
-              trailing: Icon(
-                Icons.question_mark_rounded,
-                size: 20,
-                color: Colors.black,
+          const Padding(
+            padding: EdgeInsets.only(left: 20, top: 30, right: 20, bottom: 10),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '설정',
+                style: TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w500, color: blueGrey),
               ),
             ),
           ),
-          Divider(
-            thickness: 0.5,
-            height: 0,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: GestureDetector(
+              child: Container(
+                color: Colors.transparent, // 투명 배경으로 설정
+                height: 50,
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/imgs/icon/ic_account.png',
+                      width: 22,
+                      height: 22,
+                    ),
+                    SizedBox(
+                      width: 10,
+                    ),
+                    Text(
+                      '계정 설정',
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black),
+                    ),
+                  ],
+                ),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  // MaterialPageRoute(builder: (context) => DeliveryInfo()),
+                  MaterialPageRoute(builder: (context) => UserEditPage()),
+                );
+              },
+            ),
           ),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const PrivacyPolicyPage()),
-              );
-            },
-            child: const ListTile(
-              title: Text('개인정보처리방침'),
-              trailing: Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 16,
-                color: Colors.black,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: GestureDetector(
+              onTap: () {
+                Get.to(
+                  () => BugReportPage(),
+                );
+              },
+              child: Container(
+                height: 50, color: Colors.transparent, // 투명 배경으로 설정
+
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/imgs/icon/icon_ask.png',
+                      width: 22,
+                      height: 22,
+                    ),
+                    SizedBox(
+                      width: 10,
+                    ),
+                    Text(
+                      '문의하기',
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-          Divider(
-            thickness: 0.5,
-            height: 0,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => PrivacyPolicyPage()));
+              },
+              child: SizedBox(
+                height: 50,
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/imgs/icon/ic_agreement.png',
+                      width: 22,
+                      height: 22,
+                    ),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    const Text(
+                      '개인정보처리방침',
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
+          const Spacer(),
           GestureDetector(
             onTap: _showLogoutDialog, // 로그아웃 대화상자 표시
-            child: const ListTile(
-              title: Text('로그아웃'),
-              trailing: Icon(
-                Icons.logout_rounded,
-                size: 20,
-                color: Colors.black,
-              ),
-            ),
+            child: Container(
+                width: 84,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Colors.white, // 버튼 배경색
+                  borderRadius: BorderRadius.circular(19), // 둥근 모서리
+                  border: Border.all(color: const Color(0xffcfd6e1), width: 1),
+                ),
+                child: const Center(
+                    child: Text(
+                  '로그아웃',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ))),
           ),
-          Divider(
-            thickness: 0.5,
-            height: 0,
-          ),
-          GestureDetector(
-            onTap: _showDeleteAccountDialog, // 로그아웃 대화상자 표시
-
-            child: ListTile(
-              leading: GestureDetector(
-                onTap: () async {
-                  const url =
-                      'https://calmpy.notion.site/WACT-14e07d757e788047bd80ddc5e16e0cdb';
-                  if (await canLaunchUrl(Uri.parse(url))) {
-                    await launchUrl(Uri.parse(url),
-                        mode: LaunchMode.externalApplication);
-                  } else {
-                    throw 'Could not launch $url';
-                  }
-                },
-                child: const Icon(Icons.info_outline_rounded),
-              ),
-              title: const Text('탈퇴'),
-              trailing: _scheduledDeletionDate != null
-                  ? Text(_formatRemainingTime(_scheduledDeletionDate!))
-                  : const Icon(Icons.cancel_outlined),
-            ),
-          ),
-          Divider(
-            thickness: 0.5,
-            height: 0,
+          SizedBox(
+            height: 36,
           ),
         ],
       ),

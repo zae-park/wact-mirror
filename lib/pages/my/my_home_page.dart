@@ -8,7 +8,8 @@ import 'package:wact/pages/my/my_post_page.dart';
 import 'package:wact/pages/my/my_review_page.dart';
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+  final int initialIndex;
+  const MyHomePage({super.key, this.initialIndex = 0});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -20,7 +21,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(vsync: this, length: 2);
+    // 초기 탭 인덱스를 사용하여 TabController 생성
+    _tabController = TabController(
+        vsync: this, length: 2, initialIndex: widget.initialIndex);
     // TabController에 리스너 추가
     _tabController.addListener(() {
       if (!mounted) return;

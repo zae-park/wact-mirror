@@ -2,6 +2,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/init.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -210,7 +211,7 @@ class _AccountPageState extends State<AccountPage> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
-          '프로필',
+          '회원가입',
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
         ),
         backgroundColor: Colors.white,
@@ -227,9 +228,15 @@ class _AccountPageState extends State<AccountPage> {
                 if (_isUsernameEmpty)
                   TextFormField(
                     controller: _usernameController,
+                    inputFormatters: [
+                      LengthLimitingTextInputFormatter(14), // 최대 14자 제한
+                    ],
                     decoration: const InputDecoration(
-                        labelText: '이름', hintText: '성과 이름을 같이 입력해주세요.'),
+                      labelText: '이름',
+                      hintText: '성과 이름을 같이 입력해주세요.',
+                    ),
                   ),
+
                 const SizedBox(height: 18),
                 TextFormField(
                   controller: _universityController,
@@ -359,7 +366,7 @@ class _AccountPageState extends State<AccountPage> {
                 TextButton(
                   onPressed: _signOut,
                   child: const Text(
-                    '로그아웃',
+                    '취소',
                     style: TextStyle(
                       color: Colors.black,
                     ),
