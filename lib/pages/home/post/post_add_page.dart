@@ -3,6 +3,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:wact/common/const/color.dart';
@@ -534,7 +535,7 @@ class _PostAddPageState extends State<PostAddPage> {
                             ),
                           ),
                           Text(
-                            '${_titleEditingController.text.length}/15',
+                            '${_titleEditingController.text.length}/16',
                             style: const TextStyle(
                               color: bg_90,
                               fontSize: 12,
@@ -546,7 +547,10 @@ class _PostAddPageState extends State<PostAddPage> {
                       TextFormField(
                         controller: _titleEditingController,
                         maxLines: 1,
-                        maxLength: 15,
+                        maxLength: 16,
+                        inputFormatters: [
+                          LengthLimitingTextInputFormatter(16),
+                        ],
                         cursorColor: primary,
                         decoration: const InputDecoration(
                           hintText: '제목을 입력해주세요.',
@@ -578,7 +582,7 @@ class _PostAddPageState extends State<PostAddPage> {
                             ),
                           ),
                           Text(
-                            '${_contentEditingController.text.length}/150',
+                            '${_contentEditingController.text.length}/500',
                             style: const TextStyle(
                               color: bg_90,
                               fontSize: 12,
@@ -591,7 +595,10 @@ class _PostAddPageState extends State<PostAddPage> {
                         child: TextFormField(
                           controller: _contentEditingController,
                           maxLines: 5,
-                          maxLength: 150,
+                          maxLength: 500,
+                          inputFormatters: [
+                            LengthLimitingTextInputFormatter(500), // 최대 14자 제한
+                          ],
                           cursorColor: primary,
                           decoration: const InputDecoration(
                             hintText: '내용을 작성해주세요.',

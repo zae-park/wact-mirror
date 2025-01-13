@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:wact/common/const/color.dart';
@@ -736,7 +737,7 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
                               ),
                             ),
                             Text(
-                              '${_titleEditingController.text.length}/15',
+                              '${_titleEditingController.text.length}/16',
                               style: const TextStyle(
                                 color: bg_90,
                                 fontSize: 12,
@@ -748,7 +749,10 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
                         TextFormField(
                           controller: _titleEditingController,
                           maxLines: 1,
-                          maxLength: 15,
+                          maxLength: 16,
+                          inputFormatters: [
+                            LengthLimitingTextInputFormatter(16), // 최대 16자 제한
+                          ],
                           cursorColor: primary,
                           decoration: const InputDecoration(
                             hintText: '제목을 입력해주세요.',
@@ -793,6 +797,10 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
                             controller: _contentEditingController,
                             maxLines: 10,
                             maxLength: 1000,
+                            inputFormatters: [
+                              LengthLimitingTextInputFormatter(
+                                  1000), // 최대 1000자 제한
+                            ],
                             cursorColor: primary,
                             decoration: const InputDecoration(
                               hintText: '내용을 작성해주세요.',
