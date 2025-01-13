@@ -257,7 +257,7 @@ class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
                                 color: blueGrey),
                           ),
                           Text(
-                            '$reviewCount', // 50페이지 이상 포토북 개수
+                            '0', // 50페이지 이상 포토북 개수
                             style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w600,
