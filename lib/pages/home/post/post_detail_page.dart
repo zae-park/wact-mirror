@@ -668,7 +668,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                 title: Row(
                                   children: [
                                     Text(
-                                      comment['author'] ?? '',
+                                      comment['current_author'] ?? '',
                                       style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: isPostAuthor
