@@ -1,614 +1,388 @@
-// 첫 번째 FAB누르면 나오는 게시글 작성페이지
-
-import 'dart:io';
-import 'dart:math';
-
-import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:wact/common/const/color.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:io';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:wact/common/const/bible_books.dart';
 import 'package:wact/common/init.dart';
-import 'package:wact/pages/home/home_page.dart';
 
 class SermonNoteAddPage extends StatefulWidget {
-  final List<XFile>? images;
-  final void Function(List<String>) onUpload;
-
-  const SermonNoteAddPage({
-    Key? key,
-    this.images,
-    required this.onUpload,
-  }) : super(key: key);
-
   @override
   _SermonNoteAddPageState createState() => _SermonNoteAddPageState();
 }
 
 class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
-  final _titleEditingController = TextEditingController();
-  final _contentEditingController = TextEditingController();
-  List<XFile> _currentImages = [];
-  bool _isLoading = false;
-  bool _isUploading = false; // 업로드 상태 추적 플래그 추가
-  List<String> uploadedFilePaths = [];
-  List<String> uploadedCompressedFilePaths = [];
+  final List<Map<String, dynamic>> _selectedBibleVerses = [];
+  final TextEditingController _preacherController = TextEditingController();
+  final TextEditingController _contentController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
 
-  late User? user;
-  bool isAdmin = false;
-  bool isChecked = false;
+  String? _selectedBook;
+  int? _selectedChapter;
+  int? _selectedStartVerse;
+  int? _selectedEndVerse;
+  List<File> _selectedImages = [];
+  bool _isUploading = false;
+
+  List<int> _generateNumbers(int count) =>
+      List<int>.generate(count, (i) => i + 1);
 
   Future<void> _pickImages() async {
     final pickedFiles = await ImagePicker().pickMultiImage();
-
-    if (_currentImages.length + pickedFiles.length > 10) {
+    if (pickedFiles != null &&
+        pickedFiles.length + _selectedImages.length > 10) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('최대 10장의 이미지만 선택할 수 있습니다.')));
-    } else {
-      setState(() {
-        _currentImages.addAll(pickedFiles);
-      });
+        const SnackBar(content: Text('최대 10장의 이미지만 선택할 수 있습니다.')),
+      );
+      return;
+    }
 
-      // 선택된 이미지를 바로 스토리지에 저장
-      await _uploadImages(pickedFiles);
+    if (pickedFiles != null) {
+      setState(() {
+        _selectedImages.addAll(pickedFiles.map((file) => File(file.path)));
+      });
     }
   }
 
-  // 이미지 선택 후 즉시 스토리지에 원본 및 압축본을 저장하는 함수
-  Future<void> _uploadImages(List<XFile> selectedImages) async {
-    final user = supabase.auth.currentUser;
-    if (user == null) throw Exception('User not found');
+  Future<File> _compressImage(File file) async {
+    final result = await FlutterImageCompress.compressAndGetFile(
+      file.absolute.path,
+      '${file.parent.path}/compressed_${file.uri.pathSegments.last}',
+      quality: 80,
+    );
+    if (result == null) {
+      throw Exception("Image compression failed");
+    }
+    return File(result.path);
+  }
 
-    List<String> filePaths = selectedImages.map((imageFile) {
-      final fileExt = imageFile.path.split('.').last;
-      final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
-      return '${user.id}/$fileName';
-    }).toList();
+  void _addSelectedBibleVerse() {
+    if (_selectedBook != null &&
+        _selectedChapter != null &&
+        _selectedStartVerse != null) {
+      final verseRange =
+          _selectedEndVerse != null && _selectedEndVerse! > _selectedStartVerse!
+              ? '$_selectedStartVerse-$_selectedEndVerse'
+              : '$_selectedStartVerse';
 
-    List<String> compressedFilePaths = selectedImages.map((imageFile) {
-      final fileExt = imageFile.path.split('.').last;
-      final fileName =
-          '${DateTime.now().toIso8601String()}_compressed.$fileExt';
-      return '${user.id}/$fileName';
-    }).toList();
+      setState(() {
+        _selectedBibleVerses.add({
+          'book': _selectedBook,
+          'chapter': _selectedChapter,
+          'verses': verseRange,
+        });
+        _selectedBook = null;
+        _selectedChapter = null;
+        _selectedStartVerse = null;
+        _selectedEndVerse = null;
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('모든 항목을 선택해주세요.')),
+      );
+    }
+  }
+
+  Future<void> _saveToSupabase() async {
+    if (_preacherController.text.isEmpty || _contentController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('모든 필수 항목을 작성해주세요.')),
+      );
+      return;
+    }
 
     setState(() {
-      _isUploading = true; // 업로드 시작 시 상태 설정
+      _isUploading = true;
     });
 
     try {
-      for (int i = 0; i < selectedImages.length; i++) {
-        var imageFile = selectedImages[i];
-        var filePath = filePaths[i];
-        var compressedFilePath = compressedFilePaths[i];
-
-        final imageBytes = await imageFile.readAsBytes();
-        final fileExt = imageFile.path.split('.').last;
-
-        // 이미지 압축
-        final compressedImageBytes =
-            await FlutterImageCompress.compressWithList(
-          imageBytes,
-          quality: 80, // 80% 품질로 압축
-        );
-
-        // 원본 이미지 업로드
-        await supabase.storage.from('post_photo').uploadBinary(
-              filePath,
-              imageBytes,
-              fileOptions: FileOptions(contentType: 'image/$fileExt'),
-            );
-        uploadedFilePaths.add(filePath); // 업로드된 파일 경로 저장
-
-        // 압축본 이미지 업로드
-        await supabase.storage.from('post_compressed_photo').uploadBinary(
-              compressedFilePath,
-              compressedImageBytes,
-              fileOptions: FileOptions(contentType: 'image/$fileExt'),
-            );
-        uploadedCompressedFilePaths.add(compressedFilePath); // 압축본 경로 저장
+      // 현재 사용자 ID 가져오기
+      final user = supabase.auth.currentUser;
+      if (user == null) {
+        throw Exception('로그인된 사용자가 없습니다.');
       }
-    } catch (e) {
-      debugPrint('업로드 중 오류 발생: $e');
-    } finally {
-      setState(() {
-        _isUploading = false; // 업로드 종료 시 상태 변경
+
+      // 사용자별 폴더 이름 생성
+      final userId = user.id;
+
+      // 이미지 압축 및 업로드 처리
+      List<String> imageUrls = [];
+      for (var image in _selectedImages) {
+        final compressedImage = await _compressImage(image);
+
+        // Supabase 스토리지에 사용자별 폴더에 이미지 업로드
+        final fileName =
+            'images/${userId}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final uploadResponse = await supabase.storage
+            .from('sermon_note_photo')
+            .upload(fileName, compressedImage);
+
+        if (uploadResponse.isEmpty) {
+          throw Exception('이미지 업로드 실패: $uploadResponse');
+        }
+
+        final publicUrl =
+            supabase.storage.from('sermon_note_photo').getPublicUrl(fileName);
+        imageUrls.add(publicUrl);
+      }
+
+      // 테이블에 데이터 삽입
+      final response = await supabase.from('sermon_notes').insert({
+        'user_id': userId, // 작성자의 ID 추가
+        'preacher': _preacherController.text,
+        'location': _locationController.text,
+        'content': _contentController.text,
+        'bible_verses': _selectedBibleVerses,
+        'images': imageUrls,
       });
-    }
-  }
 
-  // 스토리지에서 이미지를 삭제하는 함수
-  Future<void> _deleteUploadedImages() async {
-    for (String filePath in uploadedFilePaths) {
-      try {
-        await supabase.storage.from('post_photo').remove([filePath]);
-        debugPrint('원본 이미지 삭제 완료: $filePath');
-      } catch (e) {
-        debugPrint('원본 이미지 삭제 중 오류 발생: $filePath, $e');
-      }
-    }
-    for (String compressedFilePath in uploadedCompressedFilePaths) {
-      try {
-        await supabase.storage
-            .from('post_compressed_photo')
-            .remove([compressedFilePath]);
-        debugPrint('압축 이미지 삭제 완료: $compressedFilePath');
-      } catch (e) {
-        debugPrint('압축 이미지 삭제 중 오류 발생: $compressedFilePath, $e');
-      }
-    }
-  }
-
-  // 업로드 중인 작업 중지 및 업로드된 이미지만 삭제하는 함수
-  Future<void> _cancelUploadAndDeleteImages() async {
-    // 업로드가 진행 중이면, 업로드된 이미지만 삭제
-    if (_isUploading) {
-      debugPrint('업로드가 진행 중입니다. 일부 업로드된 이미지를 삭제합니다.');
-      await _deleteUploadedImages();
-    } else {
-      debugPrint('모든 이미지가 이미 업로드된 상태입니다.');
-    }
-  }
-
-// 게시글 업로드 (이미지 업로드 완료 후 게시글 업로드)
-  Future<bool> _uploadPost(List<XFile> images) async {
-    if (_isLoading) return false;
-
-    try {
-      setState(() => _isLoading = true);
-
-      // AlertDialog로 로딩 상태를 사용자에게 표시
-      showDialog(
-        context: context,
-        barrierDismissible: false, // 사용자가 다이얼로그 외부를 터치해도 닫히지 않도록 설정
-        builder: (BuildContext context) {
-          return const AlertDialog(
-            backgroundColor: Colors.black,
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '게시글을 저장중입니다...',
-                  style: TextStyle(color: Colors.white),
-                )
-              ],
-            ),
-          );
-        },
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('설교 노트가 저장되었습니다.')),
       );
 
-      // 모든 이미지가 업로드될 때까지 대기
-      await Future.doWhile(() async {
-        await Future.delayed(const Duration(milliseconds: 100));
-        return uploadedFilePaths.length != _currentImages.length ||
-            uploadedCompressedFilePaths.length != _currentImages.length;
+      Navigator.pop(context);
+
+      // 성공 후 초기화
+      _preacherController.clear();
+      _locationController.clear();
+      _contentController.clear();
+      setState(() {
+        _selectedBibleVerses.clear();
+        _selectedImages.clear();
       });
-
-      final user = supabase.auth.currentUser;
-      if (user == null) throw Exception('User not found');
-
-      List<String> imageUrls = [];
-      List<String> compressedImageUrls = [];
-
-      // 이미지가 있으면 이미지의 경로로 서명된 URL 생성
-      if (uploadedFilePaths.isNotEmpty) {
-        // 원본 이미지의 서명된 URL 생성
-        List<SignedUrl> signedUrls = await supabase.storage
-            .from('post_photo')
-            .createSignedUrls(uploadedFilePaths, 60 * 60 * 24 * 365 * 10);
-
-        imageUrls.addAll(signedUrls.map((e) => e.signedUrl));
-
-        // 압축 이미지의 서명된 URL 생성
-        List<SignedUrl> compressedSignedUrls = await supabase.storage
-            .from('post_compressed_photo')
-            .createSignedUrls(
-                uploadedCompressedFilePaths, 60 * 60 * 24 * 365 * 10);
-
-        compressedImageUrls
-            .addAll(compressedSignedUrls.map((e) => e.signedUrl));
-      }
-
-      final profileResponse = await supabase
-          .from('profiles')
-          .select('username')
-          .match({'id': user.id}).single();
-
-      final username = profileResponse['username'] as String?;
-
-      // 게시글 데이터 DB에 저장
-      await supabase.from('posts').insert({
-        'author_id': user.id,
-        'author': username,
-        'title': _titleEditingController.text,
-        'content': _contentEditingController.text,
-        'image_urls': imageUrls,
-        'compressed_image_urls': compressedImageUrls,
-        'notice': isChecked, // 체크 여부를 추가
-      });
-
-      widget.onUpload(imageUrls);
-
-      return true;
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        Navigator.pop(context); // AlertDialog 닫기
-      }
+      setState(() {
+        _isUploading = false;
+      });
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    user = Supabase.instance.client.auth.currentUser;
-    fetchRole(); // 역할 정보 가져오기
-
-    if (widget.images != null) {
-      _currentImages = widget.images!;
-    }
-    _titleEditingController.addListener(() {
-      setState(() {});
-    });
-
-    _contentEditingController.addListener(() {
-      setState(() {});
-    });
-  }
-
-  Future<void> fetchRole() async {
-    try {
-      final response = await Supabase.instance.client
-          .from('profiles')
-          .select('role')
-          .eq('id', user!.id) // 현재 사용자의 id로 필터링
-
-          .single();
-
-      if (response.isNotEmpty) {
-        setState(() {
-          isAdmin = response['role'] == 'admin';
-          debugPrint('관리자 여부: $isAdmin');
-        });
-      }
-    } catch (e) {
-      print('Role fetch error: $e');
-    }
-  }
-
-  @override
-  void dispose() {
-    if (_currentImages.isNotEmpty) {
-      // '게시' 버튼을 누르지 않고 페이지를 벗어날 경우 업로드를 중단하고 이미지를 삭제
-      _cancelUploadAndDeleteImages();
-    }
-    _titleEditingController.dispose();
-    _contentEditingController.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // 이미지 표시 부분
-    Widget buildImageGrid() {
-      return Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 8.0,
-            crossAxisSpacing: 8.0,
-          ),
-          itemCount: min(_currentImages.length + 1, 10),
-          itemBuilder: (BuildContext context, int index) {
-            if (index < _currentImages.length) {
-              return DragTarget<XFile>(
-                onWillAccept: (data) => true,
-                onAccept: (data) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('설교노트 작성'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 설교자 입력
+            TextFormField(
+              controller: _preacherController,
+              decoration: const InputDecoration(
+                labelText: '설교자',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16.0),
+
+            // 장소 입력
+            TextFormField(
+              controller: _locationController,
+              decoration: const InputDecoration(
+                labelText: '장소',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16.0),
+
+            // 성경절 선택
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedBook,
+                    hint: const Text('성경책 선택'),
+                    items: bibleBooks.map((book) {
+                      return DropdownMenuItem(
+                        value: book,
+                        child: Text(book),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedBook = value;
+                        _selectedChapter = null;
+                        _selectedStartVerse = null;
+                        _selectedEndVerse = null;
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: '성경책',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8.0),
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: _addSelectedBibleVerse,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16.0),
+
+            if (_selectedBook != null)
+              DropdownButtonFormField<int>(
+                value: _selectedChapter,
+                hint: const Text('장 선택'),
+                items: _generateNumbers(50).map((chapter) {
+                  return DropdownMenuItem(
+                    value: chapter,
+                    child: Text('$chapter장'),
+                  );
+                }).toList(),
+                onChanged: (value) {
                   setState(() {
-                    final oldIndex = _currentImages.indexOf(data);
-                    _currentImages.remove(data);
-                    if (index > oldIndex) {
-                      _currentImages.insert(index - 1, data);
-                    } else {
-                      _currentImages.insert(index, data);
-                    }
+                    _selectedChapter = value;
+                    _selectedStartVerse = null;
+                    _selectedEndVerse = null;
                   });
                 },
-                builder: (context, candidateData, rejectedData) {
-                  return LongPressDraggable<XFile>(
-                    data: _currentImages[index],
-                    feedback: Material(
-                      child: Image.file(File(_currentImages[index].path),
-                          fit: BoxFit.cover, width: 100, height: 100),
-                    ),
-                    childWhenDragging: Container(),
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: Image.file(File(_currentImages[index].path),
-                              fit: BoxFit.cover),
-                        ),
-                        // 삭제 버튼
-                        Positioned(
-                          right: -8,
-                          top: -8,
-                          child: IconButton(
-                            iconSize: 16,
-                            icon: const FaIcon(
-                              FontAwesomeIcons.circleMinus,
-                              color: Colors.white,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _currentImages.removeAt(index);
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            } else if (_currentImages.length < 10) {
-              return GestureDetector(
-                onTap: _pickImages,
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.add),
-                ),
-              );
-            } else {
-              return Container();
-            }
-          },
-        ),
-      );
-    }
-
-    return WillPopScope(
-      onWillPop: () async {
-        if (_currentImages.isNotEmpty) {
-          // 뒤로가기 누르면 업로드 중지 및 이미지 삭제
-          await _cancelUploadAndDeleteImages();
-        }
-        return true; // true를 반환하여 실제로 뒤로가기를 수행
-      },
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          surfaceTintColor: Colors.white,
-          iconTheme:
-              const IconThemeData(color: Color.fromARGB(255, 42, 31, 31)),
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: Transform.translate(
-            offset: const Offset(12, 0.0),
-            child: IconButton(
-              iconSize: 34,
-              icon: Image.asset('assets/imgs/icon/btn_back_grey@3x.png'),
-              onPressed: () async {
-                if (_currentImages.isNotEmpty) {
-                  // AppBar 뒤로가기 버튼 클릭 시 이미지 삭제
-                  await _deleteUploadedImages();
-                }
-                Navigator.pop(context); // 페이지에서 벗어남
-              },
-            ),
-          ),
-          title: const Text(
-            '설교노트',
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          centerTitle: true,
-          actions: <Widget>[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(0, 9, 20, 9),
-              child: SizedBox(
-                width: 52,
-                child: GestureDetector(
-                  onTap: () async {
-                    if (_titleEditingController.text.isNotEmpty ||
-                        _contentEditingController.text.isNotEmpty) {
-                      debugPrint('게시글 업로드 버튼 클릭');
-                      // await _uploadPost().then((_) {
-                      //   debugPrint('게시글 업로드 성공');
-                      //   // context.findAncestorStateOfType<HomePageState>()를 사용하는 대신 전달된 GlobalKey를 활용합니다.
-                      //   final homePageState = widget.homePageKey.currentState;
-                      //   debugPrint('homePageState: $homePageState');
-                      //   // if (homePageState != null) {
-                      //   homePageState?.refreshPostPage();
-                      //   debugPrint('PostPage 새로고침 완료');
-                      //   // }
-                      //   Navigator.pop(context, true);
-                      // });
-                      bool result = await _uploadPost(_currentImages);
-                      Navigator.pop(
-                          context, result); // 여기서 새로고침 로직을 제거하고, 결과만 반환합니다.
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          backgroundColor: Colors.black,
-                          content: Text(
-                            '내용을 작성해주세요.',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white),
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(19), color: bg_10),
-                    child: const Center(
-                      child: Text(
-                        '작성',
-                        style: TextStyle(
-                          color: primary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ),
-                  ),
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: '장',
                 ),
               ),
-            ),
-          ],
-        ),
-        body: SingleChildScrollView(
-          child: Column(
-            children: <Widget>[
-              buildImageGrid(),
 
-              // 제목과 내용 입력
-              Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: SizedBox(
-                  height: (MediaQuery.of(context).size.height * 0.65 - 56),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: 16.0),
+
+            if (_selectedChapter != null)
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<int>(
+                      value: _selectedStartVerse,
+                      hint: const Text('시작 절 선택'),
+                      items: _generateNumbers(176).map((verse) {
+                        return DropdownMenuItem(
+                          value: verse,
+                          child: Text('$verse절'),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedStartVerse = value;
+                          _selectedEndVerse = null;
+                        });
+                      },
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: '시작 절',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8.0),
+                  Expanded(
+                    child: DropdownButtonFormField<int>(
+                      value: _selectedEndVerse,
+                      hint: const Text('끝 절 선택 (선택)'),
+                      items: _generateNumbers(176).map((verse) {
+                        return DropdownMenuItem(
+                          value: verse,
+                          child: Text('$verse절'),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedEndVerse = value;
+                        });
+                      },
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: '끝 절',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+            const SizedBox(height: 16.0),
+
+            // 사진 추가
+            ElevatedButton.icon(
+              onPressed: _pickImages,
+              icon: const Icon(Icons.add_photo_alternate),
+              label: const Text('사진 추가'),
+            ),
+
+            if (_selectedImages.isNotEmpty)
+              Wrap(
+                spacing: 8.0,
+                runSpacing: 8.0,
+                children: _selectedImages.map((image) {
+                  return Stack(
+                    alignment: Alignment.topRight,
                     children: [
-                      // if (isAdmin)
-                      //   Row(
-                      //     mainAxisAlignment: MainAxisAlignment.end,
-                      //     children: [
-                      //       IconButton(
-                      //         onPressed: () {
-                      //           setState(() {
-                      //             isChecked = !isChecked;
-                      //             debugPrint('체크 여부: $isChecked');
-                      //           });
-                      //         },
-                      //         icon: isChecked
-                      //             ? Icon(
-                      //                 Icons.check_box_rounded,
-                      //                 color: Colors.red,
-                      //               )
-                      //             : Icon(
-                      //                 Icons.check_box_outline_blank_rounded,
-                      //                 color: bg_90,
-                      //               ),
-                      //       ),
-                      //       Text(
-                      //         '공지',
-                      //         style: isChecked
-                      //             ? TextStyle(
-                      //                 color: Colors.red,
-                      //                 fontSize: 14,
-                      //                 fontWeight: FontWeight.w700,
-                      //               )
-                      //             : TextStyle(
-                      //                 color: bg_90,
-                      //                 fontSize: 14,
-                      //                 fontWeight: FontWeight.w500,
-                      //               ),
-                      //       ),
-                      //     ],
-                      //   ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            '제목',
-                            style: TextStyle(
-                              color: bg_90,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                          Text(
-                            '${_titleEditingController.text.length}/15',
-                            style: const TextStyle(
-                              color: bg_90,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      ),
-                      TextFormField(
-                        controller: _titleEditingController,
-                        maxLines: 1,
-                        maxLength: 15,
-                        cursorColor: primary,
-                        decoration: const InputDecoration(
-                          hintText: '제목을 입력해주세요.',
-                          hintStyle: TextStyle(
-                            color: bg_70,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 15,
-                          ),
-                          border: InputBorder.none,
-                          counterText: '',
-                        ),
-                      ),
-                      // 색상 정보 복사 버튼과 사진 정보 복사 버튼
-                      const Divider(
-                        color: bg_30,
-                      ),
-                      const SizedBox(
-                        height: 16,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            '내용',
-                            style: TextStyle(
-                              color: bg_90,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                          Text(
-                            '${_contentEditingController.text.length}/150',
-                            style: const TextStyle(
-                              color: bg_90,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _contentEditingController,
-                          maxLines: 5,
-                          maxLength: 150,
-                          cursorColor: primary,
-                          decoration: const InputDecoration(
-                            hintText: '내용을 작성해주세요.',
-                            hintStyle: TextStyle(
-                              color: bg_70,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 15,
-                            ),
-                            border: InputBorder.none,
-                            counterText: '',
-                            focusColor: primary,
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8.0),
+                          image: DecorationImage(
+                            image: FileImage(image),
+                            fit: BoxFit.cover,
                           ),
                         ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () {
+                          setState(() {
+                            _selectedImages.remove(image);
+                          });
+                        },
                       ),
                     ],
-                  ),
-                ),
+                  );
+                }).toList(),
               ),
-            ],
-          ),
+
+            const SizedBox(height: 16.0),
+
+            // 본문 추가
+            TextFormField(
+              controller: _contentController,
+              maxLines: 5,
+              decoration: const InputDecoration(
+                labelText: '본문 추가',
+                border: OutlineInputBorder(),
+              ),
+            ),
+
+            const SizedBox(height: 16.0),
+
+            ElevatedButton(
+              onPressed: _isUploading ? null : _saveToSupabase,
+              child: _isUploading
+                  ? const CircularProgressIndicator()
+                  : const Text('작성 완료'),
+            ),
+
+            const SizedBox(height: 16.0),
+
+            if (_selectedBibleVerses.isNotEmpty)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: _selectedBibleVerses.map((verse) {
+                  return ListTile(
+                    title: Text(
+                        '${verse['book']} ${verse['chapter']}장 ${verse['verses']}절'),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () {
+                        setState(() {
+                          _selectedBibleVerses.remove(verse);
+                        });
+                      },
+                    ),
+                  );
+                }).toList(),
+              ),
+          ],
         ),
       ),
     );

@@ -16,6 +16,7 @@ import 'package:wact/pages/my/my_post_page.dart';
 import 'package:wact/pages/my/my_privacy_policy_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wact/pages/my/my_review_page.dart';
+import 'package:wact/pages/my/my_sermon_note_page.dart';
 import 'package:wact/pages/my/my_user_edit_page.dart';
 import 'package:wact/pages/my/sermon_note_add_page.dart';
 
@@ -241,7 +242,7 @@ class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
                     GestureDetector(
                       onTap: () {
                         Get.to(
-                          () => (),
+                          () => MySermonNotePage(),
                         );
                       },
                       child: Column(
@@ -314,27 +315,25 @@ class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: GestureDetector(
               onTap: () {
-                // Get.to(
-                //   () => SermonNoteAddPage(
-                //     onUpload: (List<String> urls) {}, // 이 부분은 필요에 따라 조정
-                //   ),
-                // );
-                showDialog(
-                  context: context,
-                  builder: (context) {
-                    return AlertDialog(
-                      backgroundColor: Colors.white,
-                      title: Text('설교노트 작성'),
-                      content: Text('다음 업데이트에 추가 될 예정입니다.\n조금만 기다려주세요 :)'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: Text('확인', style: TextStyle(color: primary)),
-                        ),
-                      ],
-                    );
-                  },
+                Get.to(
+                  () => SermonNoteAddPage(),
                 );
+                // showDialog(
+                //   context: context,
+                //   builder: (context) {
+                //     return AlertDialog(
+                //       backgroundColor: Colors.white,
+                //       title: Text('설교노트 작성'),
+                //       content: Text('다음 업데이트에 추가 될 예정입니다.\n조금만 기다려주세요 :)'),
+                //       actions: [
+                //         TextButton(
+                //           onPressed: () => Navigator.of(context).pop(),
+                //           child: Text('확인', style: TextStyle(color: primary)),
+                //         ),
+                //       ],
+                //     );
+                //   },
+                // );
               },
               child: Container(
                 height: 50, color: Colors.transparent, // 투명 배경으로 설정

@@ -8,14 +8,14 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/pages/my/sermon_note_detail_page.dart';
 
-class MySermonNotePage extends StatefulWidget {
-  const MySermonNotePage({super.key});
+class MySermonPage extends StatefulWidget {
+  const MySermonPage({super.key});
 
   @override
-  State<MySermonNotePage> createState() => _MySermonNotePageState();
+  State<MySermonPage> createState() => _MySermonPageState();
 }
 
-class _MySermonNotePageState extends State<MySermonNotePage> {
+class _MySermonPageState extends State<MySermonPage> {
   late Stream<List<Map<String, dynamic>>> _stream;
   late ScrollController controller;
 
@@ -93,26 +93,7 @@ class _MySermonNotePageState extends State<MySermonNotePage> {
                     final formattedDate = DateFormat('MM/dd').format(createdAt);
 
                     return InkWell(
-                      onTap: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SermonNoteDetailPage(
-                              post: sermon,
-                              refreshCallback: () {
-                                setState(() {
-                                  _stream = _loadDataStream(); // 데이터 스트림 갱신
-                                });
-                              },
-                            ),
-                          ),
-                        );
-                        if (result == true) {
-                          setState(() {
-                            _stream = _loadDataStream();
-                          });
-                        }
-                      },
+                      onTap: () {},
                       child: Column(
                         children: [
                           Padding(
