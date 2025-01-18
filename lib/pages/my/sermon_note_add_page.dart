@@ -709,8 +709,6 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
               const Divider(
                 color: bg_30,
               ),
-              const SizedBox(height: 6),
-              buildImageGrid(),
 
               // 장소&설교자 입력
               Row(
@@ -1103,6 +1101,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: TextFormField(
                   controller: _contentController,
+                  minLines: 3,
                   maxLines: 50,
                   maxLength: 1000,
                   inputFormatters: [
@@ -1122,7 +1121,8 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                 ),
               ),
               // 색상 정보 복사 버튼과 사진 정보 복사 버튼
-
+              const SizedBox(height: 6),
+              buildImageGrid(),
               const SizedBox(height: 36.0),
             ],
           ),
