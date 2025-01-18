@@ -1,0 +1,34 @@
+{
+  "weather": [
+    {"fileName": "weather_sun.png", "name": "맑음", "color": "FDD1C6"},
+    {"fileName": "weather_cloud.png", "name": "흐림", "color": "D2E3EB"},
+    {"fileName": "weather_finedust.png", "name": "미세먼지", "color": "DDDAD3"},
+    {"fileName": "weather_rain.png", "name": "비", "color": "C9E5F3"},
+    {"fileName": "weather_rainbow.png", "name": "무지개", "color": "D0CEED"},
+    {"fileName": "weather_windy.png", "name": "바람", "color": "BFDFF4"},
+    {"fileName": "weather_moon.png", "name": "달", "color": "FBE7AD"},
+    {"fileName": "weather_thunder.png", "name": "천둥", "color": "C0D1DB"},
+    {"fileName": "weather_snow.png", "name": "펑펑", "color": "CDDAFD"},
+    {"fileName": "weather_little_snow.png", "name": "눈", "color": "CDDAFD"},
+    {"fileName": "weather_hot.png", "name": "후덥지근", "color": "CDDAFD"},
+    {"fileName": "weather_cold.png", "name": "쌀쌀", "color": "D6EEEE"}
+  ],
+  "emotion": [
+    {"fileName": "emotion_flutter.png", "name": "설렘", "color": "F9BBB7"},
+    {"fileName": "emotion_hungry.png", "name": "배고픔", "color": "FEDBC0"},
+    {"fileName": "emotion_happy.png", "name": "행복", "color": "FFD394"},
+
+    {"fileName": "emotion_bad.png", "name": "우울", "color": "C5ECCD"},
+    {"fileName": "emotion_tired.png", "name": "피곤", "color": "E3ECF5"},
+    {"fileName": "emotion_soso.png", "name": "쏘쏘", "color": "D0CEED"},
+    {"fileName": "emotion_mysterious.png", "name": "오묘", "color": "EFA4A4"},
+    {"fileName": "emotion_nervous.png", "name": "긴장", "color": "E0E0E0"},
+    {"fileName": "emotion_sad.png", "name": "슬픔", "color": "C9E0E6"},
+    {"fileName": "emotion_surprise.png", "name": "놀람", "color": "FBE7AD"},
+    {"fileName": "emotion_angry.png", "name": "화남", "color": "FFCFC8"},
+    {"fileName": "emotion_exciting.png", "name": "신남", "color": "F9A785"},
+    {"fileName": "emotion_disappointing.png", "name": "실망", "color": "CFF1F1"},
+    {"fileName": "emotion_annoying.png", "name": "짜증", "color": "E5B7D6"},
+    {"fileName": "emotion_moved.png", "name": "감동", "color": "FBE7AD"}
+  ]
+}
