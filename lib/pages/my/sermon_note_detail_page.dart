@@ -109,84 +109,125 @@ class _SermonNoteDetailPageState extends State<SermonNoteDetailPage> {
         .format(DateTime.parse(widget.post['created_at']));
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('설교노트 상세'),
+        title: Text('설교노트 상세', style: TextStyle(color: Colors.black)),
         centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 1,
+        iconTheme: IconThemeData(color: Colors.black),
       ),
       body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '설교자: ${widget.post['preacher']}',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    '장소: ${widget.post['location'] ?? "미입력"}',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    '작성일: $createdAt',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    '내용',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    widget.post['content'],
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  SizedBox(height: 16),
-                  if (imageUrls != null && imageUrls!.isNotEmpty)
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: imageUrls!.map((url) {
-                        return GestureDetector(
-                          onTap: () => _showImagePopup(context, url),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              url,
-                              width: 100,
-                              height: 100,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        );
-                      }).toList(),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: Offset(0, 3),
                     ),
-                ],
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '설교자: ${widget.post['preacher']}',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      '장소: ${widget.post['location'] ?? "미입력"}',
+                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      '작성일: $createdAt',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      '내용',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      widget.post['content'],
+                      style: TextStyle(fontSize: 16, height: 1.5),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Divider(),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
+              SizedBox(height: 16),
+              if (imageUrls != null && imageUrls!.isNotEmpty)
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: imageUrls!.map((url) {
+                    return GestureDetector(
+                      onTap: () => _showImagePopup(context, url),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          url,
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              Divider(height: 32, color: Colors.grey[300]),
+              Text(
                 '댓글',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-            ),
-            Column(
-              children: comments.map((comment) {
+              SizedBox(height: 16),
+              ...comments.map((comment) {
                 final createdAt = DateFormat('yyyy-MM-dd HH:mm')
                     .format(DateTime.parse(comment['created_at']));
-                return ListTile(
-                  title: Text(comment['author'] ?? '알 수 없음'),
-                  subtitle: Column(
+                return Container(
+                  margin: EdgeInsets.only(bottom: 16),
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        blurRadius: 5,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(comment['content'] ?? ''),
+                      Text(
+                        comment['author'] ?? '알 수 없음',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        comment['content'] ?? '',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                      SizedBox(height: 8),
                       Text(
                         createdAt,
                         style: TextStyle(fontSize: 12, color: Colors.grey),
@@ -195,8 +236,8 @@ class _SermonNoteDetailPageState extends State<SermonNoteDetailPage> {
                   ),
                 );
               }).toList(),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: Padding(
@@ -209,7 +250,7 @@ class _SermonNoteDetailPageState extends State<SermonNoteDetailPage> {
           decoration: InputDecoration(
             hintText: '댓글 작성',
             suffixIcon: IconButton(
-              icon: Icon(Icons.send),
+              icon: Icon(Icons.send, color: Colors.blue),
               onPressed: () {
                 if (commentController.text.isNotEmpty) {
                   addComment(commentController.text);
@@ -217,8 +258,11 @@ class _SermonNoteDetailPageState extends State<SermonNoteDetailPage> {
               },
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[300]!),
             ),
+            filled: true,
+            fillColor: Colors.grey[100],
           ),
         ),
       ),

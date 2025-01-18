@@ -47,6 +47,7 @@ class _MySermonNotePageState extends State<MySermonNotePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('내 설교노트'),
         centerTitle: true,

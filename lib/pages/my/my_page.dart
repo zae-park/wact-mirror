@@ -36,6 +36,7 @@ class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
   // 상태 변수 추가
   int postCount = 0;
   int reviewCount = 0;
+  int sermonCount = 0;
   int commentCount = 0;
 
   @override
@@ -47,6 +48,7 @@ class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
 
     _fetchPostCount();
     _fetchReviewCount();
+    _fetchSermonNoteCount();
     _fetchCommentsCount();
   }
 
@@ -76,6 +78,21 @@ class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
       ;
       setState(() {
         reviewCount = response.length;
+      });
+    }
+  }
+
+  // sermon_notes 테이블에서 해당 유저가 작성한 글 개수 가져오기
+  Future<void> _fetchSermonNoteCount() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId != null) {
+      final response = await Supabase.instance.client
+          .from('sermon_notes')
+          .select()
+          .eq('user_id', userId);
+
+      setState(() {
+        sermonCount = response.length;
       });
     }
   }
@@ -194,308 +211,321 @@ class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
         ),
       ),
       backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          Container(
-            color: Color(0xffF1F2FF),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Container(
-                width: MediaQuery.of(context).size.width - 40,
-                height: 82,
-                decoration: BoxDecoration(
-                  color: Colors.white, // 버튼 배경색
-                  borderRadius: BorderRadius.circular(10), // 둥근 모서리
-                  border: Border.all(color: primary, width: 1),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Get.to(
-                          () => const MyHomePage(),
-                        );
-                      },
-                      child: Column(
-                        mainAxisAlignment:
-                            MainAxisAlignment.center, // 세로축 중앙 정렬
-
-                        children: [
-                          Text(
-                            '내 글',
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: blueGrey),
-                          ),
-                          Text(
-                            '${postCount + commentCount}',
-                            style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black),
-                          ),
-                        ],
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Get.to(
-                          () => MySermonNotePage(),
-                        );
-                      },
-                      child: Column(
-                        mainAxisAlignment:
-                            MainAxisAlignment.center, // 세로축 중앙 정렬
-
-                        children: [
-                          Text(
-                            '설교노트',
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: blueGrey),
-                          ),
-                          Text(
-                            '0', // 50페이지 이상 포토북 개수
-                            style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black),
-                          ),
-                        ],
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Get.to(
-                          () => const MyCommentPage(),
-                        );
-                      },
-                      child: Column(
-                        mainAxisAlignment:
-                            MainAxisAlignment.center, // 세로축 중앙 정렬
-
-                        children: [
-                          Text(
-                            '댓글',
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: blueGrey),
-                          ),
-                          Text(
-                            '$commentCount',
-                            style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.only(left: 20, top: 30, right: 20, bottom: 10),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                '신앙',
-                style: TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w500, color: blueGrey),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: GestureDetector(
-              onTap: () {
-                Get.to(
-                  () => SermonNoteAddPage(),
-                );
-                // showDialog(
-                //   context: context,
-                //   builder: (context) {
-                //     return AlertDialog(
-                //       backgroundColor: Colors.white,
-                //       title: Text('설교노트 작성'),
-                //       content: Text('다음 업데이트에 추가 될 예정입니다.\n조금만 기다려주세요 :)'),
-                //       actions: [
-                //         TextButton(
-                //           onPressed: () => Navigator.of(context).pop(),
-                //           child: Text('확인', style: TextStyle(color: primary)),
-                //         ),
-                //       ],
-                //     );
-                //   },
-                // );
-              },
-              child: Container(
-                height: 50, color: Colors.transparent, // 투명 배경으로 설정
-
-                child: Row(
-                  children: [
-                    Image.asset(
-                      'assets/imgs/icon/ic_question.png',
-                      width: 22,
-                      height: 22,
-                    ),
-                    SizedBox(
-                      width: 10,
-                    ),
-                    Text(
-                      '설교노트 작성',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.only(left: 20, top: 30, right: 20, bottom: 10),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                '설정',
-                style: TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w500, color: blueGrey),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: GestureDetector(
-              child: Container(
-                color: Colors.transparent, // 투명 배경으로 설정
-                height: 50,
-                child: Row(
-                  children: [
-                    Image.asset(
-                      'assets/imgs/icon/ic_account.png',
-                      width: 22,
-                      height: 22,
-                    ),
-                    SizedBox(
-                      width: 10,
-                    ),
-                    Text(
-                      '계정 설정',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black),
-                    ),
-                  ],
-                ),
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  // MaterialPageRoute(builder: (context) => DeliveryInfo()),
-                  MaterialPageRoute(builder: (context) => UserEditPage()),
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: GestureDetector(
-              onTap: () {
-                Get.to(
-                  () => BugReportPage(),
-                );
-              },
-              child: Container(
-                height: 50, color: Colors.transparent, // 투명 배경으로 설정
-
-                child: Row(
-                  children: [
-                    Image.asset(
-                      'assets/imgs/icon/icon_ask.png',
-                      width: 22,
-                      height: 22,
-                    ),
-                    SizedBox(
-                      width: 10,
-                    ),
-                    Text(
-                      '문의하기',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => PrivacyPolicyPage()));
-              },
-              child: SizedBox(
-                height: 50,
-                child: Row(
-                  children: [
-                    Image.asset(
-                      'assets/imgs/icon/ic_agreement.png',
-                      width: 22,
-                      height: 22,
-                    ),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    const Text(
-                      '개인정보처리방침',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const Spacer(),
-          GestureDetector(
-            onTap: _showLogoutDialog, // 로그아웃 대화상자 표시
-            child: Container(
-                width: 84,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: Colors.white, // 버튼 배경색
-                  borderRadius: BorderRadius.circular(19), // 둥근 모서리
-                  border: Border.all(color: const Color(0xffcfd6e1), width: 1),
-                ),
-                child: const Center(
-                    child: Text(
-                  '로그아웃',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Container(
+              color: Color(0xffF1F2FF),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Container(
+                  width: MediaQuery.of(context).size.width - 40,
+                  height: 82,
+                  decoration: BoxDecoration(
+                    color: Colors.white, // 버튼 배경색
+                    borderRadius: BorderRadius.circular(10), // 둥근 모서리
+                    border: Border.all(color: primary, width: 1),
                   ),
-                ))),
-          ),
-          SizedBox(
-            height: 36,
-          ),
-        ],
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          Get.to(
+                            () => const MyHomePage(),
+                          );
+                        },
+                        child: Column(
+                          mainAxisAlignment:
+                              MainAxisAlignment.center, // 세로축 중앙 정렬
+
+                          children: [
+                            Text(
+                              '내 글',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: blueGrey),
+                            ),
+                            Text(
+                              '${postCount + commentCount}',
+                              style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black),
+                            ),
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Get.to(
+                            () => MySermonNotePage(),
+                          );
+                        },
+                        child: Column(
+                          mainAxisAlignment:
+                              MainAxisAlignment.center, // 세로축 중앙 정렬
+
+                          children: [
+                            Text(
+                              '설교노트',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: blueGrey),
+                            ),
+                            Text(
+                              '$sermonCount', // 50페이지 이상 포토북 개수
+                              style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black),
+                            ),
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Get.to(
+                            () => const MyCommentPage(),
+                          );
+                        },
+                        child: Column(
+                          mainAxisAlignment:
+                              MainAxisAlignment.center, // 세로축 중앙 정렬
+
+                          children: [
+                            Text(
+                              '댓글',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: blueGrey),
+                            ),
+                            Text(
+                              '$commentCount',
+                              style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const Padding(
+              padding:
+                  EdgeInsets.only(left: 20, top: 30, right: 20, bottom: 10),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '신앙',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: blueGrey),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: GestureDetector(
+                onTap: () async {
+                  final result = await Get.to(() => SermonNoteAddPage());
+
+                  if (result == true) {
+                    await _fetchSermonNoteCount(); // 작성 완료 후 sermonCount 새로고침
+                  }
+                  // showDialog(
+                  //   context: context,
+                  //   builder: (context) {
+                  //     return AlertDialog(
+                  //       backgroundColor: Colors.white,
+                  //       title: Text('설교노트 작성'),
+                  //       content: Text('다음 업데이트에 추가 될 예정입니다.\n조금만 기다려주세요 :)'),
+                  //       actions: [
+                  //         TextButton(
+                  //           onPressed: () => Navigator.of(context).pop(),
+                  //           child: Text('확인', style: TextStyle(color: primary)),
+                  //         ),
+                  //       ],
+                  //     );
+                  //   },
+                  // );
+                },
+                child: Container(
+                  height: 50, color: Colors.transparent, // 투명 배경으로 설정
+
+                  child: Row(
+                    children: [
+                      Image.asset(
+                        'assets/imgs/icon/ic_question.png',
+                        width: 22,
+                        height: 22,
+                      ),
+                      SizedBox(
+                        width: 10,
+                      ),
+                      Text(
+                        '설교노트 작성',
+                        style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const Padding(
+              padding:
+                  EdgeInsets.only(left: 20, top: 30, right: 20, bottom: 10),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '설정',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: blueGrey),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: GestureDetector(
+                child: Container(
+                  color: Colors.transparent, // 투명 배경으로 설정
+                  height: 50,
+                  child: Row(
+                    children: [
+                      Image.asset(
+                        'assets/imgs/icon/ic_account.png',
+                        width: 22,
+                        height: 22,
+                      ),
+                      SizedBox(
+                        width: 10,
+                      ),
+                      Text(
+                        '계정 설정',
+                        style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black),
+                      ),
+                    ],
+                  ),
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    // MaterialPageRoute(builder: (context) => DeliveryInfo()),
+                    MaterialPageRoute(builder: (context) => UserEditPage()),
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: GestureDetector(
+                onTap: () {
+                  Get.to(
+                    () => BugReportPage(),
+                  );
+                },
+                child: Container(
+                  height: 50, color: Colors.transparent, // 투명 배경으로 설정
+
+                  child: Row(
+                    children: [
+                      Image.asset(
+                        'assets/imgs/icon/icon_ask.png',
+                        width: 22,
+                        height: 22,
+                      ),
+                      SizedBox(
+                        width: 10,
+                      ),
+                      Text(
+                        '문의하기',
+                        style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => PrivacyPolicyPage()));
+                },
+                child: SizedBox(
+                  height: 50,
+                  child: Row(
+                    children: [
+                      Image.asset(
+                        'assets/imgs/icon/ic_agreement.png',
+                        width: 22,
+                        height: 22,
+                      ),
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      const Text(
+                        '개인정보처리방침',
+                        style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 76,
+            ),
+            GestureDetector(
+              onTap: _showLogoutDialog, // 로그아웃 대화상자 표시
+              child: Container(
+                  width: 84,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: Colors.white, // 버튼 배경색
+                    borderRadius: BorderRadius.circular(19), // 둥근 모서리
+                    border:
+                        Border.all(color: const Color(0xffcfd6e1), width: 1),
+                  ),
+                  child: const Center(
+                      child: Text(
+                    '로그아웃',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ))),
+            ),
+            SizedBox(
+              height: 36,
+            ),
+          ],
+        ),
       ),
     );
   }
