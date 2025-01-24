@@ -42,6 +42,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
   List<String> uploadedFilePaths = [];
   List<String> uploadedCompressedFilePaths = [];
   bool _isOCREnabled = false; // OCR 활성화 여부
+  bool _isExtractingText = false; // 텍스트 추출 중인지 확인하는 변수
 
   late Future<List<IconInfo>> emotionIconsFuture;
   late Future<List<IconInfo>> weatherIconsFuture;
@@ -65,8 +66,11 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
   }
 
   // 설교 노트 텍스트 인식
-
   Future<String> _extractTextFromImage(String imagePath) async {
+    setState(() {
+      _isExtractingText = true; // 텍스트 추출 시작
+    });
+
     const String apiKey = 'AIzaSyB4k5Clcz2Wpm2haTwgdsQ0F2J8P9aB6_s';
     final Uri uri = Uri.parse(
         'https://vision.googleapis.com/v1/images:annotate?key=$apiKey');
@@ -99,6 +103,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
         final responseData = jsonDecode(response.body);
         final extractedText = responseData['responses'][0]['fullTextAnnotation']
             ['text']; // OCR 결과 추출
+
         return extractedText ?? '';
       } else {
         debugPrint('Google Vision API 호출 중 오류: ${response.body}');
@@ -137,7 +142,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
     return pickedDate;
   }
 
-  // 이미지 선택 후 즉시 스토리지에 원본 및 압축본을 저장하는 함수
+// 이미지 선택 후 즉시 스토리지에 원본 및 압축본을 저장하는 함수
   Future<void> _uploadImages(List<XFile> selectedImages) async {
     final user = supabase.auth.currentUser;
     if (user == null) throw Exception('User not found');
@@ -181,7 +186,6 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
               imageBytes,
               fileOptions: FileOptions(contentType: 'image/$fileExt'),
             );
-        uploadedFilePaths.add(filePath); // 업로드된 파일 경로 저장
 
         // 압축본 이미지 업로드
         await supabase.storage
@@ -191,19 +195,22 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
               compressedImageBytes,
               fileOptions: FileOptions(contentType: 'image/$fileExt'),
             );
-        uploadedCompressedFilePaths.add(compressedFilePath); // 압축본 경로 저장
-
-        // Google Vision API 호출하여 텍스트 인식
-        if (_isOCREnabled) {
-          final extractedText = await _extractTextFromImage(imageFile.path);
-          if (extractedText.isNotEmpty) {
-            setState(() {
-              _contentController.text +=
-                  '\n\n--- OCR 텍스트 추출 ---\n$extractedText'; // 텍스트 필드에 추가
-            });
-          }
-        }
       }
+
+      // 서명된 URL 생성
+      final signedOriginalUrls = await supabase.storage
+          .from('sermon_note_photo')
+          .createSignedUrls(filePaths, 60 * 60 * 24 * 365 * 10); // 10년 유효
+      final signedCompressedUrls = await supabase.storage
+          .from('sermon_note_compressed_photo')
+          .createSignedUrls(
+              compressedFilePaths, 60 * 60 * 24 * 365 * 10); // 10년 유효
+
+      setState(() {
+        uploadedFilePaths = signedOriginalUrls.map((e) => e.signedUrl).toList();
+        uploadedCompressedFilePaths =
+            signedCompressedUrls.map((e) => e.signedUrl).toList();
+      });
     } catch (e) {
       debugPrint('업로드 중 오류 발생: $e');
     } finally {
@@ -224,21 +231,21 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
         _currentImages.addAll(pickedFiles);
       });
 
+      // OCR 활성화 상태일 때 Google Vision API 호출
+      if (_isOCREnabled && pickedFiles.isNotEmpty) {
+        for (final imageFile in pickedFiles) {
+          final extractedText = await _extractTextFromImage(imageFile.path);
+          if (extractedText.isNotEmpty) {
+            setState(() {
+              _contentController.text += '\n$extractedText'; // 텍스트 필드에 추가
+              _isExtractingText = false;
+            });
+          }
+        }
+      }
       // 선택된 이미지를 바로 스토리지에 저장
       await _uploadImages(pickedFiles);
     }
-  }
-
-  Future<File> _compressImage(File file) async {
-    final result = await FlutterImageCompress.compressAndGetFile(
-      file.absolute.path,
-      '${file.parent.path}/compressed_${file.uri.pathSegments.last}',
-      quality: 80,
-    );
-    if (result == null) {
-      throw Exception("Image compression failed");
-    }
-    return File(result.path);
   }
 
   void _addSelectedBibleVerse() {
@@ -375,8 +382,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                   },
                   child: Container(
                     margin: const EdgeInsets.only(right: 12),
-                    padding: const EdgeInsets.only(
-                        left: 4, top: 8, right: 8, bottom: 4),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18.0),
                       color:
@@ -511,9 +517,15 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                     child: Stack(
                       children: [
                         Positioned.fill(
-                          child: Image.file(File(_currentImages[index].path),
-                              fit: BoxFit.cover),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.file(
+                              File(_currentImages[index].path),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         ),
+
                         // 삭제 버튼
                         Positioned(
                           right: -8,
@@ -545,32 +557,47 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                   });
                 },
                 child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                        color: _isOCREnabled ? primary : Colors.grey,
-                        width: _isOCREnabled ? 3 : 1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: _isOCREnabled
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.document_scanner_outlined,
-                                color: primary, size: 20),
-                            SizedBox(
-                              height: 1,
-                            ),
-                            Text(
-                              'OCR',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                          color: _isOCREnabled ? primary : blueGrey,
+                          width: _isOCREnabled ? 3 : 1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: _isOCREnabled
+                        ? const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.document_scanner_outlined,
+                                  color: primary, size: 20),
+                              SizedBox(
+                                height: 1,
                               ),
-                            ),
-                          ],
-                        )
-                      : Icon(Icons.add),
-                ),
+                              Text(
+                                'OCR',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          )
+                        : const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add, color: Colors.black, size: 20),
+                              SizedBox(
+                                height: 1,
+                              ),
+                              Text(
+                                '사진',
+                                style: TextStyle(
+                                  color: blueGrey,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          )),
               );
             } else {
               return Container();
@@ -579,20 +606,6 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
         ),
       );
     }
-
-    // IconButton(
-    //                         icon: Icon(
-    //                           _isOCREnabled
-    //                               ? Icons.document_scanner
-    //                               : Icons.document_scanner,
-    //                           color: _isOCREnabled ? primary : blueGrey,
-    //                         ),
-    //                         onPressed: () {
-    //                           setState(() {
-    //                             _isOCREnabled = !_isOCREnabled;
-    //                           });
-    //                         },
-    //                       );
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -625,13 +638,19 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
               width: 46,
               height: 37,
               child: GestureDetector(
-                onTap: _isUploading ? null : _saveToSupabase,
+                onTap: (_isUploading || _isExtractingText)
+                    ? null
+                    : _saveToSupabase,
                 child: Container(
                   decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(19), color: primary),
-                  child: const Center(
+                    borderRadius: BorderRadius.circular(19),
+                    color: (_isUploading || _isExtractingText)
+                        ? bg_30
+                        : primary, // 비활성화 색상 변경
+                  ),
+                  child: Center(
                     child: Text(
-                      '저장',
+                      (_isUploading || _isExtractingText) ? '...' : '저장',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 13,
@@ -647,79 +666,114 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
       ),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(), // 다른 영역을 터치하면 키보드가 닫힘
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Row(
+        child: Scrollbar(
+          thumbVisibility: true,
+          thickness: 6.0,
+          radius: const Radius.circular(4.0),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Row(
+                    children: [
+                      Align(
+                        alignment: Alignment.topLeft,
+                        child: InkWell(
+                          onTap: () async {
+                            DateTime? pickedDate = await _selectDate();
+                            if (pickedDate != null &&
+                                pickedDate != _selectedDate) {
+                              setState(() {
+                                _selectedDate = pickedDate;
+                              });
+                            }
+                          },
+                          child: Row(
+                            children: [
+                              const Text(
+                                '',
+                                style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w500),
+                              ),
+                              _selectedDate != DateTime.now()
+                                  ? Text(
+                                      "${_selectedDate.year}년 ${_selectedDate.month}월 ${_selectedDate.day}일 (${_getWeekdayString(_selectedDate.weekday)})",
+                                      style: const TextStyle(
+                                          fontSize: 15,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w500),
+                                    )
+                                  : const Text(
+                                      "날짜 선택",
+                                      style: TextStyle(color: secondary),
+                                    ),
+                              const SizedBox(width: 4),
+                              SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: Image.asset(
+                                    'assets/imgs/icon/icon_calendar.png'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 2),
+                _iconSelector("emotion", "감정", emotionIconsFuture),
+
+                const Divider(
+                  color: bg_30,
+                ),
+
+                // 장소&설교자 입력
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Align(
-                      alignment: Alignment.topLeft,
-                      child: InkWell(
-                        onTap: () async {
-                          DateTime? pickedDate = await _selectDate();
-                          if (pickedDate != null &&
-                              pickedDate != _selectedDate) {
-                            setState(() {
-                              _selectedDate = pickedDate;
-                            });
-                          }
-                        },
-                        child: Row(
-                          children: [
-                            const Text(
-                              '',
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.w500),
-                            ),
-                            _selectedDate != DateTime.now()
-                                ? Text(
-                                    "${_selectedDate.year}년 ${_selectedDate.month}월 ${_selectedDate.day}일 (${_getWeekdayString(_selectedDate.weekday)})",
-                                    style: const TextStyle(
-                                        fontSize: 15,
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.w500),
-                                  )
-                                : const Text(
-                                    "날짜 선택",
-                                    style: TextStyle(color: secondary),
-                                  ),
-                            const SizedBox(width: 4),
-                            SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: Image.asset(
-                                  'assets/imgs/icon/icon_calendar.png'),
-                            ),
+                    SizedBox(
+                      width: (MediaQuery.of(context).size.width - 42) / 2,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 5),
+                        child: TextFormField(
+                          controller: _locationController,
+                          maxLines: 1,
+                          maxLength: 20,
+                          inputFormatters: [
+                            LengthLimitingTextInputFormatter(20),
                           ],
+                          cursorColor: primary,
+                          decoration: const InputDecoration(
+                            labelText: '장소',
+                            labelStyle: TextStyle(color: bg_70),
+                            hintStyle: TextStyle(
+                              color: bg_70,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
+                            ),
+                            border: InputBorder.none,
+                            counterText: '',
+                          ),
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 2),
-              _iconSelector("emotion", "감정", emotionIconsFuture),
-
-              const Divider(
-                color: bg_30,
-              ),
-
-              // 장소&설교자 입력
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  SizedBox(
-                    width: (MediaQuery.of(context).size.width - 42) / 2,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 5),
+                    SizedBox(
+                      width: 10,
+                      height: 40,
+                      child: VerticalDivider(
+                        color: bg_50,
+                      ),
+                    ),
+                    SizedBox(
+                      width: (MediaQuery.of(context).size.width - 42) / 2,
                       child: TextFormField(
-                        controller: _locationController,
+                        controller: _preacherController,
                         maxLines: 1,
                         maxLength: 20,
                         inputFormatters: [
@@ -727,7 +781,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                         ],
                         cursorColor: primary,
                         decoration: const InputDecoration(
-                          labelText: '장소',
+                          labelText: '설교자',
                           labelStyle: TextStyle(color: bg_70),
                           hintStyle: TextStyle(
                             color: bg_70,
@@ -739,222 +793,106 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                         ),
                       ),
                     ),
-                  ),
-                  SizedBox(
-                    width: 10,
-                    height: 40,
-                    child: VerticalDivider(
-                      color: bg_50,
-                    ),
-                  ),
-                  SizedBox(
-                    width: (MediaQuery.of(context).size.width - 42) / 2,
-                    child: TextFormField(
-                      controller: _preacherController,
-                      maxLines: 1,
-                      maxLength: 20,
-                      inputFormatters: [
-                        LengthLimitingTextInputFormatter(20),
-                      ],
-                      cursorColor: primary,
-                      decoration: const InputDecoration(
-                        labelText: '설교자',
-                        labelStyle: TextStyle(color: bg_70),
-                        hintStyle: TextStyle(
-                          color: bg_70,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 12,
-                        ),
-                        border: InputBorder.none,
-                        counterText: '',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const Divider(
-                color: bg_30,
-              ),
-              SizedBox(
-                height: 6,
-              ),
-              // 선택된 성경절 목록
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      '본문 성경절',
-                      style: TextStyle(
-                        color: bg_90,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
                   ],
                 ),
-              ),
-              SizedBox(
-                height: 6,
-              ),
-              if (_selectedBibleVerses.isNotEmpty)
+                const Divider(
+                  color: bg_30,
+                ),
+                SizedBox(
+                  height: 6,
+                ),
+                // 선택된 성경절 목록
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: _selectedBibleVerses.asMap().entries.map((entry) {
-                      final index = entry.key + 1; // 1부터 시작하는 번호
-                      final verse = entry.value;
-
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            '$index. ${verse['book']} ${verse['chapter']}장 ${verse['verses']}절',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black),
-                          ),
-                          IconButton(
-                            icon: Image.asset(
-                              'assets/imgs/icon/btn_close.png',
-                              width: 22,
-                              height: 22,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _selectedBibleVerses.remove(verse);
-                              });
-                            },
-                          ),
-                        ],
-                      );
-                    }).toList(),
-                  ),
-                ),
-
-              // 성경절 선택
-
-              Row(
-                children: [
-                  SizedBox(
-                    width: (MediaQuery.of(context).size.width - 16) / 2,
-                    child: DropdownButtonFormField<String>(
-                      icon: Image.asset(
-                        'assets/imgs/icon/btn_dropdown.png',
-                        width: 20,
-                        height: 20,
-                      ),
-                      dropdownColor: Colors.pink[50],
-                      value: _selectedBook,
-                      style: TextStyle(
-                          color: Colors.black, fontWeight: FontWeight.w700),
-                      hint: const Text(
-                        '성경절 선택',
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        '본문 성경절',
                         style: TextStyle(
-                            color: blueGrey, fontWeight: FontWeight.w500),
-                      ),
-                      items: bibleBooks.map((book) {
-                        return DropdownMenuItem(
-                          value: book,
-                          child: Text(book),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedBook = value;
-                          _selectedChapter = null;
-                          _selectedStartVerse = null;
-                          _selectedEndVerse = null;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        fillColor: paleGrey,
-                        filled: true,
-                        border: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(5.0), // 모서리 둥글게 설정
-                          borderSide: BorderSide.none, // 테두리 선 제거
+                          color: bg_90,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
+                    ],
+                  ),
+                ),
+                SizedBox(
+                  height: 6,
+                ),
+                if (_selectedBibleVerses.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children:
+                          _selectedBibleVerses.asMap().entries.map((entry) {
+                        final index = entry.key + 1; // 1부터 시작하는 번호
+                        final verse = entry.value;
+
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '$index. ${verse['book']} ${verse['chapter']}장 ${verse['verses']}절',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black),
+                            ),
+                            IconButton(
+                              icon: Image.asset(
+                                'assets/imgs/icon/btn_close.png',
+                                width: 22,
+                                height: 22,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _selectedBibleVerses.remove(verse);
+                                });
+                              },
+                            ),
+                          ],
+                        );
+                      }).toList(),
                     ),
                   ),
-                  const SizedBox(width: 4.0),
-                  if (_selectedBook != null)
+
+                // 성경절 선택
+
+                Row(
+                  children: [
                     SizedBox(
-                      width: (MediaQuery.of(context).size.width - 16 - 4) / 4,
-                      child: DropdownButtonFormField<int>(
-                        dropdownColor: Colors.orange[200],
+                      width: (MediaQuery.of(context).size.width - 16) / 2,
+                      child: DropdownButtonFormField<String>(
                         icon: Image.asset(
                           'assets/imgs/icon/btn_dropdown.png',
                           width: 20,
                           height: 20,
                         ),
-                        decoration: InputDecoration(
-                          fillColor: paleGrey,
-                          filled: true,
-                          border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.circular(5.0), // 모서리 둥글게 설정
-                            borderSide: BorderSide.none, // 테두리 선 제거
-                          ),
-                        ),
-                        value: _selectedChapter,
+                        dropdownColor: Colors.pink[50],
+                        value: _selectedBook,
+                        style: TextStyle(
+                            color: Colors.black, fontWeight: FontWeight.w500),
                         hint: const Text(
-                          '장',
+                          '성경절 선택',
                           style: TextStyle(
                               color: blueGrey, fontWeight: FontWeight.w500),
                         ),
-                        items: _generateNumbers(50).map((chapter) {
+                        items: bibleBooks.map((book) {
                           return DropdownMenuItem(
-                            value: chapter,
-                            child: Text('$chapter장'),
+                            value: book,
+                            child: Text(book),
                           );
                         }).toList(),
                         onChanged: (value) {
                           setState(() {
-                            _selectedChapter = value;
+                            _selectedBook = value;
+                            _selectedChapter = null;
                             _selectedStartVerse = null;
                             _selectedEndVerse = null;
                           });
                         },
-                      ),
-                    ),
-                ],
-              ),
-
-              const SizedBox(height: 4.0),
-
-              if (_selectedChapter != null)
-                Row(
-                  children: [
-                    SizedBox(
-                      width: (MediaQuery.of(context).size.width - 16 - 4) / 3,
-                      child: DropdownButtonFormField<int>(
-                        icon: Image.asset(
-                          'assets/imgs/icon/btn_dropdown.png',
-                          width: 20,
-                          height: 20,
-                        ),
-                        value: _selectedStartVerse,
-                        hint: const Text('시작 절'),
-                        items: _generateNumbers(176).map((verse) {
-                          return DropdownMenuItem(
-                            value: verse,
-                            child: Text('$verse절'),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedStartVerse = value;
-                            _selectedEndVerse = null;
-                          });
-                          if (value != null) {
-                            FocusScope.of(context).nextFocus(); // 다음 필드로 이동
-                          }
-                        },
-                        dropdownColor: Colors.amber[100],
                         decoration: InputDecoration(
                           fillColor: paleGrey,
                           filled: true,
@@ -967,164 +905,251 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                       ),
                     ),
                     const SizedBox(width: 4.0),
-                    SizedBox(
-                      width: (MediaQuery.of(context).size.width - 16 - 4) / 3,
-                      child: DropdownButtonFormField<int>(
-                        icon: Image.asset(
-                          'assets/imgs/icon/btn_dropdown.png',
-                          width: 20,
-                          height: 20,
+                    if (_selectedBook != null)
+                      SizedBox(
+                        width: (MediaQuery.of(context).size.width - 16 - 4) / 4,
+                        child: DropdownButtonFormField<int>(
+                          dropdownColor: Colors.orange[200],
+                          icon: Image.asset(
+                            'assets/imgs/icon/btn_dropdown.png',
+                            width: 20,
+                            height: 20,
+                          ),
+                          decoration: InputDecoration(
+                            fillColor: paleGrey,
+                            filled: true,
+                            border: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.circular(5.0), // 모서리 둥글게 설정
+                              borderSide: BorderSide.none, // 테두리 선 제거
+                            ),
+                          ),
+                          value: _selectedChapter,
+                          hint: const Text(
+                            '장',
+                            style: TextStyle(
+                                color: blueGrey, fontWeight: FontWeight.w500),
+                          ),
+                          items: _generateNumbers(50).map((chapter) {
+                            return DropdownMenuItem(
+                              value: chapter,
+                              child: Text('$chapter장'),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedChapter = value;
+                              _selectedStartVerse = null;
+                              _selectedEndVerse = null;
+                            });
+                          },
                         ),
-                        value: _selectedEndVerse,
-                        hint: const Text('끝 절'),
-                        items: _generateNumbers(176).map((verse) {
-                          return DropdownMenuItem(
-                            value: verse,
-                            child: Text('$verse절'),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedEndVerse = value;
-                          });
-                          FocusScope.of(context)
-                              .nextFocus(); // 끝 절 선택 후 다음 필드로 이동
-                        },
-                        dropdownColor: Colors.green[100],
-                        decoration: InputDecoration(
-                          fillColor: paleGrey,
-                          filled: true,
-                          border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.circular(5.0), // 모서리 둥글게 설정
-                            borderSide: BorderSide.none, // 테두리 선 제거
+                      ),
+                  ],
+                ),
+
+                const SizedBox(height: 4.0),
+
+                if (_selectedChapter != null)
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: (MediaQuery.of(context).size.width - 16 - 4) / 3,
+                        child: DropdownButtonFormField<int>(
+                          icon: Image.asset(
+                            'assets/imgs/icon/btn_dropdown.png',
+                            width: 20,
+                            height: 20,
+                          ),
+                          value: _selectedStartVerse,
+                          hint: const Text('시작 절'),
+                          items: _generateNumbers(176).map((verse) {
+                            return DropdownMenuItem(
+                              value: verse,
+                              child: Text('$verse절'),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedStartVerse = value;
+                              _selectedEndVerse = null;
+                            });
+                            if (value != null) {
+                              FocusScope.of(context).nextFocus(); // 다음 필드로 이동
+                            }
+                          },
+                          dropdownColor: Colors.amber[100],
+                          decoration: InputDecoration(
+                            fillColor: paleGrey,
+                            filled: true,
+                            border: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.circular(5.0), // 모서리 둥글게 설정
+                              borderSide: BorderSide.none, // 테두리 선 제거
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    IconButton(
-                      icon: Image.asset(
-                        (_selectedBook != null &&
-                                _selectedChapter != null &&
-                                _selectedStartVerse != null)
-                            ? 'assets/imgs/icon/ic_check_big_on.png'
-                            : 'assets/imgs/icon/ic_check_big_off.png',
-                        width: 30,
-                        height: 30,
+                      const SizedBox(width: 4.0),
+                      SizedBox(
+                        width: (MediaQuery.of(context).size.width - 16 - 4) / 3,
+                        child: DropdownButtonFormField<int>(
+                          icon: Image.asset(
+                            'assets/imgs/icon/btn_dropdown.png',
+                            width: 20,
+                            height: 20,
+                          ),
+                          value: _selectedEndVerse,
+                          hint: const Text('끝 절'),
+                          items: _generateNumbers(176).map((verse) {
+                            return DropdownMenuItem(
+                              value: verse,
+                              child: Text('$verse절'),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedEndVerse = value;
+                            });
+                            FocusScope.of(context)
+                                .nextFocus(); // 끝 절 선택 후 다음 필드로 이동
+                          },
+                          dropdownColor: Colors.green[100],
+                          decoration: InputDecoration(
+                            fillColor: paleGrey,
+                            filled: true,
+                            border: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.circular(5.0), // 모서리 둥글게 설정
+                              borderSide: BorderSide.none, // 테두리 선 제거
+                            ),
+                          ),
+                        ),
                       ),
-                      onPressed: _addSelectedBibleVerse,
-                    ),
-                  ],
+                      IconButton(
+                        icon: Image.asset(
+                          (_selectedBook != null &&
+                                  _selectedChapter != null &&
+                                  _selectedStartVerse != null)
+                              ? 'assets/imgs/icon/ic_check_big_on.png'
+                              : 'assets/imgs/icon/ic_check_big_off.png',
+                          width: 30,
+                          height: 30,
+                        ),
+                        onPressed: _addSelectedBibleVerse,
+                      ),
+                    ],
+                  ),
+                const SizedBox(height: 4.0),
+                const Divider(
+                  color: bg_30,
                 ),
-              const SizedBox(height: 4.0),
-              const Divider(
-                color: bg_30,
-              ),
-              const SizedBox(height: 6.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      '설교 제목',
-                      style: TextStyle(
-                        color: bg_90,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
+                const SizedBox(height: 6.0),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        '설교 제목',
+                        style: TextStyle(
+                          color: bg_90,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
-                    ),
-                    Text(
-                      '${_titleController.text.length}/20',
-                      style: const TextStyle(
-                        color: bg_90,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
+                      Text(
+                        '${_titleController.text.length}/20',
+                        style: const TextStyle(
+                          color: bg_90,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: TextFormField(
-                  controller: _titleController,
-                  maxLines: 1,
-                  maxLength: 20,
-                  inputFormatters: [
-                    LengthLimitingTextInputFormatter(20),
-                  ],
-                  cursorColor: primary,
-                  decoration: const InputDecoration(
-                    hintText: '설교 제목을 입력해주세요.',
-                    hintStyle: TextStyle(
-                      color: bg_70,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 15,
-                    ),
-                    border: InputBorder.none,
-                    counterText: '',
+                    ],
                   ),
                 ),
-              ),
-              // 색상 정보 복사 버튼과 사진 정보 복사 버튼
-              const Divider(
-                color: bg_30,
-              ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: TextFormField(
+                    controller: _titleController,
+                    maxLines: 1,
+                    maxLength: 20,
+                    inputFormatters: [
+                      LengthLimitingTextInputFormatter(20),
+                    ],
+                    cursorColor: primary,
+                    decoration: const InputDecoration(
+                      hintText: '설교 제목을 입력해주세요.',
+                      hintStyle: TextStyle(
+                        color: bg_70,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 15,
+                      ),
+                      border: InputBorder.none,
+                      counterText: '',
+                    ),
+                  ),
+                ),
+                const Divider(
+                  color: bg_30,
+                ),
 
-              const SizedBox(height: 6.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      '설교 내용',
-                      style: TextStyle(
-                        color: bg_90,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
+                const SizedBox(height: 6.0),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        '설교 내용',
+                        style: TextStyle(
+                          color: bg_90,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
-                    ),
-                    Text(
-                      '${_contentController.text.length}/1000',
-                      style: const TextStyle(
-                        color: bg_90,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
+                      Text(
+                        '${_contentController.text.length}/2000',
+                        style: const TextStyle(
+                          color: bg_90,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: TextFormField(
-                  controller: _contentController,
-                  minLines: 3,
-                  maxLines: 50,
-                  maxLength: 1000,
-                  inputFormatters: [
-                    LengthLimitingTextInputFormatter(1000),
-                  ],
-                  cursorColor: primary,
-                  decoration: const InputDecoration(
-                    hintText: '설교 내용을 적어주세요.',
-                    hintStyle: TextStyle(
-                      color: bg_70,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 15,
-                    ),
-                    border: InputBorder.none,
-                    counterText: '',
+                    ],
                   ),
                 ),
-              ),
-              // 색상 정보 복사 버튼과 사진 정보 복사 버튼
-              const SizedBox(height: 6),
-              buildImageGrid(),
-              const SizedBox(height: 36.0),
-            ],
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: TextFormField(
+                    controller: _contentController,
+                    minLines: 2,
+                    maxLines: null, // TextField가 콘텐츠 길이에 따라 확장
+                    maxLength: 2000,
+                    inputFormatters: [
+                      LengthLimitingTextInputFormatter(2000),
+                    ],
+                    cursorColor: primary,
+                    decoration: InputDecoration(
+                      hintText: _isExtractingText
+                          ? '텍스트 추출중..'
+                          : '설교 내용을 적어주세요.', // 상태에 따라 텍스트 변경
+                      hintStyle: TextStyle(
+                        color: _isExtractingText ? primary : bg_70,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 15,
+                      ),
+                      border: InputBorder.none,
+                      counterText: '',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                buildImageGrid(),
+                const SizedBox(height: 36.0),
+              ],
+            ),
           ),
         ),
       ),

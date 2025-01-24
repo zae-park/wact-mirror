@@ -2,16 +2,20 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uuid/uuid.dart';
+import 'package:wact/common/const/color.dart';
+import 'package:wact/pages/my/sermon_note_edit_page.dart';
 
 class SermonNoteDetailPage extends StatefulWidget {
   final Map<String, dynamic> post;
+  final int currentIndex;
+
   final Function refreshCallback;
 
   const SermonNoteDetailPage({
     Key? key,
     required this.post,
     required this.refreshCallback,
+    required this.currentIndex,
   }) : super(key: key);
 
   @override
@@ -19,250 +23,369 @@ class SermonNoteDetailPage extends StatefulWidget {
 }
 
 class _SermonNoteDetailPageState extends State<SermonNoteDetailPage> {
-  late TextEditingController commentController;
-  late User? user;
-  List<dynamic>? imageUrls;
-  List<dynamic> comments = [];
+  late Map<String, dynamic> post;
 
   @override
   void initState() {
     super.initState();
-    commentController = TextEditingController();
-    user = Supabase.instance.client.auth.currentUser;
-
-    // 이미지 URL 처리
-    if (widget.post['images'] is String) {
-      String jsonString = widget.post['images'];
-      imageUrls = json.decode(jsonString);
-    } else if (widget.post['images'] is List) {
-      imageUrls = widget.post['images'];
-    } else {
-      imageUrls = [];
-    }
-
-    fetchComments();
+    post = widget.post;
   }
 
-  Future<void> fetchComments() async {
-    final response = await Supabase.instance.client
-        .from('comments')
-        .select()
-        .eq('target_id', widget.post['id'])
-        .order('created_at', ascending: true);
-
+  void updatePost(Map<String, dynamic> updatedPost) {
     setState(() {
-      comments = List<dynamic>.from(response);
+      post = updatedPost;
+      // 필요하다면 widget.post도 업데이트
+      widget.post.addAll(updatedPost);
     });
+    widget.refreshCallback(updatedPost); // 상위 콜백 호출
   }
 
-  Future<void> addComment(String content) async {
-    try {
-      final profileResponse = await Supabase.instance.client
-          .from('profiles')
-          .select('username')
-          .eq('id', user!.id)
-          .single();
-
-      final username = profileResponse['username'] as String;
-      final uuid = Uuid();
-
-      await Supabase.instance.client.from('comments').insert({
-        'id': uuid.v4(),
-        'target_id': widget.post['id'],
-        'author_id': user!.id,
-        'author': username,
-        'content': content,
-        'created_at': DateTime.now().toIso8601String(),
-      });
-
-      commentController.clear();
-      fetchComments();
-    } catch (error) {
-      print('댓글 추가 오류: $error');
-    }
-  }
-
-  void _showImagePopup(BuildContext context, String imageUrl) {
-    showDialog(
-      context: context,
-      barrierColor: Colors.black54,
-      builder: (BuildContext context) {
-        return GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Center(
-            child: Image.network(imageUrl, fit: BoxFit.contain),
-          ),
-        );
-      },
-    );
-  }
-
-  @override
-  void dispose() {
-    commentController.dispose();
-    super.dispose();
+  // 설교노트 삭제 함수
+  Future<void> deleteSermonNote() async {
+    final response = await Supabase.instance.client
+        .from('sermon_notes')
+        .delete()
+        .match({'id': widget.post['id']}).select();
+    print('supabase 삭제: $response');
+    // 삭제 성공
+    Navigator.of(context).pop(true); // 삭제 후 이전 화면으로 돌아가며 true 값 전달
   }
 
   @override
   Widget build(BuildContext context) {
-    final createdAt = DateFormat('yyyy-MM-dd HH:mm')
+    // 데이터 처리
+    final createdAt = DateFormat('yyyy년 MM월 dd일 (E)', 'ko_KR')
         .format(DateTime.parse(widget.post['created_at']));
+    final preacher = widget.post['preacher'] ?? '미입력';
+    final location = widget.post['location'] ?? '미입력';
+    final title = widget.post['title'] ?? '제목 없음';
+    final content = widget.post['content'] ?? '내용이 없습니다.';
+    final emotionIcon =
+        widget.post['emotion_icon'] ?? 'assets/imgs/icon/default.png';
+// 성경 구절 가져오기
+    final bibleVerses = (widget.post['bible_verses'] as List<dynamic>?) ?? [];
+
+    List<dynamic> imageUrls = [];
+    if (widget.post['compressed_images'] is String) {
+      imageUrls = json.decode(widget.post['compressed_images']);
+    } else if (widget.post['compressed_images'] is List) {
+      imageUrls = widget.post['compressed_images'];
+    }
+
+    Widget buildImageGrid() {
+      return ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: imageUrls.length,
+        itemBuilder: (BuildContext context, int index) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: GestureDetector(
+              onTap: () => showDialog(
+                context: context,
+                builder: (context) => Dialog(
+                  child: Image.network(imageUrls[index]),
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Image.network(
+                  imageUrls[index],
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('설교노트 상세', style: TextStyle(color: Colors.black)),
+        toolbarHeight: 60,
+        leading: Transform.translate(
+          offset: const Offset(12, 0.0),
+          child: IconButton(
+            iconSize: 34,
+            icon: Image.asset('assets/imgs/icon/btn_back_white.png'),
+            onPressed: () {
+              Navigator.pop(context, post);
+            },
+          ),
+        ),
+        actions: <Widget>[
+          PopupMenuButton(
+            surfaceTintColor: Colors.white,
+            color: Colors.white,
+            onSelected: (value) async {
+              // 수정 버튼 눌렀을 때의 로직
+              if (value == 'edit') {
+                final updatedPost = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SermonNoteEditPage(
+                      post: post, // 상태 변수 전달
+                      refreshCallback: (updatedData) {
+                        // 콜백 호출 시 상태 갱신
+                        updatePost(updatedData);
+                      },
+                    ),
+                  ),
+                );
+                // 반환된 데이터가 있으면 반영
+                if (updatedPost != null) {
+                  debugPrint('반환? : $updatedPost');
+                  updatePost(updatedPost);
+                }
+              } else if (value == 'delete') {
+                deleteSermonNote();
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+              const PopupMenuItem(
+                value: 'edit',
+                child: ListTile(
+                  title: Text(
+                    '수정',
+                  ),
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'delete',
+                child: ListTile(
+                  title: Text('삭제'),
+                ),
+              ),
+            ],
+            icon: const Icon(
+              Icons.more_vert,
+            ),
+          ),
+          // Transform.translate(
+          //   offset: const Offset(-4, 0.0),
+          //   child: IconButton(
+          //     onPressed: () async {
+          //       final updatedPost = await Navigator.push(
+          //         context,
+          //         MaterialPageRoute(
+          //           builder: (context) => SermonNoteEditPage(
+          //             post: post, // 상태 변수 전달
+          //             refreshCallback: (updatedData) {
+          //               // 콜백 호출 시 상태 갱신
+          //               updatePost(updatedData);
+          //             },
+          //           ),
+          //         ),
+          //       );
+          //       // 반환된 데이터가 있으면 반영
+          //       if (updatedPost != null) {
+          //         debugPrint('반환? : $updatedPost');
+          //         updatePost(updatedPost);
+          //       }
+          //     },
+          //     icon: Image.asset(
+          //       'assets/imgs/icon/icon_edit.png',
+          //       width: 24,
+          //       height: 24,
+          //     ),
+          //   ),
+          // ),
+        ],
+        backgroundColor: const Color(0xffF1F2FF),
+        title: const Text(
+          '설교노트 상세',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 1,
-        iconTheme: IconThemeData(color: Colors.black),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
-                      spreadRadius: 2,
-                      blurRadius: 5,
-                      offset: Offset(0, 3),
+              const SizedBox(height: 12),
+              // 최상단 날짜와 감정 아이콘
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    createdAt,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
                     ),
-                  ],
+                  ),
+                  Image.asset(
+                    emotionIcon,
+                    width: 20,
+                    height: 20,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Divider(
+                color: paleGrey,
+              ),
+
+              // 설교 제목
+              const Text(
+                '설교 제목',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: bg_90,
                 ),
-                child: Column(
+              ),
+              const SizedBox(height: 2),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+              const Divider(color: paleGrey, height: 20),
+
+              // 장소 & 설교자
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '장소',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: bg_90,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          location,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 35,
+                    child: VerticalDivider(
+                      width: 2,
+                      color: paleGrey,
+                    ),
+                  ),
+                  SizedBox(
+                    width: 10,
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '설교자',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: bg_90,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          preacher,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(color: paleGrey, height: 20),
+
+              // 설교 내용 아래에 성경 구절 표시 추가
+              if (bibleVerses.isNotEmpty)
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '설교자: ${widget.post['preacher']}',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    const Text(
+                      '본문 성경절',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: bg_90,
+                      ),
                     ),
-                    SizedBox(height: 8),
-                    Text(
-                      '장소: ${widget.post['location'] ?? "미입력"}',
-                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      '작성일: $createdAt',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      '내용',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      widget.post['content'],
-                      style: TextStyle(fontSize: 16, height: 1.5),
+                    const SizedBox(height: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: bibleVerses.map((verse) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 4.0),
+                          child: Text(
+                            '${verse['book']} ${verse['chapter']}장 ${verse['verses']}절',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: primary,
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ],
                 ),
-              ),
-              SizedBox(height: 16),
-              if (imageUrls != null && imageUrls!.isNotEmpty)
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: imageUrls!.map((url) {
-                    return GestureDetector(
-                      onTap: () => _showImagePopup(context, url),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          url,
-                          width: 100,
-                          height: 100,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    );
-                  }).toList(),
+              const Divider(color: paleGrey, height: 20),
+
+              // 설교 내용
+              const Text(
+                '설교 내용',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: bg_90,
                 ),
-              Divider(height: 32, color: Colors.grey[300]),
-              Text(
-                '댓글',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 16),
-              ...comments.map((comment) {
-                final createdAt = DateFormat('yyyy-MM-dd HH:mm')
-                    .format(DateTime.parse(comment['created_at']));
-                return Container(
-                  margin: EdgeInsets.only(bottom: 16),
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        blurRadius: 5,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        comment['author'] ?? '알 수 없음',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        comment['content'] ?? '',
-                        style: TextStyle(fontSize: 14),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        createdAt,
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
+              const SizedBox(height: 8),
+              Text(
+                content,
+                style: const TextStyle(
+                  fontSize: 16,
+                  height: 1.5,
+                  color: Colors.black,
+                ),
+              ),
+
+              // 이미지
+              if (imageUrls.isNotEmpty)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 20),
+                    buildImageGrid(),
+                  ],
+                ),
+              const SizedBox(height: 34),
             ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: Padding(
-        padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-            left: 16,
-            right: 16),
-        child: TextField(
-          controller: commentController,
-          decoration: InputDecoration(
-            hintText: '댓글 작성',
-            suffixIcon: IconButton(
-              icon: Icon(Icons.send, color: Colors.blue),
-              onPressed: () {
-                if (commentController.text.isNotEmpty) {
-                  addComment(commentController.text);
-                }
-              },
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            filled: true,
-            fillColor: Colors.grey[100],
           ),
         ),
       ),

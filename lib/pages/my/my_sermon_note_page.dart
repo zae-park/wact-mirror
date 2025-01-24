@@ -6,6 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:wact/common/const/color.dart';
 import 'package:wact/pages/my/sermon_note_detail_page.dart';
 
 class MySermonNotePage extends StatefulWidget {
@@ -49,7 +50,27 @@ class _MySermonNotePageState extends State<MySermonNotePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('내 설교노트'),
+        toolbarHeight: 60,
+        backgroundColor: Color(0xffF1F2FF),
+        leading: Transform.translate(
+          offset: const Offset(12, 0.0),
+          child: IconButton(
+            iconSize: 34,
+            icon: Image.asset('assets/imgs/icon/btn_back_white.png'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ),
+        title: StreamBuilder<List<Map<String, dynamic>>>(
+            stream: _stream,
+            builder: (context, snapshot) {
+              final count = snapshot.hasData ? snapshot.data!.length : 0;
+              return Text(
+                '설교노트 $count일차',
+                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),
+              );
+            }),
         centerTitle: true,
       ),
       body: RefreshIndicator(
@@ -91,7 +112,8 @@ class _MySermonNotePageState extends State<MySermonNotePage> {
 
                     // 날짜 형식 변경
                     final createdAt = DateTime.parse(sermon['created_at']);
-                    final formattedDate = DateFormat('MM/dd').format(createdAt);
+                    final formattedDate =
+                        DateFormat('MM. dd').format(createdAt);
 
                     return InkWell(
                       onTap: () async {
@@ -100,14 +122,18 @@ class _MySermonNotePageState extends State<MySermonNotePage> {
                           MaterialPageRoute(
                             builder: (context) => SermonNoteDetailPage(
                               post: sermon,
-                              refreshCallback: () {
+                              currentIndex: index,
+                              refreshCallback: (updatedPost) {
+                                // 특정 데이터만 업데이트
                                 setState(() {
-                                  _stream = _loadDataStream(); // 데이터 스트림 갱신
+                                  _stream = _loadDataStream(); // 전체 데이터 새로 로드
                                 });
                               },
                             ),
                           ),
                         );
+
+                        // result가 반환된 경우 스트림 갱신
                         if (result == true) {
                           setState(() {
                             _stream = _loadDataStream();
@@ -120,17 +146,44 @@ class _MySermonNotePageState extends State<MySermonNotePage> {
                             padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
                             child: SizedBox(
                               width: MediaQuery.of(context).size.width - 40,
-                              height: 90,
+                              height: 50,
                               child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
+                                  SizedBox(
+                                    width: 45,
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          formattedDate,
+                                          style: const TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.w700),
+                                        ),
+                                        Text(
+                                          sermon['weekday'] ?? '',
+                                          style: const TextStyle(
+                                              fontSize: 12, color: blueGrey),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(
+                                      width: 25,
+                                      height: 25,
+                                      child: VerticalDivider(
+                                        width: 1,
+                                        color: paleGrey,
+                                      )),
                                   SizedBox(
                                     width: MediaQuery.of(context).size.width -
                                         40 -
-                                        60 -
-                                        10,
-                                    height: 90,
+                                        40 -
+                                        30 -
+                                        40,
                                     child: Column(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
@@ -138,45 +191,28 @@ class _MySermonNotePageState extends State<MySermonNotePage> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          sermon['preacher'],
+                                          sermon['title'] ?? '',
                                           style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w600),
-                                        ),
-                                        const SizedBox(
-                                          height: 2,
+                                              fontSize: 14,
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.w700),
                                         ),
                                         Text(
-                                          sermon['content'],
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(fontSize: 14),
-                                        ),
-                                        const SizedBox(
-                                          height: 5,
-                                        ),
-                                        Text(
-                                          formattedDate,
+                                          '설교: ${sermon['preacher']}',
                                           style: const TextStyle(
-                                              fontSize: 9, color: Colors.grey),
+                                              fontSize: 12, color: blueGrey),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  if (imageUrl != null)
-                                    SizedBox(
-                                      width: 60,
-                                      height: 60,
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(20),
-                                        child: CachedNetworkImage(
-                                          imageUrl: imageUrl,
-                                          width: 60,
-                                          height: 60,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
+                                  SizedBox(
+                                    width: 40,
+                                    child: Image.asset(
+                                      '${sermon['emotion_icon']}',
+                                      width: 32,
+                                      height: 32,
                                     ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -184,7 +220,7 @@ class _MySermonNotePageState extends State<MySermonNotePage> {
                           const Padding(
                             padding: EdgeInsets.fromLTRB(20, 0, 20, 0),
                             child: Divider(
-                              color: Colors.grey,
+                              color: paleGrey,
                               height: 1,
                             ),
                           ),
