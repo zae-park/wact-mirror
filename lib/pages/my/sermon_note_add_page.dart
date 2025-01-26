@@ -870,7 +870,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                           width: 20,
                           height: 20,
                         ),
-                        dropdownColor: Colors.pink[50],
+                        dropdownColor: Colors.amber[100],
                         value: _selectedBook,
                         style: TextStyle(
                             color: Colors.black, fontWeight: FontWeight.w500),
@@ -909,7 +909,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                       SizedBox(
                         width: (MediaQuery.of(context).size.width - 16 - 4) / 4,
                         child: DropdownButtonFormField<int>(
-                          dropdownColor: Colors.orange[200],
+                          dropdownColor: Colors.green[100],
                           icon: Image.asset(
                             'assets/imgs/icon/btn_dropdown.png',
                             width: 20,
@@ -978,7 +978,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                               FocusScope.of(context).nextFocus(); // 다음 필드로 이동
                             }
                           },
-                          dropdownColor: Colors.amber[100],
+                          dropdownColor: Colors.pink[100],
                           decoration: InputDecoration(
                             fillColor: paleGrey,
                             filled: true,
@@ -1014,7 +1014,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                             FocusScope.of(context)
                                 .nextFocus(); // 끝 절 선택 후 다음 필드로 이동
                           },
-                          dropdownColor: Colors.green[100],
+                          dropdownColor: Colors.blue[100],
                           decoration: InputDecoration(
                             fillColor: paleGrey,
                             filled: true,

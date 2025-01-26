@@ -62,6 +62,25 @@ class _PostDetailPageState extends State<PostDetailPage> {
     print('Author ID: ${widget.post['author_id']}');
   }
 
+  /*
+  25.01.24 - 26
+  // 1. 감정 표현 시, 실시간 반영
+  // 2. 한 사람당 한 댓글에 하나의 감정 표현만 가능하게
+  // 3. 감정 개수 집계 column, 함수, UI
+  // 4. 누가 감정표현 했는 지 표시? or not -> 일단 표시X
+  // 5. 디자인 다듬기 -> 다음 업데이트때
+  */
+
+  Map<String, String> reactionEmojis = {
+    'amen': '🙏🏻',
+    'love': '❤️',
+    'funny': '🤣',
+    'sad': '😢',
+    'amazing': '😮',
+    'clap': '👏🏻',
+    'touched': '🥹',
+  };
+
   Future<void> fetchComments() async {
     final response = await Supabase.instance.client
         .from('comments')
@@ -327,8 +346,9 @@ class _PostDetailPageState extends State<PostDetailPage> {
               part,
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.blue, // 링크 색상
+                color: Colors.pink[200], // 링크 색상
                 decoration: TextDecoration.underline, // 밑줄 추가
+                decorationColor: Colors.pink[200],
               ),
             ),
           ),
@@ -350,6 +370,153 @@ class _PostDetailPageState extends State<PostDetailPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start, // 왼쪽 정렬
       children: widgets,
+    );
+  }
+
+  void showReactionOptions(
+      BuildContext context, String commentId, String authorId) async {
+    showModalBottomSheet(
+      backgroundColor: Color(0xffF1F2FF),
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(15.0)),
+      ),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildReactionIcon('❤️', 'love', commentId),
+              _buildReactionIcon('🙏🏻', 'amen', commentId),
+              _buildReactionIcon('🤣', 'funny', commentId),
+              _buildReactionIcon('😮', 'amazing', commentId),
+              _buildReactionIcon('👏🏻', 'clap', commentId),
+              _buildReactionIcon('🥹', 'touched', commentId),
+              _buildReactionIcon('😢', 'sad', commentId),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> addReaction(String commentId, String reactionType) async {
+    try {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+
+      if (userId == null) throw Exception("로그인이 필요합니다.");
+
+      // 기존 감정 확인
+      final existingReactions = await Supabase.instance.client
+          .from('reactions')
+          .select()
+          .eq('comment_id', commentId)
+          .eq('user_id', userId);
+
+      if (existingReactions != null && existingReactions.isNotEmpty) {
+        final existingReaction = existingReactions[0];
+
+        if (existingReaction['reaction_type'] == reactionType) {
+          // 같은 감정이라면 삭제
+          await Supabase.instance.client
+              .from('reactions')
+              .delete()
+              .eq('comment_id', commentId)
+              .eq('user_id', userId);
+        } else {
+          // 다른 감정이라면 업데이트
+          await Supabase.instance.client
+              .from('reactions')
+              .update({'reaction_type': reactionType})
+              .eq('comment_id', commentId)
+              .eq('user_id', userId);
+        }
+      } else {
+        // 새로운 감정 추가
+        await Supabase.instance.client.from('reactions').insert({
+          'comment_id': commentId,
+          'user_id': userId,
+          'reaction_type': reactionType,
+        });
+      }
+
+      // UI 갱신
+      setState(() {
+        fetchComments(); // 댓글 목록 다시 불러오기
+      });
+    } catch (e) {
+      print("감정 추가/업데이트 오류: $e");
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchReactions(String commentId) async {
+    try {
+      final response = await Supabase.instance.client
+          .from('reactions')
+          .select()
+          .eq('comment_id', commentId);
+
+      if (response.isEmpty) {
+        // 결과가 없을 경우 빈 리스트 반환
+        return [];
+      }
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print("감정 가져오기 오류: $e");
+      return [];
+    }
+  }
+
+// 감정 버튼 UI 생성
+  Widget _buildReactionIcon(
+      String emoji, String reactionType, String commentId) {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+
+    if (userId == null) throw Exception("로그인이 필요합니다.");
+
+    return FutureBuilder(
+      future: Supabase.instance.client
+          .from('reactions')
+          .select()
+          .eq('comment_id', commentId)
+          .eq('user_id', userId)
+          .eq('reaction_type', reactionType)
+          .maybeSingle(),
+      builder: (context, snapshot) {
+        Color backgroundColor = Colors.transparent;
+
+        // 선택된 감정일 경우 배경색 변경
+        if (snapshot.hasData && snapshot.data != null) {
+          backgroundColor = primary;
+        }
+
+        return GestureDetector(
+          onTap: () async {
+            await addReaction(commentId, reactionType);
+            Navigator.pop(context); // Bottom Sheet 닫기
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    emoji,
+                    style: const TextStyle(fontSize: 24),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -664,79 +831,193 @@ class _PostDetailPageState extends State<PostDetailPage> {
                             color: Colors.transparent,
                             child: Padding(
                               padding: const EdgeInsets.only(left: 4),
-                              child: ListTile(
-                                title: Row(
-                                  children: [
-                                    Text(
-                                      comment['current_author'] ?? '',
-                                      style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: isPostAuthor
-                                              ? FontWeight.w600
-                                              : FontWeight.w500,
-                                          color: isPostAuthor
-                                              ? primary
-                                              : Colors.black),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    SizedBox(
-                                      width: (teamName == '목회자') ? 35 : 30,
-                                      height: 18,
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: (teamName == '오비')
-                                              ? bg_10
-                                              : (teamName == '목회자')
-                                                  ? Colors.black
-                                                  : primary,
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            teamName,
+                              child: GestureDetector(
+                                onLongPress: () {
+                                  // 감정 선택 Bottom Sheet 열기
+                                  if (comment['author_id'] != user?.id)
+                                    showReactionOptions(context, comment['id'],
+                                        comment['author_id']);
+                                },
+                                onLongPressStart: null, // 진동 트리거 방지
+                                onLongPressDown: null, // 진동 트리거 방지
+                                behavior:
+                                    HitTestBehavior.translucent, // 터치 가능한 영역 설정
+                                child: ListTile(
+                                  title: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            comment['current_author'] ?? '',
                                             style: TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: (teamName == '목회자')
-                                                  ? FontWeight.w600
-                                                  : FontWeight.w800,
-                                              color: (teamName == '오비')
-                                                  ? primary
-                                                  : Colors.white,
+                                                fontSize: 18,
+                                                fontWeight: isPostAuthor
+                                                    ? FontWeight.w600
+                                                    : FontWeight.w500,
+                                                color: isPostAuthor
+                                                    ? primary
+                                                    : Colors.black),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          SizedBox(
+                                            width: (teamName.length == 4)
+                                                ? 45
+                                                : (teamName == '목회자')
+                                                    ? 36
+                                                    : 30,
+                                            height: 18,
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: (teamName == '오비')
+                                                    ? bg_10
+                                                    : (teamName == '목회자' ||
+                                                            teamName == '장로' ||
+                                                            teamName == '운영')
+                                                        ? Colors.black
+                                                        : primary,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  teamName,
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: (teamName ==
+                                                                '목회자' ||
+                                                            teamName == '장로')
+                                                        ? FontWeight.w600
+                                                        : FontWeight.w800,
+                                                    color: (teamName == '오비')
+                                                        ? primary
+                                                        : Colors.white,
+                                                  ),
+                                                ),
+                                              ),
                                             ),
                                           ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            formattedDate,
+                                            style: const TextStyle(
+                                              fontSize: 9,
+                                              color: bg_70,
+                                            ),
+                                          ),
+                                          if (isCommentAuthor)
+                                            Padding(
+                                              padding: EdgeInsets.only(left: 4),
+                                              child: GestureDetector(
+                                                  child: const Icon(
+                                                      Icons.delete_outline,
+                                                      size: 16),
+                                                  onTap: () {
+                                                    deleteComment(
+                                                        comment['id'], context);
+                                                  }),
+                                            ),
+                                        ],
+                                      )
+                                    ],
+                                  ),
+                                  subtitle: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        comment['content'],
+                                        style: const TextStyle(
+                                          fontSize: 14,
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                subtitle: Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      comment['content'],
-                                      style: const TextStyle(
-                                        fontSize: 14,
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: FutureBuilder<
+                                                List<Map<String, dynamic>>>(
+                                              future:
+                                                  fetchReactions(comment['id']),
+                                              builder: (context, snapshot) {
+                                                if (!snapshot.hasData ||
+                                                    snapshot.data!.isEmpty)
+                                                  return SizedBox.shrink();
+
+                                                // JSONB reaction_counts를 가져오기
+                                                final Map<String, dynamic>
+                                                    reactionCounts = Map<String,
+                                                        dynamic>.from(comment[
+                                                            'reaction_counts'] ??
+                                                        {});
+
+                                                final reactions =
+                                                    snapshot.data!;
+                                                return Row(
+                                                  children: reactionCounts
+                                                      .entries
+                                                      .map((entry) {
+                                                    final reactionType =
+                                                        entry.key; // 예: 'amen'
+                                                    final count =
+                                                        entry.value; // 예: 3
+                                                    final emoji =
+                                                        reactionEmojis[
+                                                                reactionType] ??
+                                                            ''; // 예: '🙏🏻'
+
+                                                    return Padding(
+                                                      padding: EdgeInsets.only(
+                                                          right: (count > 1)
+                                                              ? 8.0
+                                                              : 4.0),
+                                                      child: Row(
+                                                        children: [
+                                                          Text(emoji,
+                                                              style: const TextStyle(
+                                                                  fontSize:
+                                                                      14)), // 이모지 표시
+                                                          const SizedBox(
+                                                              width: 4),
+                                                          if (count > 1)
+                                                            Text(
+                                                              count
+                                                                  .toString(), // 감정 수 표시
+                                                              style: const TextStyle(
+                                                                  fontSize: 10,
+                                                                  color:
+                                                                      blueGrey,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w500),
+                                                            ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                    Text(
-                                      formattedDate,
-                                      style: const TextStyle(
-                                        fontSize: 9,
-                                        color: bg_70,
-                                      ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
+                                  // trailing: isCommentAuthor
+                                  //     ? GestureDetector(
+                                  //         child: const Icon(
+                                  //             Icons.delete_outline,
+                                  //             size: 16),
+                                  //         onTap: () {
+                                  //           deleteComment(
+                                  //               comment['id'], context);
+                                  //         })
+                                  //     : null,
                                 ),
-                                trailing: isCommentAuthor
-                                    ? IconButton(
-                                        icon: const Icon(Icons.delete_outline,
-                                            size: 16),
-                                        onPressed: () {
-                                          deleteComment(comment['id'], context);
-                                        })
-                                    : null,
                               ),
                             ),
                           ),
