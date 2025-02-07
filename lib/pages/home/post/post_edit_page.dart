@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -168,9 +169,23 @@ class _PostEditPageState extends State<PostEditPage> {
     List<String> compressedImageUrls = [];
     var originalImageUrls = widget.post['compressed_image_urls'];
 
-    if (images.length !=
-        (originalImageUrls is List ? originalImageUrls.length : 0)) {
-      shouldUpdate = true; // 이미지 개수가 변경되었음을 감지
+    // 기존 압축 이미지 URL 리스트 가져오기
+    List<String> originalCompressedImageUrls = [];
+    if (originalImageUrls is String) {
+      originalCompressedImageUrls =
+          List<String>.from(jsonDecode(originalImageUrls));
+    } else if (originalImageUrls is List) {
+      originalCompressedImageUrls = List<String>.from(originalImageUrls);
+    }
+
+    // 현재 이미지 순서
+    List<String> currentCompressedImageUrls =
+        images.map((image) => image.path).toList();
+
+    // 이미지 개수 또는 순서 변경 여부 확인
+    if (images.length != originalCompressedImageUrls.length ||
+        !listEquals(originalCompressedImageUrls, currentCompressedImageUrls)) {
+      shouldUpdate = true;
     }
 
     if (images.isNotEmpty) {
