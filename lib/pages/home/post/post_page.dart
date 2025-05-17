@@ -6,6 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/const/color.dart';
+import 'package:wact/pages/home/post/post_add_page.dart';
 import 'package:wact/pages/home/post/post_detail_page.dart';
 
 class PostPage extends StatefulWidget {
@@ -222,297 +223,341 @@ class PostPageState extends State<PostPage> {
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      color: Colors.white,
-      backgroundColor: Colors.black,
-      onRefresh: () async {
-        refresh();
-      },
-      child: Stack(
-        children: [
-          StreamBuilder<List<Map<String, dynamic>>>(
-            stream: _noticeStream,
-            builder: (context, noticeSnapshot) {
-              if (!noticeSnapshot.hasData) {
-                return const Center(
-                  child: CircularProgressIndicator(color: Colors.black),
-                );
-              }
-              final notices = noticeSnapshot.data ?? [];
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: RefreshIndicator(
+        color: Colors.white,
+        backgroundColor: Colors.black,
+        onRefresh: () async {
+          refresh();
+        },
+        child: Stack(
+          children: [
+            StreamBuilder<List<Map<String, dynamic>>>(
+              stream: _noticeStream,
+              builder: (context, noticeSnapshot) {
+                if (!noticeSnapshot.hasData) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: Colors.black),
+                  );
+                }
+                final notices = noticeSnapshot.data ?? [];
 
-              return StreamBuilder<List<Map<String, dynamic>>>(
-                stream: _postStream,
-                builder: (context, postSnapshot) {
-                  if (!postSnapshot.hasData) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: Colors.black),
-                    );
-                  }
-                  final posts = postSnapshot.data!;
+                return StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: _postStream,
+                  builder: (context, postSnapshot) {
+                    if (!postSnapshot.hasData) {
+                      return const Center(
+                        child: CircularProgressIndicator(color: Colors.black),
+                      );
+                    }
+                    final posts = postSnapshot.data!;
 
-                  return StreamBuilder<Map<int, int>>(
-                    stream: _commentCountStream,
-                    builder: (context, commentSnapshot) {
-                      if (!commentSnapshot.hasData) {
-                        return const Center(
-                          child: CircularProgressIndicator(color: Colors.black),
-                        );
-                      }
-                      final commentCounts = commentSnapshot.data ?? {};
+                    return StreamBuilder<Map<int, int>>(
+                      stream: _commentCountStream,
+                      builder: (context, commentSnapshot) {
+                        if (!commentSnapshot.hasData) {
+                          return const Center(
+                            child:
+                                CircularProgressIndicator(color: Colors.black),
+                          );
+                        }
+                        final commentCounts = commentSnapshot.data ?? {};
 
-                      return ListView.builder(
-                        controller: controller,
-                        itemCount: posts.length + 1, // 공지 + 게시글
-                        itemBuilder: (context, index) {
-                          if (index == 0) {
-                            return _buildNoticeSectionWithIndicator(notices);
-                          }
-                          final post = posts[index - 1];
+                        return ListView.builder(
+                          controller: controller,
+                          itemCount: posts.length + 1, // 공지 + 게시글
+                          itemBuilder: (context, index) {
+                            if (index == 0) {
+                              return _buildNoticeSectionWithIndicator(notices);
+                            }
+                            final post = posts[index - 1];
 
-                          // 이미지 URL 처리
-                          List<dynamic> imageUrls = [];
-                          if (post['compressed_image_urls'] is List<dynamic>) {
-                            imageUrls = post['compressed_image_urls'];
-                          } else if (post['compressed_image_urls'] is String) {
-                            imageUrls =
-                                json.decode(post['compressed_image_urls']);
-                          }
-                          final imageUrl =
-                              imageUrls.isNotEmpty ? imageUrls[0] : null;
-                          if (imageUrl != null) {
-                            precacheImage(NetworkImage(imageUrl), context);
-                          }
+                            // 이미지 URL 처리
+                            List<dynamic> imageUrls = [];
+                            if (post['compressed_image_urls']
+                                is List<dynamic>) {
+                              imageUrls = post['compressed_image_urls'];
+                            } else if (post['compressed_image_urls']
+                                is String) {
+                              imageUrls =
+                                  json.decode(post['compressed_image_urls']);
+                            }
+                            final imageUrl =
+                                imageUrls.isNotEmpty ? imageUrls[0] : null;
+                            if (imageUrl != null) {
+                              precacheImage(NetworkImage(imageUrl), context);
+                            }
 
-                          // 댓글 개수 처리
-                          final commentCount = commentCounts[post['id']] ?? 0;
+                            // 댓글 개수 처리
+                            final commentCount = commentCounts[post['id']] ?? 0;
 
-                          // 날짜 형식 변경
-                          final createdAt = DateTime.parse(post['created_at']);
-                          final formattedDate =
-                              DateFormat('MM/dd').format(createdAt);
+                            // 날짜 형식 변경
+                            final createdAt =
+                                DateTime.parse(post['created_at']);
+                            final formattedDate =
+                                DateFormat('MM/dd').format(createdAt);
 
-                          bool isReported = post['report'];
+                            bool isReported = post['report'];
 
-                          return InkWell(
-                            onTap: () async {
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => PostDetailPage(
-                                    post: post,
-                                    refreshCallback: () {
-                                      refresh();
-                                      debugPrint('PostDetailPage에서 돌아옴: 새로고침');
-                                    },
+                            return InkWell(
+                              onTap: () async {
+                                final result = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PostDetailPage(
+                                      post: post,
+                                      refreshCallback: () {
+                                        refresh();
+                                        debugPrint(
+                                            'PostDetailPage에서 돌아옴: 새로고침');
+                                      },
+                                    ),
                                   ),
-                                ),
-                              );
-                              if (result == true) {
-                                refresh();
-                              }
-                            },
-                            child: Column(
-                              children: [
-                                (isReported == false)
-                                    ? Padding(
-                                        padding: const EdgeInsets.fromLTRB(
-                                            20, 10, 20, 10),
-                                        child: SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width -
-                                              40,
-                                          height: 90,
-                                          child: GestureDetector(
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                SizedBox(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width -
-                                                      40 -
-                                                      60 -
-                                                      10,
-                                                  height: 90,
-                                                  child: Column(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(
-                                                        post['title'],
-                                                        style: const TextStyle(
-                                                            fontSize: 18,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .w600),
-                                                      ),
-                                                      const SizedBox(height: 2),
-                                                      Text(
-                                                        post['content'],
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: const TextStyle(
-                                                            fontSize: 14,
-                                                            fontWeight:
-                                                                FontWeight.w500,
-                                                            color: bg_90),
-                                                      ),
-                                                      const SizedBox(height: 5),
-                                                      Row(
-                                                        children: [
-                                                          if (commentCount > 0)
-                                                            Row(
-                                                              children: [
-                                                                Icon(
-                                                                  Icons
-                                                                      .comment_outlined,
-                                                                  size: 12,
-                                                                ),
-                                                                const SizedBox(
-                                                                    width: 3),
-                                                                Text(
-                                                                  '$commentCount',
-                                                                  style: const TextStyle(
-                                                                      fontSize:
-                                                                          10,
-                                                                      color:
-                                                                          blueGrey),
-                                                                ),
-                                                                const SizedBox(
-                                                                    width: 5),
-                                                                // const Text(
-                                                                //   'ㅣ',
-                                                                //   style: TextStyle(
-                                                                //       fontSize:
-                                                                //           8,
-                                                                //       color:
-                                                                //           bg_90),
-                                                                // ),
-                                                                Container(
-                                                                  width: 2,
-                                                                  height: 2,
-                                                                  decoration:
-                                                                      BoxDecoration(
-                                                                    color:
-                                                                        blueGrey,
-                                                                    shape: BoxShape
-                                                                        .circle, // 원형
-                                                                  ),
-                                                                ),
-                                                                const SizedBox(
-                                                                    width: 5),
-                                                              ],
-                                                            ),
-                                                          Text(
-                                                            formattedDate,
-                                                            style:
-                                                                const TextStyle(
-                                                                    fontSize:
-                                                                        10,
-                                                                    color:
-                                                                        blueGrey),
-                                                          ),
-                                                          const SizedBox(
-                                                              width: 5),
-                                                          // const Text(
-                                                          //   'ㅣ',
-                                                          //   style: TextStyle(
-                                                          //       fontSize: 8,
-                                                          //       color: bg_70),
-                                                          // ),
-                                                          Container(
-                                                            width: 2,
-                                                            height: 2,
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              color: blueGrey,
-                                                              shape: BoxShape
-                                                                  .circle, // 원형
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                              width: 5),
-                                                          Text(
-                                                            post[
-                                                                'current_author'],
-                                                            style:
-                                                                const TextStyle(
-                                                                    fontSize:
-                                                                        10,
-                                                                    color:
-                                                                        blueGrey),
-                                                          ),
-                                                        ],
-                                                      )
-                                                    ],
-                                                  ),
-                                                ),
-                                                if (imageUrl != null)
+                                );
+                                if (result == true) {
+                                  refresh();
+                                }
+                              },
+                              child: Column(
+                                children: [
+                                  (isReported == false)
+                                      ? Padding(
+                                          padding: const EdgeInsets.fromLTRB(
+                                              20, 10, 20, 10),
+                                          child: SizedBox(
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width -
+                                                40,
+                                            height: 90,
+                                            child: GestureDetector(
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
                                                   SizedBox(
-                                                    width: 60,
-                                                    height: 60,
-                                                    child: ClipRRect(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              20),
-                                                      child: CachedNetworkImage(
-                                                        imageUrl: imageUrl,
-                                                        width: 60,
-                                                        height: 60,
-                                                        fit: BoxFit.cover,
-                                                      ),
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width -
+                                                            40 -
+                                                            60 -
+                                                            10,
+                                                    height: 90,
+                                                    child: Column(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          post['title'],
+                                                          style: const TextStyle(
+                                                              fontSize: 18,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 2),
+                                                        Text(
+                                                          post['content'],
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style:
+                                                              const TextStyle(
+                                                                  fontSize: 14,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w500,
+                                                                  color: bg_90),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 5),
+                                                        Row(
+                                                          children: [
+                                                            if (commentCount >
+                                                                0)
+                                                              Row(
+                                                                children: [
+                                                                  Icon(
+                                                                    Icons
+                                                                        .comment_outlined,
+                                                                    size: 12,
+                                                                  ),
+                                                                  const SizedBox(
+                                                                      width: 3),
+                                                                  Text(
+                                                                    '$commentCount',
+                                                                    style: const TextStyle(
+                                                                        fontSize:
+                                                                            10,
+                                                                        color:
+                                                                            blueGrey),
+                                                                  ),
+                                                                  const SizedBox(
+                                                                      width: 5),
+                                                                  // const Text(
+                                                                  //   'ㅣ',
+                                                                  //   style: TextStyle(
+                                                                  //       fontSize:
+                                                                  //           8,
+                                                                  //       color:
+                                                                  //           bg_90),
+                                                                  // ),
+                                                                  Container(
+                                                                    width: 2,
+                                                                    height: 2,
+                                                                    decoration:
+                                                                        BoxDecoration(
+                                                                      color:
+                                                                          blueGrey,
+                                                                      shape: BoxShape
+                                                                          .circle, // 원형
+                                                                    ),
+                                                                  ),
+                                                                  const SizedBox(
+                                                                      width: 5),
+                                                                ],
+                                                              ),
+                                                            Text(
+                                                              formattedDate,
+                                                              style: const TextStyle(
+                                                                  fontSize: 10,
+                                                                  color:
+                                                                      blueGrey),
+                                                            ),
+                                                            const SizedBox(
+                                                                width: 5),
+                                                            // const Text(
+                                                            //   'ㅣ',
+                                                            //   style: TextStyle(
+                                                            //       fontSize: 8,
+                                                            //       color: bg_70),
+                                                            // ),
+                                                            Container(
+                                                              width: 2,
+                                                              height: 2,
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                color: blueGrey,
+                                                                shape: BoxShape
+                                                                    .circle, // 원형
+                                                              ),
+                                                            ),
+                                                            const SizedBox(
+                                                                width: 5),
+                                                            Text(
+                                                              post[
+                                                                  'current_author'],
+                                                              style: const TextStyle(
+                                                                  fontSize: 10,
+                                                                  color:
+                                                                      blueGrey),
+                                                            ),
+                                                          ],
+                                                        )
+                                                      ],
                                                     ),
                                                   ),
-                                              ],
+                                                  if (imageUrl != null)
+                                                    SizedBox(
+                                                      width: 60,
+                                                      height: 60,
+                                                      child: ClipRRect(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(20),
+                                                        child:
+                                                            CachedNetworkImage(
+                                                          imageUrl: imageUrl,
+                                                          width: 60,
+                                                          height: 60,
+                                                          fit: BoxFit.cover,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                      : Padding(
+                                          padding: const EdgeInsets.fromLTRB(
+                                              20, 10, 20, 10),
+                                          child: SizedBox(
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width -
+                                                40,
+                                            height: 30,
+                                            child: Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: Text(
+                                                '비활성화된 게시글입니다.',
+                                                textAlign: TextAlign.left,
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      )
-                                    : Padding(
-                                        padding: const EdgeInsets.fromLTRB(
-                                            20, 10, 20, 10),
-                                        child: SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width -
-                                              40,
-                                          height: 30,
-                                          child: Align(
-                                            alignment: Alignment.centerLeft,
-                                            child: Text(
-                                              '비활성화된 게시글입니다.',
-                                              textAlign: TextAlign.left,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                const Padding(
-                                  padding: EdgeInsets.fromLTRB(20, 0, 20, 0),
-                                  child: Divider(
-                                    color: bg_10,
-                                    height: 1,
+                                  const Padding(
+                                    padding: EdgeInsets.fromLTRB(20, 0, 20, 0),
+                                    child: Divider(
+                                      color: bg_10,
+                                      height: 1,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  );
-                },
-              );
-            },
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.black,
+        // mini: true,
+        onPressed: () {
+          // widget.toggleFAB();
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PostAddPage(
+                onUpload: (List<String> urls) {}, // 이 부분은 필요에 따라 조정
+                // homePageKey: widget.homePageKey,
+              ),
+            ),
+          ).then((result) {
+            if (result == true) {
+              debugPrint(
+                  'FAB1: 새로운 게시글 작성 후 PostPage를 새로고침하기 위해 refreshPostPage 실행');
+              // widget.homePageKey.currentState?.refreshPostPage();
+            }
+          });
+        },
+        child: const SizedBox(
+          width: 24,
+          height: 24,
+          child: Center(
+            child: Row(
+              children: [
+                Icon(Icons.add),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }

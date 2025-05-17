@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 import 'package:wact/common/const/color.dart';
+import 'package:wact/common/const/reaction_emojis.dart';
 import 'package:wact/pages/home/post/post_edit_page.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
@@ -70,16 +71,6 @@ class _PostDetailPageState extends State<PostDetailPage> {
   // 4. 누가 감정표현 했는 지 표시? or not -> 일단 표시X
   // 5. 디자인 다듬기 -> 다음 업데이트때
   */
-
-  Map<String, String> reactionEmojis = {
-    'amen': '🙏🏻',
-    'love': '❤️',
-    'funny': '🤣',
-    'sad': '😢',
-    'amazing': '😮',
-    'clap': '👏🏻',
-    'touched': '🥹',
-  };
 
   Future<void> fetchComments() async {
     final response = await Supabase.instance.client
@@ -294,10 +285,10 @@ class _PostDetailPageState extends State<PostDetailPage> {
     fetchComments(); // 댓글 목록 다시 로드
   }
 
-  // 문자열 필터링
+  // 문자열 필터링, 라이브 스트림 링크도 탐지 가능하게 수정 250208
   String? extractVideoId(String content) {
     RegExp regExp = RegExp(
-      r'(?:https:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})',
+      r'(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})',
     );
     Match? match = regExp.firstMatch(content);
     if (match != null) {
@@ -329,6 +320,41 @@ class _PostDetailPageState extends State<PostDetailPage> {
               ),
             ),
           );
+        } else if (part.contains('youtube.com') || part.contains('youtu.be')) {
+          String? videoId = extractVideoId(part);
+
+          if (videoId != null && videoId.isNotEmpty) {
+            // 기존 유튜브 영상 처리
+            widgets.add(
+              YoutubePlayer(
+                controller: YoutubePlayerController.fromVideoId(
+                  videoId: videoId,
+                  autoPlay: false,
+                  params: const YoutubePlayerParams(showFullscreenButton: true),
+                ),
+                aspectRatio: 16 / 9,
+              ),
+            );
+          } else {
+            // 유튜브 라이브 또는 영상 ID 추출 실패 시 링크로 처리
+            widgets.add(
+              GestureDetector(
+                onTap: () async {
+                  if (await canLaunchUrl(Uri.parse(part))) {
+                    await launchUrl(Uri.parse(part));
+                  }
+                },
+                child: Text(
+                  part,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.pink[200],
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            );
+          }
         }
       } else if (Uri.tryParse(part)?.hasAbsolutePath == true) {
         // 웹페이지 링크인 경우

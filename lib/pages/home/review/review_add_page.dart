@@ -14,14 +14,13 @@ import 'package:wact/pages/home/home_page.dart';
 class ReviewAddPage extends StatefulWidget {
   final List<XFile>? images;
   final void Function(List<String>) onUpload;
-  final GlobalKey<HomePageState> homePageKey;
+  // final GlobalKey<HomePageState> homePageKey;
 
-  const ReviewAddPage(
-      {Key? key,
-      this.images,
-      required this.onUpload,
-      required this.homePageKey})
-      : super(key: key);
+  const ReviewAddPage({
+    Key? key,
+    this.images,
+    required this.onUpload,
+  }) : super(key: key);
 
   @override
   _ReviewAddPageState createState() => _ReviewAddPageState();
@@ -47,6 +46,10 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
   List<String> uploadedFilePaths = [];
   List<String> uploadedCompressedFilePaths = [];
 
+  late User? user;
+  bool isAdmin = false;
+  bool isChecked = false;
+
   Future<void> _pickImages() async {
     final pickedFiles = await ImagePicker().pickMultiImage();
 
@@ -59,6 +62,26 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
       });
 
       await _uploadImages(pickedFiles);
+    }
+  }
+
+  Future<void> fetchRole() async {
+    try {
+      final response = await Supabase.instance.client
+          .from('profiles')
+          .select('role')
+          .eq('id', user!.id) // 현재 사용자의 id로 필터링
+
+          .single();
+
+      if (response.isNotEmpty) {
+        setState(() {
+          isAdmin = response['role'] == 'admin';
+          debugPrint('관리자 여부: $isAdmin');
+        });
+      }
+    } catch (e) {
+      print('Role fetch error: $e');
     }
   }
 
@@ -250,6 +273,7 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
         'image_urls': imageUrls,
         'compressed_image_urls': compressedImageUrls,
         'participants': _selectedParticipants?.replaceAll('명', ''),
+        'schedule': isChecked,
       });
 
       widget.onUpload(imageUrls);
@@ -273,6 +297,9 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
   @override
   void initState() {
     super.initState();
+    user = Supabase.instance.client.auth.currentUser;
+    fetchRole(); // 역할 정보 가져오기
+
     if (widget.images != null) {
       _currentImages = widget.images!;
     }
@@ -445,8 +472,8 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
                           _selectedParticipants != null) {
                         bool result = await _uploadPost();
                         if (result == true) {
-                          final homePageState = widget.homePageKey.currentState;
-                          homePageState?.refreshReviewPage();
+                          // final homePageState = widget.homePageKey.currentState;
+                          // homePageState?.refreshReviewPage();
                           Navigator.pop(context, true);
                         }
                       } else {
@@ -484,326 +511,190 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
             ],
           ),
           body: SingleChildScrollView(
-            child: Column(
-              children: <Widget>[
-                buildImageGrid(),
-                const Text('(사진은 최대 6장까지 선택 가능🙂)'),
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: SizedBox(
-                    height: (MediaQuery.of(context).size.height),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            child: GestureDetector(
+              onTap: () =>
+                  FocusScope.of(context).unfocus(), // 다른 영역을 터치하면 키보드가 닫힘
+
+              child: Column(
+                children: <Widget>[
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            DropdownButton<String>(
-                              style: const TextStyle(color: Colors.black),
-                              dropdownColor: Colors.white,
-                              value: _selectedTeam,
-                              hint: const Text('지부'),
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  _selectedTeam = newValue;
-                                });
-                              },
-                              items: <String>[
-                                '강남',
-                                '시내',
-                                '신촌',
-                                '인천',
-                                '태릉',
-                                '오비',
-                                '행사',
-                                '모임',
-                              ].map<DropdownMenuItem<String>>((String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(
-                                    value,
-                                    style: const TextStyle(
-                                      color: Colors.black,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                            Align(
-                              alignment: Alignment.topLeft,
-                              child: InkWell(
-                                onTap: () async {
-                                  DateTime? pickedDate = await _selectDate();
-                                  if (pickedDate != null &&
-                                      pickedDate != _selectedDate) {
-                                    setState(() {
-                                      _selectedDate = pickedDate;
-                                    });
-                                  }
+                        IconButton(
+                          onPressed: () {
+                            setState(() {
+                              isChecked = !isChecked;
+                              debugPrint('체크 여부: $isChecked');
+                            });
+                          },
+                          icon: isChecked
+                              ? Icon(
+                                  Icons.check_box_rounded,
+                                  color: Colors.red,
+                                )
+                              : Icon(
+                                  Icons.check_box_outline_blank_rounded,
+                                  color: bg_90,
+                                ),
+                        ),
+                        Text(
+                          '일정',
+                          style: isChecked
+                              ? TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                )
+                              : TextStyle(
+                                  color: bg_90,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  buildImageGrid(),
+                  const Text('(사진은 최대 6장까지 선택 가능🙂)'),
+                  Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: SizedBox(
+                      height: (MediaQuery.of(context).size.height),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              DropdownButton<String>(
+                                style: const TextStyle(color: Colors.black),
+                                dropdownColor: Colors.white,
+                                value: _selectedTeam,
+                                hint: const Text('지부'),
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    _selectedTeam = newValue;
+                                  });
                                 },
-                                child: Row(
-                                  children: [
-                                    const Text(
-                                      '모임 날짜: ',
-                                      style: TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.w500),
+                                items: <String>[
+                                  '강남',
+                                  '시내',
+                                  '신촌',
+                                  '인천',
+                                  '태릉',
+                                  '오비',
+                                  '행사',
+                                  '모임',
+                                ].map<DropdownMenuItem<String>>((String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(
+                                      value,
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 16,
+                                      ),
                                     ),
-                                    _selectedDate != DateTime.now()
-                                        ? Text(
-                                            "${_selectedDate.year}년 ${_selectedDate.month}월 ${_selectedDate.day}일",
-                                            style: const TextStyle(
-                                                fontSize: 15,
-                                                color: Colors.black,
-                                                fontWeight: FontWeight.w500),
-                                          )
-                                        : const Text(
-                                            "날짜 선택",
-                                            style: TextStyle(color: secondary),
-                                          ),
-                                    const SizedBox(width: 4),
-                                    SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: Image.asset(
-                                          'assets/imgs/icon/icon_calendar.png'),
-                                    ),
-                                  ],
+                                  );
+                                }).toList(),
+                              ),
+                              Align(
+                                alignment: Alignment.topLeft,
+                                child: InkWell(
+                                  onTap: () async {
+                                    DateTime? pickedDate = await _selectDate();
+                                    if (pickedDate != null &&
+                                        pickedDate != _selectedDate) {
+                                      setState(() {
+                                        _selectedDate = pickedDate;
+                                      });
+                                    }
+                                  },
+                                  child: Row(
+                                    children: [
+                                      const Text(
+                                        '모임 날짜: ',
+                                        style: TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w500),
+                                      ),
+                                      _selectedDate != DateTime.now()
+                                          ? Text(
+                                              "${_selectedDate.year}년 ${_selectedDate.month}월 ${_selectedDate.day}일",
+                                              style: const TextStyle(
+                                                  fontSize: 15,
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.w500),
+                                            )
+                                          : const Text(
+                                              "날짜 선택",
+                                              style:
+                                                  TextStyle(color: secondary),
+                                            ),
+                                      const SizedBox(width: 4),
+                                      SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: Image.asset(
+                                            'assets/imgs/icon/icon_calendar.png'),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(
-                          height: 16,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              '참석',
-                              style: TextStyle(
-                                color: bg_90,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            DropdownButton<String>(
-                              style: const TextStyle(color: Colors.black),
-                              dropdownColor: Colors.white,
-                              value: _selectedParticipants,
-                              hint: const Text('인원'),
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  _selectedParticipants = newValue;
-                                });
-                              },
-                              items: participantsList
-                                  .map<DropdownMenuItem<String>>(
-                                      (String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(
-                                    value,
-                                    style: const TextStyle(
-                                      color: Colors.black,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ],
-                        ),
-                        TextFormField(
-                          controller: _memberEditingController,
-                          maxLines: 1,
-                          maxLength: 100,
-                          cursorColor: primary,
-                          decoration: const InputDecoration(
-                            hintText: '참석한 사람을 적어주세요.',
-                            hintStyle: TextStyle(
-                              color: bg_70,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 15,
-                            ),
-                            border: InputBorder.none,
-                            counterText: '',
-                          ),
-                        ),
-                        const Divider(
-                          color: bg_30,
-                        ),
-                        const SizedBox(
-                          height: 16,
-                        ),
-                        const Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '장소',
-                              style: TextStyle(
-                                color: bg_90,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            Text(
-                              '',
-                              style: TextStyle(
-                                color: bg_90,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ],
-                        ),
-                        TextFormField(
-                          controller: _placeEditingController,
-                          maxLines: 1,
-                          maxLength: 100,
-                          cursorColor: primary,
-                          decoration: const InputDecoration(
-                            hintText: '모임 장소를 적어주세요.',
-                            hintStyle: TextStyle(
-                              color: bg_70,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 15,
-                            ),
-                            border: InputBorder.none,
-                            counterText: '',
-                          ),
-                        ),
-                        const Divider(
-                          color: bg_30,
-                        ),
-                        const SizedBox(
-                          height: 16,
-                        ),
-                        const Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '말씀',
-                              style: TextStyle(
-                                color: bg_90,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            Text(
-                              '',
-                              style: TextStyle(
-                                color: bg_90,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ],
-                        ),
-                        TextFormField(
-                          controller: _bibleController,
-                          maxLines: 1,
-                          maxLength: 100,
-                          cursorColor: primary,
-                          decoration: const InputDecoration(
-                            hintText: '말씀 묵상 범위를 적어주세요.',
-                            hintStyle: TextStyle(
-                              color: bg_70,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 15,
-                            ),
-                            border: InputBorder.none,
-                            counterText: '',
-                          ),
-                        ),
-                        const Divider(
-                          color: bg_30,
-                        ),
-                        const SizedBox(
-                          height: 16,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              '제목',
-                              style: TextStyle(
-                                color: bg_90,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            Text(
-                              '${_titleEditingController.text.length}/16',
-                              style: const TextStyle(
-                                color: bg_90,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ],
-                        ),
-                        TextFormField(
-                          controller: _titleEditingController,
-                          maxLines: 1,
-                          maxLength: 16,
-                          inputFormatters: [
-                            LengthLimitingTextInputFormatter(16), // 최대 16자 제한
-                          ],
-                          cursorColor: primary,
-                          decoration: const InputDecoration(
-                            hintText: '제목을 입력해주세요.',
-                            hintStyle: TextStyle(
-                              color: bg_70,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 15,
-                            ),
-                            border: InputBorder.none,
-                            counterText: '',
-                          ),
-                        ),
-                        const Divider(
-                          color: bg_30,
-                        ),
-                        const SizedBox(
-                          height: 16,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              '내용',
-                              style: TextStyle(
-                                color: bg_90,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            Text(
-                              '${_contentEditingController.text.length}/1000',
-                              style: const TextStyle(
-                                color: bg_90,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _contentEditingController,
-                            maxLines: 10,
-                            maxLength: 1000,
-                            inputFormatters: [
-                              LengthLimitingTextInputFormatter(
-                                  1000), // 최대 1000자 제한
                             ],
+                          ),
+                          const SizedBox(
+                            height: 16,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                '참석',
+                                style: TextStyle(
+                                  color: bg_90,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              DropdownButton<String>(
+                                style: const TextStyle(color: Colors.black),
+                                dropdownColor: Colors.white,
+                                value: _selectedParticipants,
+                                hint: const Text('인원'),
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    _selectedParticipants = newValue;
+                                  });
+                                },
+                                items: participantsList
+                                    .map<DropdownMenuItem<String>>(
+                                        (String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(
+                                      value,
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          ),
+                          TextFormField(
+                            controller: _memberEditingController,
+                            maxLines: 1,
+                            maxLength: 100,
                             cursorColor: primary,
                             decoration: const InputDecoration(
-                              hintText: '내용을 작성해주세요.',
+                              hintText: '참석한 사람을 적어주세요.',
                               hintStyle: TextStyle(
                                 color: bg_70,
                                 fontWeight: FontWeight.w500,
@@ -811,18 +702,199 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
                               ),
                               border: InputBorder.none,
                               counterText: '',
-                              focusColor: primary,
                             ),
                           ),
-                        ),
-                        const SizedBox(
-                          height: 32,
-                        ),
-                      ],
+                          const Divider(
+                            color: bg_30,
+                          ),
+                          const SizedBox(
+                            height: 16,
+                          ),
+                          const Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '장소',
+                                style: TextStyle(
+                                  color: bg_90,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              Text(
+                                '',
+                                style: TextStyle(
+                                  color: bg_90,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ],
+                          ),
+                          TextFormField(
+                            controller: _placeEditingController,
+                            maxLines: 1,
+                            maxLength: 100,
+                            cursorColor: primary,
+                            decoration: const InputDecoration(
+                              hintText: '모임 장소를 적어주세요.',
+                              hintStyle: TextStyle(
+                                color: bg_70,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 15,
+                              ),
+                              border: InputBorder.none,
+                              counterText: '',
+                            ),
+                          ),
+                          const Divider(
+                            color: bg_30,
+                          ),
+                          const SizedBox(
+                            height: 16,
+                          ),
+                          const Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '말씀',
+                                style: TextStyle(
+                                  color: bg_90,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              Text(
+                                '',
+                                style: TextStyle(
+                                  color: bg_90,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ],
+                          ),
+                          TextFormField(
+                            controller: _bibleController,
+                            maxLines: 1,
+                            maxLength: 100,
+                            cursorColor: primary,
+                            decoration: const InputDecoration(
+                              hintText: '말씀 묵상 범위를 적어주세요.',
+                              hintStyle: TextStyle(
+                                color: bg_70,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 15,
+                              ),
+                              border: InputBorder.none,
+                              counterText: '',
+                            ),
+                          ),
+                          const Divider(
+                            color: bg_30,
+                          ),
+                          const SizedBox(
+                            height: 16,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                '제목',
+                                style: TextStyle(
+                                  color: bg_90,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              Text(
+                                '${_titleEditingController.text.length}/16',
+                                style: const TextStyle(
+                                  color: bg_90,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ],
+                          ),
+                          TextFormField(
+                            controller: _titleEditingController,
+                            maxLines: 1,
+                            maxLength: 16,
+                            inputFormatters: [
+                              LengthLimitingTextInputFormatter(16), // 최대 16자 제한
+                            ],
+                            cursorColor: primary,
+                            decoration: const InputDecoration(
+                              hintText: '제목을 입력해주세요.',
+                              hintStyle: TextStyle(
+                                color: bg_70,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 15,
+                              ),
+                              border: InputBorder.none,
+                              counterText: '',
+                            ),
+                          ),
+                          const Divider(
+                            color: bg_30,
+                          ),
+                          const SizedBox(
+                            height: 16,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                '내용',
+                                style: TextStyle(
+                                  color: bg_90,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              Text(
+                                '${_contentEditingController.text.length}/1000',
+                                style: const TextStyle(
+                                  color: bg_90,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _contentEditingController,
+                              maxLines: 10,
+                              maxLength: 1000,
+                              inputFormatters: [
+                                LengthLimitingTextInputFormatter(
+                                    1000), // 최대 1000자 제한
+                              ],
+                              cursorColor: primary,
+                              decoration: const InputDecoration(
+                                hintText: '내용을 작성해주세요.',
+                                hintStyle: TextStyle(
+                                  color: bg_70,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 15,
+                                ),
+                                border: InputBorder.none,
+                                counterText: '',
+                                focusColor: primary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(
+                            height: 32,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ));

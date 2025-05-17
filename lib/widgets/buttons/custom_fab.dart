@@ -74,7 +74,7 @@ class _CustomFABState extends State<CustomFAB> {
                 MaterialPageRoute(
                   builder: (context) => PostAddPage(
                     onUpload: (List<String> urls) {}, // 이 부분은 필요에 따라 조정
-                    homePageKey: widget.homePageKey,
+                    // homePageKey: widget.homePageKey,
                   ),
                 ),
               ).then((result) {
@@ -107,7 +107,7 @@ class _CustomFABState extends State<CustomFAB> {
                 MaterialPageRoute(
                   builder: (context) => ReviewAddPage(
                     onUpload: (String) {},
-                    homePageKey: widget.homePageKey,
+                    // homePageKey: widget.homePageKey,
                   ),
                 ),
               ).then((result) {

@@ -163,6 +163,12 @@ class _ReviewEditPageState extends State<ReviewEditPage> {
       updateData['team'] = _selectedTeam;
       shouldUpdate = true;
     }
+
+    if (_selectedDate != widget.review['meet_date']) {
+      updateData['meet_date'] = _selectedDate.toIso8601String();
+      shouldUpdate = true;
+    }
+
     if (_selectedParticipants != widget.review['participants']) {
       updateData['participants'] = _selectedParticipants?.replaceAll('명', '');
       shouldUpdate = true;

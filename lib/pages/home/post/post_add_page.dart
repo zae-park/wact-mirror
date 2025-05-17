@@ -16,14 +16,13 @@ import 'package:wact/pages/home/home_page.dart';
 class PostAddPage extends StatefulWidget {
   final List<XFile>? images;
   final void Function(List<String>) onUpload;
-  final GlobalKey<HomePageState> homePageKey;
+  // final GlobalKey<HomePageState> homePageKey;
 
-  const PostAddPage(
-      {Key? key,
-      this.images,
-      required this.onUpload,
-      required this.homePageKey})
-      : super(key: key);
+  const PostAddPage({
+    Key? key,
+    this.images,
+    required this.onUpload,
+  }) : super(key: key);
 
   @override
   _PostAddPageState createState() => _PostAddPageState();

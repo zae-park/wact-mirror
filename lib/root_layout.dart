@@ -6,7 +6,9 @@ import 'package:wact/common/const/color.dart';
 import 'package:wact/common/init.dart';
 import 'package:wact/pages/home/home_page.dart';
 import 'package:wact/pages/home/post/post_add_page.dart';
+import 'package:wact/pages/home/post/post_page.dart';
 import 'package:wact/pages/home/review/review_add_page.dart';
+import 'package:wact/pages/home/review/review_page.dart';
 import 'package:wact/pages/my/my_page.dart';
 import 'package:wact/widgets/buttons/custom_fab.dart';
 
@@ -25,6 +27,9 @@ class _RootLayoutState extends State<RootLayout>
   bool _isFabOpen = false;
   final GlobalKey<HomePageState> _homePageKey =
       GlobalKey<HomePageState>(); // 추가
+
+  final GlobalKey<PostPageState> postPageKey = GlobalKey<PostPageState>();
+  final GlobalKey<ReviewPageState> reviewPageKey = GlobalKey<ReviewPageState>();
 
   @override
   void initState() {
@@ -70,8 +75,12 @@ class _RootLayoutState extends State<RootLayout>
 
     _scrollController = ScrollController();
     _screens = [
-      HomePage(key: _homePageKey), // initState에서 _screens를 초기화합니다.
-      // const QTRoom(),
+      // HomePage(key: _homePageKey), // initState에서 _screens를 초기화합니다.
+      ReviewPage(
+        key: reviewPageKey,
+      ),
+      PostPage(key: postPageKey),
+
       const MyPage(),
     ];
   }
@@ -140,6 +149,20 @@ class _RootLayoutState extends State<RootLayout>
             ),
             BottomNavigationBarItem(
               icon: Image.asset(
+                'assets/imgs/icon/bottomnavigation/btn_nav_chat_off.png', // 비활성화 아이콘
+                width: 34,
+                height: 34,
+              ),
+              activeIcon: Image.asset(
+                'assets/imgs/icon/bottomnavigation/btn_nav_chat_on.png', // 활성화 아이콘
+                width: 34,
+                height: 34,
+                color: Colors.black,
+              ),
+              label: 'BOARD',
+            ),
+            BottomNavigationBarItem(
+              icon: Image.asset(
                 'assets/imgs/icon/bottomnavigation/btn_nav_my_off.png', // 비활성화 아이콘
                 width: 34,
                 height: 34,
@@ -205,20 +228,20 @@ class _RootLayoutState extends State<RootLayout>
           },
         ),
       ),
-      floatingActionButton: CustomFAB(
-        isFABVisible: true,
-        isFabOpen: _isFabOpen,
-        toggleFAB: _toggleFAB,
-        selectedIndex: _selectedIndex, // 추가
-        onTabChange: (index) {
-          // 추가
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        homePageKey: _homePageKey,
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      // floatingActionButton: CustomFAB(
+      //   isFABVisible: true,
+      //   isFabOpen: _isFabOpen,
+      //   toggleFAB: _toggleFAB,
+      //   selectedIndex: _selectedIndex, // 추가
+      //   onTabChange: (index) {
+      //     // 추가
+      //     setState(() {
+      //       _selectedIndex = index;
+      //     });
+      //   },
+      //   homePageKey: _homePageKey,
+      // ),
+      // floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }
