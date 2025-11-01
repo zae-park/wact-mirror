@@ -25,6 +25,10 @@ class _RootLayoutState extends State<RootLayout>
   late ScrollController _scrollController; // 스크롤을 감지하기 위한 컨트롤러
   late List<Widget> _screens; // 화면 리스트
   bool _isFabOpen = false;
+
+  // PageView를 위한 PageController 추가
+  late PageController _pageController;
+
   final GlobalKey<HomePageState> _homePageKey =
       GlobalKey<HomePageState>(); // 추가
 
@@ -34,6 +38,9 @@ class _RootLayoutState extends State<RootLayout>
   @override
   void initState() {
     super.initState();
+
+    // PageController 초기화
+    _pageController = PageController(initialPage: _selectedIndex);
 
     supabase.auth.onAuthStateChange.listen((event) async {
       if (event.event == AuthChangeEvent.signedIn) {
@@ -80,7 +87,6 @@ class _RootLayoutState extends State<RootLayout>
         key: reviewPageKey,
       ),
       PostPage(key: postPageKey),
-
       const MyPage(),
     ];
   }
@@ -105,7 +111,7 @@ class _RootLayoutState extends State<RootLayout>
   @override
   void dispose() {
     _scrollController.dispose();
-
+    _pageController.dispose(); // PageController도 dispose
     super.dispose();
   }
 
@@ -119,7 +125,16 @@ class _RootLayoutState extends State<RootLayout>
             _toggleFAB(); // 스크린을 터치하면 FAB를 닫기
           }
         },
-        child: _screens[_selectedIndex], // 선택된 인덱스에 따른 화면 보여주기
+        child: PageView(
+          controller: _pageController,
+          onPageChanged: (index) {
+            // 스와이프로 페이지가 변경될 때 탭 인덱스도 업데이트
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+          children: _screens, // PageView로 화면들을 감싸기
+        ),
       ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
@@ -145,7 +160,7 @@ class _RootLayoutState extends State<RootLayout>
                 width: 34,
                 height: 34,
               ),
-              label: 'HOME',
+              label: '후기',
             ),
             BottomNavigationBarItem(
               icon: Image.asset(
@@ -159,7 +174,7 @@ class _RootLayoutState extends State<RootLayout>
                 height: 34,
                 color: Colors.black,
               ),
-              label: 'BOARD',
+              label: '자유',
             ),
             BottomNavigationBarItem(
               icon: Image.asset(
@@ -172,8 +187,8 @@ class _RootLayoutState extends State<RootLayout>
                 width: 34,
                 height: 34,
               ),
-              label: 'MY',
-            ),
+              label: '마이',
+            )
           ],
           currentIndex: _selectedIndex,
           selectedItemColor: Colors.black, // 선택된 아이템의 색상
@@ -224,6 +239,13 @@ class _RootLayoutState extends State<RootLayout>
 
               // 현재 선택된 탭과 상관없이 'index' 업데이트 (홈/마이페이지 전환 처리)
               _selectedIndex = index;
+
+              // PageView를 해당 페이지로 애니메이션과 함께 이동
+              _pageController.animateToPage(
+                index,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
             });
           },
         ),

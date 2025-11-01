@@ -186,7 +186,7 @@ class _MyPageState extends State<MyPage> with TickerProviderStateMixin {
         automaticallyImplyLeading: false,
         backgroundColor: Color(0xffF1F2FF),
         surfaceTintColor: Colors.white,
-        elevation: 0, // 앱바 그림자 제거
+        elevation: 0, // 앱바 그림자 제거ㅌ₩
         centerTitle: false,
         title: Padding(
           padding: const EdgeInsets.only(left: 4),

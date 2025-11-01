@@ -526,35 +526,53 @@ class PostPageState extends State<PostPage> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.black,
-        // mini: true,
-        onPressed: () {
-          // widget.toggleFAB();
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => PostAddPage(
-                onUpload: (List<String> urls) {}, // 이 부분은 필요에 따라 조정
-                // homePageKey: widget.homePageKey,
+      floatingActionButton: SizedBox(
+        height: 48,
+        child: FloatingActionButton.extended(
+          onPressed: () {
+            // widget.toggleFAB();
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PostAddPage(
+                  onUpload: (List<String> urls) {}, // 이 부분은 필요에 따라 조정
+                  // homePageKey: widget.homePageKey,
+                ),
               ),
-            ),
-          ).then((result) {
-            if (result == true) {
-              debugPrint(
-                  'FAB1: 새로운 게시글 작성 후 PostPage를 새로고침하기 위해 refreshPostPage 실행');
-              // widget.homePageKey.currentState?.refreshPostPage();
-            }
-          });
-        },
-        child: const SizedBox(
-          width: 24,
-          height: 24,
-          child: Center(
-            child: Row(
-              children: [
-                Icon(Icons.add),
-              ],
+            ).then((result) {
+              if (result == true) {
+                debugPrint(
+                    '새로운 게시글 작성 후 PostPage를 새로고침하기 위해 refreshPostPage 실행');
+                refresh();
+              }
+            });
+          },
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(40),
+            // side: const BorderSide(color: Colors.white, width: 1),
+          ),
+          label: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 0),
+            child: SizedBox(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '글쓰기  ',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 5),
+                    child: Text(
+                      '+',
+                      style:
+                          TextStyle(fontSize: 24, fontWeight: FontWeight.w200),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

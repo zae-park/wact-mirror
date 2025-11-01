@@ -694,7 +694,7 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
                             maxLength: 100,
                             cursorColor: primary,
                             decoration: const InputDecoration(
-                              hintText: '참석한 사람을 적어주세요.',
+                              hintText: '참석한 사람을 적어주세요. (많으면 패스)',
                               hintStyle: TextStyle(
                                 color: bg_70,
                                 fontWeight: FontWeight.w500,
