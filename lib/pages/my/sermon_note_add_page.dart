@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/const/bible_books.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:wact/common/init.dart';
+import 'package:wact/common/utils/image_compression.dart';
+import 'package:wact/common/utils/xfile_image.dart';
 import 'package:wact/models/%08shared/icon_info.dart';
 
 class SermonNoteAddPage extends StatefulWidget {
@@ -66,7 +66,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
   }
 
   // 설교 노트 텍스트 인식
-  Future<String> _extractTextFromImage(String imagePath) async {
+  Future<String> _extractTextFromImage(XFile imageFile) async {
     setState(() {
       _isExtractingText = true; // 텍스트 추출 시작
     });
@@ -75,7 +75,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
     final Uri uri = Uri.parse(
         'https://vision.googleapis.com/v1/images:annotate?key=$apiKey');
 
-    final imageBytes = await File(imagePath).readAsBytes();
+    final imageBytes = await imageFile.readAsBytes();
 
     final requestPayload = {
       "requests": [
@@ -175,10 +175,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
 
         // 이미지 압축
         final compressedImageBytes =
-            await FlutterImageCompress.compressWithList(
-          imageBytes,
-          quality: 80, // 80% 품질로 압축
-        );
+            await compressImage(imageBytes, quality: 80);
 
         // 원본 이미지 업로드
         await supabase.storage.from('sermon_note_photo').uploadBinary(
@@ -234,7 +231,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
       // OCR 활성화 상태일 때 Google Vision API 호출
       if (_isOCREnabled && pickedFiles.isNotEmpty) {
         for (final imageFile in pickedFiles) {
-          final extractedText = await _extractTextFromImage(imageFile.path);
+          final extractedText = await _extractTextFromImage(imageFile);
           if (extractedText.isNotEmpty) {
             setState(() {
               _contentController.text += '\n$extractedText'; // 텍스트 필드에 추가
@@ -510,8 +507,12 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                   return LongPressDraggable<XFile>(
                     data: _currentImages[index],
                     feedback: Material(
-                      child: Image.file(File(_currentImages[index].path),
-                          fit: BoxFit.cover, width: 100, height: 100),
+                      child: buildLocalImage(
+                        _currentImages[index],
+                        fit: BoxFit.cover,
+                        width: 100,
+                        height: 100,
+                      ),
                     ),
                     childWhenDragging: Container(),
                     child: Stack(
@@ -519,8 +520,8 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                         Positioned.fill(
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.file(
-                              File(_currentImages[index].path),
+                            child: buildLocalImage(
+                              _currentImages[index],
                               fit: BoxFit.cover,
                             ),
                           ),

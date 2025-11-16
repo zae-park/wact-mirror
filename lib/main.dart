@@ -1,4 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
@@ -7,15 +8,13 @@ import 'package:wact/common/init.dart';
 import 'package:wact/common/theme/app_theme.dart';
 import 'package:wact/pages/home/post/post_detail_page.dart';
 import 'package:wact/pages/home/review/review_detail_page.dart';
-import 'package:wact/pages/login/account_page.dart';
-import 'package:wact/pages/login/login_page.dart';
-import 'package:wact/pages/login/splash_page.dart';
-import 'package:wact/root_layout.dart';
 import 'package:wact/routes/route.dart';
 
 Future<void> main() async {
   await initializeApp();
-  FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpened);
+  if (!kIsWeb) {
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpened);
+  }
   runApp(const MyApp());
 }
 

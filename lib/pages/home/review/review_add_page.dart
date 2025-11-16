@@ -1,14 +1,14 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/services.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/init.dart';
+import 'package:wact/common/utils/image_compression.dart';
+import 'package:wact/common/utils/xfile_image.dart';
 import 'package:wact/pages/home/home_page.dart';
 
 class ReviewAddPage extends StatefulWidget {
@@ -116,10 +116,7 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
         final fileExt = imageFile.path.split('.').last;
 
         final compressedImageBytes =
-            await FlutterImageCompress.compressWithList(
-          imageBytes,
-          quality: 80,
-        );
+            await compressImage(imageBytes, quality: 80);
 
         await supabase.storage.from('post_photo').uploadBinary(
               filePath,
@@ -372,15 +369,17 @@ class _ReviewAddPageState extends State<ReviewAddPage> {
                   return LongPressDraggable<XFile>(
                     data: _currentImages[index],
                     feedback: Material(
-                      child: Image.file(File(_currentImages[index].path),
+                      child: buildLocalImage(_currentImages[index],
                           fit: BoxFit.cover, width: 100, height: 100),
                     ),
                     childWhenDragging: Container(),
                     child: Stack(
                       children: [
                         Positioned.fill(
-                          child: Image.file(File(_currentImages[index].path),
-                              fit: BoxFit.cover),
+                          child: buildLocalImage(
+                            _currentImages[index],
+                            fit: BoxFit.cover,
+                          ),
                         ),
                         Positioned(
                           right: -8,

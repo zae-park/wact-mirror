@@ -1,17 +1,15 @@
 // 첫 번째 FAB누르면 나오는 게시글 작성페이지
-
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/services.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/init.dart';
-import 'package:wact/pages/home/home_page.dart';
+import 'package:wact/common/utils/image_compression.dart';
+import 'package:wact/common/utils/xfile_image.dart';
 
 class PostAddPage extends StatefulWidget {
   final List<XFile>? images;
@@ -90,10 +88,7 @@ class _PostAddPageState extends State<PostAddPage> {
 
         // 이미지 압축
         final compressedImageBytes =
-            await FlutterImageCompress.compressWithList(
-          imageBytes,
-          quality: 80, // 80% 품질로 압축
-        );
+            await compressImage(imageBytes, quality: 80);
 
         // 원본 이미지 업로드
         await supabase.storage.from('post_photo').uploadBinary(
@@ -324,15 +319,17 @@ class _PostAddPageState extends State<PostAddPage> {
                   return LongPressDraggable<XFile>(
                     data: _currentImages[index],
                     feedback: Material(
-                      child: Image.file(File(_currentImages[index].path),
+                      child: buildLocalImage(_currentImages[index],
                           fit: BoxFit.cover, width: 100, height: 100),
                     ),
                     childWhenDragging: Container(),
                     child: Stack(
                       children: [
                         Positioned.fill(
-                          child: Image.file(File(_currentImages[index].path),
-                              fit: BoxFit.cover),
+                          child: buildLocalImage(
+                            _currentImages[index],
+                            fit: BoxFit.cover,
+                          ),
                         ),
                         // 삭제 버튼
                         Positioned(

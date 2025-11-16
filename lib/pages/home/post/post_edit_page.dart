@@ -1,15 +1,15 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:wact/common/init.dart';
+import 'package:wact/common/utils/image_compression.dart';
+import 'package:wact/common/utils/xfile_image.dart';
 
 class PostEditPage extends StatefulWidget {
   final Map<String, dynamic> post;
@@ -198,10 +198,7 @@ class _PostEditPageState extends State<PostEditPage> {
           // 로컬 파일 처리
           final imageBytes = await image.readAsBytes();
           final compressedImageBytes =
-              await FlutterImageCompress.compressWithList(
-            imageBytes,
-            quality: 92,
-          );
+              await compressImage(imageBytes, quality: 92);
 
           final fileExt = image.name.split('.').last;
           final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
@@ -307,14 +304,16 @@ class _PostEditPageState extends State<PostEditPage> {
           itemCount: min(images.length + 1, 6),
           itemBuilder: (BuildContext context, int index) {
             if (index < images.length) {
-              // URL인 경우 Image.network 사용, 아니면 Image.file 사용
+              // URL인 경우 Image.network 사용, 아니면 buildLocalImage 사용
               Widget imageWidget;
               if (Uri.parse(images[index].path).isAbsolute) {
                 imageWidget =
                     Image.network(images[index].path, fit: BoxFit.cover);
               } else {
-                imageWidget =
-                    Image.file(File(images[index].path), fit: BoxFit.cover);
+                imageWidget = buildLocalImage(
+                  images[index],
+                  fit: BoxFit.cover,
+                );
               }
               return DragTarget<XFile>(
                 onWillAccept: (data) => true,
@@ -334,10 +333,18 @@ class _PostEditPageState extends State<PostEditPage> {
                     data: images[index],
                     feedback: Material(
                       child: images[index].path.startsWith('http')
-                          ? Image.network(images[index].path,
-                              fit: BoxFit.cover, width: 100, height: 100)
-                          : Image.file(File(images[index].path),
-                              fit: BoxFit.cover, width: 100, height: 100),
+                          ? Image.network(
+                              images[index].path,
+                              fit: BoxFit.cover,
+                              width: 100,
+                              height: 100,
+                            )
+                          : buildLocalImage(
+                              images[index],
+                              fit: BoxFit.cover,
+                              width: 100,
+                              height: 100,
+                            ),
                     ),
                     childWhenDragging: Container(),
                     child: Stack(

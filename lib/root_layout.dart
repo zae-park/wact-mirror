@@ -1,16 +1,13 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/const/color.dart';
 import 'package:wact/common/init.dart';
 import 'package:wact/pages/home/home_page.dart';
-import 'package:wact/pages/home/post/post_add_page.dart';
 import 'package:wact/pages/home/post/post_page.dart';
-import 'package:wact/pages/home/review/review_add_page.dart';
 import 'package:wact/pages/home/review/review_page.dart';
 import 'package:wact/pages/my/my_page.dart';
-import 'package:wact/widgets/buttons/custom_fab.dart';
 
 class RootLayout extends StatefulWidget {
   const RootLayout({super.key, required int initialTab});
@@ -44,41 +41,56 @@ class _RootLayoutState extends State<RootLayout>
 
     supabase.auth.onAuthStateChange.listen((event) async {
       if (event.event == AuthChangeEvent.signedIn) {
+        if (kIsWeb) {
+          return;
+        }
+
         await FirebaseMessaging.instance.requestPermission();
 
-        await FirebaseMessaging.instance.getAPNSToken();
-        final fcmToken = await FirebaseMessaging.instance.getToken();
-        if (fcmToken != null) {
-          await _setFcmToken(fcmToken);
+        if (defaultTargetPlatform == TargetPlatform.iOS) {
+          await FirebaseMessaging.instance.getAPNSToken();
+        }
+
+        try {
+          final fcmToken = await FirebaseMessaging.instance.getToken();
+          if (fcmToken != null) {
+            await _setFcmToken(fcmToken);
+          }
+        } catch (error, stackTrace) {
+          debugPrint('Failed to fetch FCM token: $error');
+          debugPrint('$stackTrace');
         }
       }
     });
-    FirebaseMessaging.instance.onTokenRefresh.listen((fcmToken) {
-      _setFcmToken(fcmToken);
-    });
 
-    FirebaseMessaging.onMessage.listen((payload) {
-      final notification = payload.notification;
-      if (notification != null) {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text(notification.title ?? 'Notification'),
-              content: Text(notification.body ?? 'No content'),
-              actions: [
-                TextButton(
-                  child: Text('OK'),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            );
-          },
-        );
-      }
-    });
+    if (!kIsWeb) {
+      FirebaseMessaging.instance.onTokenRefresh.listen((fcmToken) {
+        _setFcmToken(fcmToken);
+      });
+
+      FirebaseMessaging.onMessage.listen((payload) {
+        final notification = payload.notification;
+        if (notification != null && mounted) {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text(notification.title ?? 'Notification'),
+                content: Text(notification.body ?? 'No content'),
+                actions: [
+                  TextButton(
+                    child: const Text('OK'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      });
+    }
 
     _scrollController = ScrollController();
     _screens = [

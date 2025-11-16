@@ -2,7 +2,6 @@
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -27,6 +26,8 @@ class _LoginPageState extends State<LoginPage> {
   final String supabaseClientId = 'com.one.wact';
   final String expectedIssuer = 'https://appleid.apple.com';
   final String expectedAudience = 'com.one.wact';
+  String get _webRedirectUrl =>
+      kReleaseMode ? 'https://wactapp.web.app' : 'http://localhost:3000';
 
   @override
   void initState() {
@@ -72,9 +73,8 @@ class _LoginPageState extends State<LoginPage> {
 
       await supabase.auth.signInWithOAuth(
         OAuthProvider.kakao,
-        redirectTo: kIsWeb
-            ? 'http://localhost:3000'
-            : 'io.supabase.actapp://login-callback/',
+        redirectTo:
+            kIsWeb ? _webRedirectUrl : 'io.supabase.actapp://login-callback/',
       );
 
       // 로그인 성공 시 로컬 스토리지에 상태 저장
@@ -301,6 +301,10 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _nativeGoogleSignin() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     /// TODO: update the Web client ID with your own.
     ///
     /// Web Client ID that you registered with Google Cloud.
@@ -312,28 +316,53 @@ class _LoginPageState extends State<LoginPage> {
     /// iOS Client ID that you registered with Google Cloud.
     const iosClientId =
         '866308159640-eo30bqc5ssl849h0h3jpao25pf06qg2u.apps.googleusercontent.com';
+    const androidClientId =
+        '866308159640-nrcokahnl6fk3hcqie4t0efa0cdf2tf5.apps.googleusercontent.com';
 
-    final GoogleSignIn googleSignIn = GoogleSignIn(
-      clientId: iosClientId,
-      serverClientId: webClientId,
-    );
-    final googleUser = await googleSignIn.signIn();
-    final googleAuth = await googleUser!.authentication;
-    final accessToken = googleAuth.accessToken;
-    final idToken = googleAuth.idToken;
+    try {
+      if (kIsWeb) {
+        await supabase.auth.signInWithOAuth(
+          OAuthProvider.google,
+          redirectTo: _webRedirectUrl,
+        );
+        return;
+      }
 
-    if (accessToken == null) {
-      throw 'No Access Token found.';
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        clientId: kIsWeb
+            ? webClientId
+            : defaultTargetPlatform == TargetPlatform.iOS
+                ? iosClientId
+                : defaultTargetPlatform == TargetPlatform.android
+                    ? androidClientId
+                    : null,
+        serverClientId:
+            kIsWeb ? null : webClientId, // native apps exchange using web client
+      );
+      final googleUser = await googleSignIn.signIn();
+      final googleAuth = await googleUser!.authentication;
+      final accessToken = googleAuth.accessToken;
+      final idToken = googleAuth.idToken;
+
+      if (accessToken == null) {
+        throw 'No Access Token found.';
+      }
+      if (idToken == null) {
+        throw 'No ID Token found.';
+      }
+
+      await supabase.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        accessToken: accessToken,
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
-    if (idToken == null) {
-      throw 'No ID Token found.';
-    }
-
-    await supabase.auth.signInWithIdToken(
-      provider: OAuthProvider.google,
-      idToken: idToken,
-      accessToken: accessToken,
-    );
   }
 
   Future<AuthResponse> _googleSignIn() async {
@@ -353,8 +382,8 @@ class _LoginPageState extends State<LoginPage> {
           '866308159640-eo30bqc5ssl849h0h3jpao25pf06qg2u.apps.googleusercontent.com';
 
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        clientId: iosClientId,
-        serverClientId: webClientId,
+        clientId: kIsWeb ? webClientId : iosClientId,
+        serverClientId: kIsWeb ? null : webClientId,
       );
 
       final googleUser = await googleSignIn.signIn();
@@ -470,7 +499,7 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(
                     width: 20,
                   ),
-                  if (Platform.isIOS)
+                  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS)
                     GestureDetector(
                       onTap: _isLoading ? null : _appleSignIn,
                       child: SizedBox(
@@ -482,7 +511,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     )
-                  else
+                  else if (!kIsWeb)
                     GestureDetector(
                       onTap: _isLoading ? null : _appleSignInAndroid,
                       child: SizedBox(
