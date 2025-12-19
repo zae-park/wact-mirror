@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wact/common/const/bible_books.dart';
 import 'package:wact/common/const/color.dart';
-import 'package:wact/models/%08shared/icon_info.dart';
+import 'package:wact/models/shared/icon_info.dart';
 
 class SermonNoteEditPage extends StatefulWidget {
   final Map<String, dynamic> post;
@@ -43,8 +43,8 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
       List<int>.generate(count, (i) => i + 1);
 
   String _getWeekdayString(int weekday) {
-    const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
-    return weekdays[weekday - 1]; // DateTime.weekday는 1(월요일)부터 시작
+    const weekdays = ['?', '?', '?', '?', '?', '?', '?'];
+    return weekdays[weekday - 1]; // DateTime.weekday? 1(???)?? ??
   }
 
   @override
@@ -58,7 +58,7 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
 
     _selectedEmotionIcon = widget.post['emotion_icon']?.split('/').last;
 
-    // bible_verses를 안전하게 변환
+    // bible_verses? ???? ??
     final bibleVerses = widget.post['bible_verses'] ?? [];
     if (bibleVerses is List<dynamic>) {
       _selectedBibleVerses.addAll(
@@ -131,7 +131,7 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('모든 항목을 선택해주세요.')),
+        const SnackBar(content: Text('?? ??? ??????.')),
       );
     }
   }
@@ -144,11 +144,11 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
     try {
       final supabase = Supabase.instance.client;
 
-      // 이미지 URL 생성
+      // ??? URL ??
       List<String> signedImageUrls = [];
       List<String> signedCompressedImageUrls = [];
 
-      // 데이터 업데이트
+      // ??? ????
       await supabase.from('sermon_notes').update({
         'title': _titleController.text,
         'content': _contentController.text,
@@ -159,11 +159,11 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
             ? 'assets/imgs/icon/emotion/$_selectedEmotionIcon'
             : null,
         'bible_verses': _selectedBibleVerses,
-        'images': signedImageUrls, // 서명된 원본 이미지 URL 추가
-        'compressed_images': signedCompressedImageUrls, // 서명된 압축 이미지 URL 추가
+        'images': signedImageUrls, // ??? ?? ??? URL ??
+        'compressed_images': signedCompressedImageUrls, // ??? ?? ??? URL ??
       }).eq('id', widget.post['id']);
 
-      // 수정된 데이터를 반환
+      // ??? ???? ??
       final updatedPost = {
         ...widget.post,
         'title': _titleController.text,
@@ -182,7 +182,7 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
       Navigator.pop(context, updatedPost);
     } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('저장 중 오류가 발생했습니다. 다시 시도해주세요.')),
+        const SnackBar(content: Text('?? ? ??? ??????. ?? ??????.')),
       );
     } finally {
       setState(() {
@@ -265,7 +265,7 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
         toolbarHeight: 60,
         backgroundColor: const Color(0xffF1F2FF),
         title: const Text(
-          '설교노트 수정',
+          '???? ??',
           style: TextStyle(
             color: Colors.black,
             fontSize: 20,
@@ -297,7 +297,7 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                 height: 37,
                 child: const Center(
                   child: Text(
-                    '저장',
+                    '??',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 13,
@@ -317,14 +317,14 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 날짜 선택
+              // ?? ??
 
               InkWell(
                 onTap: _selectDate,
                 child: Row(
                   children: [
                     Text(
-                      DateFormat('yyyy년 MM월 dd일 (E)', 'ko_KR')
+                      DateFormat('yyyy? MM? dd? (E)', 'ko_KR')
                           .format(_selectedDate),
                       style: const TextStyle(
                         fontSize: 15,
@@ -343,9 +343,9 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
               ),
               const SizedBox(height: 16),
 
-              // 감정 아이콘 선택
+              // ?? ??? ??
               const Text(
-                '감정 아이콘',
+                '?? ???',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
@@ -354,7 +354,7 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
               ),
               const SizedBox(height: 8),
               FutureBuilder<List<IconInfo>>(
-                future: _loadIcons("emotion"), // 공통 함수로 감정 아이콘 로드
+                future: _loadIcons("emotion"), // ?? ??? ?? ??? ??
                 builder: (BuildContext context,
                     AsyncSnapshot<List<IconInfo>> snapshot) {
                   if (snapshot.connectionState == ConnectionState.done &&
@@ -366,7 +366,7 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                         itemCount: snapshot.data!.length,
                         itemBuilder: (BuildContext context, int index) {
                           final iconInfo = snapshot.data![index];
-                          // _selectedEmotionIcon과 iconInfo.fileName 비교
+                          // _selectedEmotionIcon? iconInfo.fileName ??
                           final isSelected =
                               _selectedEmotionIcon == iconInfo.fileName;
 
@@ -375,7 +375,7 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                               setState(() {
                                 _selectedEmotionIcon = isSelected
                                     ? null
-                                    : iconInfo.fileName; // 선택 상태 토글
+                                    : iconInfo.fileName; // ?? ?? ??
                               });
                             },
                             child: Container(
@@ -385,7 +385,7 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                                 borderRadius: BorderRadius.circular(18.0),
                                 color: isSelected
                                     ? primary
-                                    : Colors.white, // 선택 시 색상 변경
+                                    : Colors.white, // ?? ? ?? ??
                               ),
                               child: Column(
                                 children: [
@@ -421,7 +421,7 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
               ),
               const Divider(color: bg_30),
 
-              // 장소&설교자 입력
+              // ??&??? ??
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -438,7 +438,7 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                         ],
                         cursorColor: primary,
                         decoration: const InputDecoration(
-                          labelText: '장소',
+                          labelText: '??',
                           labelStyle: TextStyle(color: bg_70),
                           hintStyle: TextStyle(
                             color: bg_70,
@@ -469,7 +469,7 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                       ],
                       cursorColor: primary,
                       decoration: const InputDecoration(
-                        labelText: '설교자',
+                        labelText: '???',
                         labelStyle: TextStyle(color: bg_70),
                         hintStyle: TextStyle(
                           color: bg_70,
@@ -490,14 +490,14 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
               SizedBox(
                 height: 6,
               ),
-              // 선택된 성경절 목록
+              // ??? ??? ??
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      '본문 성경절',
+                      '?? ???',
                       style: TextStyle(
                         color: bg_90,
                         fontSize: 12,
@@ -516,14 +516,14 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: _selectedBibleVerses.asMap().entries.map((entry) {
-                      final index = entry.key + 1; // 1부터 시작하는 번호
+                      final index = entry.key + 1; // 1?? ???? ??
                       final verse = entry.value;
 
                       return Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            '$index. ${verse['book']} ${verse['chapter']}장 ${verse['verses']}절',
+                            '$index. ${verse['book']} ${verse['chapter']}? ${verse['verses']}?',
                             style: const TextStyle(
                                 fontWeight: FontWeight.w500,
                                 color: Colors.black),
@@ -546,7 +546,7 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                   ),
                 ),
 
-              // 성경절 선택
+              // ??? ??
 
               Row(
                 children: [
@@ -563,7 +563,7 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                       style: TextStyle(
                           color: Colors.black, fontWeight: FontWeight.w500),
                       hint: const Text(
-                        '성경절 선택',
+                        '??? ??',
                         style: TextStyle(
                             color: blueGrey, fontWeight: FontWeight.w500),
                       ),
@@ -586,8 +586,8 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                         filled: true,
                         border: OutlineInputBorder(
                           borderRadius:
-                              BorderRadius.circular(5.0), // 모서리 둥글게 설정
-                          borderSide: BorderSide.none, // 테두리 선 제거
+                              BorderRadius.circular(5.0), // ??? ??? ??
+                          borderSide: BorderSide.none, // ??? ? ??
                         ),
                       ),
                     ),
@@ -608,20 +608,20 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                           filled: true,
                           border: OutlineInputBorder(
                             borderRadius:
-                                BorderRadius.circular(5.0), // 모서리 둥글게 설정
-                            borderSide: BorderSide.none, // 테두리 선 제거
+                                BorderRadius.circular(5.0), // ??? ??? ??
+                            borderSide: BorderSide.none, // ??? ? ??
                           ),
                         ),
                         value: _selectedChapter,
                         hint: const Text(
-                          '장',
+                          '?',
                           style: TextStyle(
                               color: blueGrey, fontWeight: FontWeight.w500),
                         ),
                         items: _generateNumbers(50).map((chapter) {
                           return DropdownMenuItem(
                             value: chapter,
-                            child: Text('$chapter장'),
+                            child: Text('$chapter?'),
                           );
                         }).toList(),
                         onChanged: (value) {
@@ -650,11 +650,11 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                           height: 20,
                         ),
                         value: _selectedStartVerse,
-                        hint: const Text('시작 절'),
+                        hint: const Text('?? ?'),
                         items: _generateNumbers(176).map((verse) {
                           return DropdownMenuItem(
                             value: verse,
-                            child: Text('$verse절'),
+                            child: Text('$verse?'),
                           );
                         }).toList(),
                         onChanged: (value) {
@@ -663,7 +663,7 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                             _selectedEndVerse = null;
                           });
                           if (value != null) {
-                            FocusScope.of(context).nextFocus(); // 다음 필드로 이동
+                            FocusScope.of(context).nextFocus(); // ?? ??? ??
                           }
                         },
                         dropdownColor: Colors.amber[100],
@@ -672,8 +672,8 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                           filled: true,
                           border: OutlineInputBorder(
                             borderRadius:
-                                BorderRadius.circular(5.0), // 모서리 둥글게 설정
-                            borderSide: BorderSide.none, // 테두리 선 제거
+                                BorderRadius.circular(5.0), // ??? ??? ??
+                            borderSide: BorderSide.none, // ??? ? ??
                           ),
                         ),
                       ),
@@ -688,11 +688,11 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                           height: 20,
                         ),
                         value: _selectedEndVerse,
-                        hint: const Text('끝 절'),
+                        hint: const Text('? ?'),
                         items: _generateNumbers(176).map((verse) {
                           return DropdownMenuItem(
                             value: verse,
-                            child: Text('$verse절'),
+                            child: Text('$verse?'),
                           );
                         }).toList(),
                         onChanged: (value) {
@@ -700,7 +700,7 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                             _selectedEndVerse = value;
                           });
                           FocusScope.of(context)
-                              .nextFocus(); // 끝 절 선택 후 다음 필드로 이동
+                              .nextFocus(); // ? ? ?? ? ?? ??? ??
                         },
                         dropdownColor: Colors.green[100],
                         decoration: InputDecoration(
@@ -708,8 +708,8 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                           filled: true,
                           border: OutlineInputBorder(
                             borderRadius:
-                                BorderRadius.circular(5.0), // 모서리 둥글게 설정
-                            borderSide: BorderSide.none, // 테두리 선 제거
+                                BorderRadius.circular(5.0), // ??? ??? ??
+                            borderSide: BorderSide.none, // ??? ? ??
                           ),
                         ),
                       ),
@@ -739,7 +739,7 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      '설교 제목',
+                      '?? ??',
                       style: TextStyle(
                         color: bg_90,
                         fontSize: 12,
@@ -768,7 +768,7 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                   ],
                   cursorColor: primary,
                   decoration: const InputDecoration(
-                    hintText: '설교 제목을 입력해주세요.',
+                    hintText: '?? ??? ??????.',
                     hintStyle: TextStyle(
                       color: bg_70,
                       fontWeight: FontWeight.w500,
@@ -790,7 +790,7 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      '설교 내용',
+                      '?? ??',
                       style: TextStyle(
                         color: bg_90,
                         fontSize: 12,
@@ -820,7 +820,7 @@ class _SermonNoteEditPageState extends State<SermonNoteEditPage> {
                   ],
                   cursorColor: primary,
                   decoration: const InputDecoration(
-                    hintText: '설교 내용을 적어주세요.',
+                    hintText: '?? ??? ?????.',
                     hintStyle: TextStyle(
                       color: bg_70,
                       fontWeight: FontWeight.w500,

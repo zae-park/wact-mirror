@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -12,7 +12,7 @@ import 'package:wact/common/const/color.dart';
 import 'package:wact/common/init.dart';
 import 'package:wact/common/utils/image_compression.dart';
 import 'package:wact/common/utils/xfile_image.dart';
-import 'package:wact/models/%08shared/icon_info.dart';
+import 'package:wact/models/shared/icon_info.dart';
 
 class SermonNoteAddPage extends StatefulWidget {
   @override
@@ -34,15 +34,15 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
   int? _selectedStartVerse;
   int? _selectedEndVerse;
 
-  // XFile? _ocrImage; // 설교노트 OCR 이미지
+  // XFile? _ocrImage; // ???? OCR ???
   // String uploadedOcrFilePath = '';
   // String uploadedOcrCompressedFilePath = '';
 
   List<XFile> _currentImages = [];
   List<String> uploadedFilePaths = [];
   List<String> uploadedCompressedFilePaths = [];
-  bool _isOCREnabled = false; // OCR 활성화 여부
-  bool _isExtractingText = false; // 텍스트 추출 중인지 확인하는 변수
+  bool _isOCREnabled = false; // OCR ??? ??
+  bool _isExtractingText = false; // ??? ?? ??? ???? ??
 
   late Future<List<IconInfo>> emotionIconsFuture;
   late Future<List<IconInfo>> weatherIconsFuture;
@@ -52,8 +52,8 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
       List<int>.generate(count, (i) => i + 1);
 
   String _getWeekdayString(int weekday) {
-    const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
-    return weekdays[weekday - 1]; // DateTime.weekday는 1(월요일)부터 시작
+    const weekdays = ['?', '?', '?', '?', '?', '?', '?'];
+    return weekdays[weekday - 1]; // DateTime.weekday? 1(???)?? ??
   }
 
   @override
@@ -62,13 +62,13 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
     emotionIconsFuture = _loadIcons("emotion");
     weatherIconsFuture = _loadIcons("weather");
 
-    _locationController.text = '서액트교회'; // 초기 값 설정
+    _locationController.text = '?????'; // ?? ? ??
   }
 
-  // 설교 노트 텍스트 인식
+  // ?? ?? ??? ??
   Future<String> _extractTextFromImage(XFile imageFile) async {
     setState(() {
-      _isExtractingText = true; // 텍스트 추출 시작
+      _isExtractingText = true; // ??? ?? ??
     });
 
     const String apiKey = 'AIzaSyB4k5Clcz2Wpm2haTwgdsQ0F2J8P9aB6_s';
@@ -81,11 +81,11 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
       "requests": [
         {
           "image": {
-            "content": base64Encode(imageBytes), // 이미지 Base64 인코딩
+            "content": base64Encode(imageBytes), // ??? Base64 ???
           },
           "features": [
             {
-              "type": "TEXT_DETECTION", // 텍스트 감지 기능
+              "type": "TEXT_DETECTION", // ??? ?? ??
             }
           ]
         }
@@ -102,21 +102,21 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         final extractedText = responseData['responses'][0]['fullTextAnnotation']
-            ['text']; // OCR 결과 추출
+            ['text']; // OCR ?? ??
 
         return extractedText ?? '';
       } else {
-        debugPrint('Google Vision API 호출 중 오류: ${response.body}');
+        debugPrint('Google Vision API ?? ? ??: ${response.body}');
 
         throw Exception('Google Vision API Error: ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('Google Vision API 호출 중 오류: $e');
+      debugPrint('Google Vision API ?? ? ??: $e');
       return '';
     }
   }
 
-  // 날짜 선택 메서드
+  // ?? ?? ???
   Future<DateTime?> _selectDate() async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -142,7 +142,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
     return pickedDate;
   }
 
-// 이미지 선택 후 즉시 스토리지에 원본 및 압축본을 저장하는 함수
+// ??? ?? ? ?? ????? ?? ? ???? ???? ??
   Future<void> _uploadImages(List<XFile> selectedImages) async {
     final user = supabase.auth.currentUser;
     if (user == null) throw Exception('User not found');
@@ -161,7 +161,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
     }).toList();
 
     setState(() {
-      _isUploading = true; // 업로드 시작 시 상태 설정
+      _isUploading = true; // ??? ?? ? ?? ??
     });
 
     try {
@@ -173,18 +173,18 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
         final imageBytes = await imageFile.readAsBytes();
         final fileExt = imageFile.path.split('.').last;
 
-        // 이미지 압축
+        // ??? ??
         final compressedImageBytes =
             await compressImage(imageBytes, quality: 80);
 
-        // 원본 이미지 업로드
+        // ?? ??? ???
         await supabase.storage.from('sermon_note_photo').uploadBinary(
               filePath,
               imageBytes,
               fileOptions: FileOptions(contentType: 'image/$fileExt'),
             );
 
-        // 압축본 이미지 업로드
+        // ??? ??? ???
         await supabase.storage
             .from('sermon_note_compressed_photo')
             .uploadBinary(
@@ -194,14 +194,14 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
             );
       }
 
-      // 서명된 URL 생성
+      // ??? URL ??
       final signedOriginalUrls = await supabase.storage
           .from('sermon_note_photo')
-          .createSignedUrls(filePaths, 60 * 60 * 24 * 365 * 10); // 10년 유효
+          .createSignedUrls(filePaths, 60 * 60 * 24 * 365 * 10); // 10? ??
       final signedCompressedUrls = await supabase.storage
           .from('sermon_note_compressed_photo')
           .createSignedUrls(
-              compressedFilePaths, 60 * 60 * 24 * 365 * 10); // 10년 유효
+              compressedFilePaths, 60 * 60 * 24 * 365 * 10); // 10? ??
 
       setState(() {
         uploadedFilePaths = signedOriginalUrls.map((e) => e.signedUrl).toList();
@@ -209,10 +209,10 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
             signedCompressedUrls.map((e) => e.signedUrl).toList();
       });
     } catch (e) {
-      debugPrint('업로드 중 오류 발생: $e');
+      debugPrint('??? ? ?? ??: $e');
     } finally {
       setState(() {
-        _isUploading = false; // 업로드 종료 시 상태 변경
+        _isUploading = false; // ??? ?? ? ?? ??
       });
     }
   }
@@ -222,25 +222,25 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
 
     if (_currentImages.length + pickedFiles.length > 10) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('최대 10장의 이미지만 선택할 수 있습니다.')));
+          const SnackBar(content: Text('?? 10?? ???? ??? ? ????.')));
     } else {
       setState(() {
         _currentImages.addAll(pickedFiles);
       });
 
-      // OCR 활성화 상태일 때 Google Vision API 호출
+      // OCR ??? ??? ? Google Vision API ??
       if (_isOCREnabled && pickedFiles.isNotEmpty) {
         for (final imageFile in pickedFiles) {
           final extractedText = await _extractTextFromImage(imageFile);
           if (extractedText.isNotEmpty) {
             setState(() {
-              _contentController.text += '\n$extractedText'; // 텍스트 필드에 추가
+              _contentController.text += '\n$extractedText'; // ??? ??? ??
               _isExtractingText = false;
             });
           }
         }
       }
-      // 선택된 이미지를 바로 스토리지에 저장
+      // ??? ???? ?? ????? ??
       await _uploadImages(pickedFiles);
     }
   }
@@ -267,7 +267,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('모든 항목을 선택해주세요.')),
+        const SnackBar(content: Text('?? ??? ??????.')),
       );
     }
   }
@@ -277,7 +277,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
         _titleController.text.isEmpty ||
         _contentController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('모든 항목을 작성해주세요.')),
+        const SnackBar(content: Text('?? ??? ??????.')),
       );
       return;
     }
@@ -287,41 +287,41 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
     });
 
     try {
-      // 현재 사용자 ID 가져오기
+      // ?? ??? ID ????
       final user = supabase.auth.currentUser;
       if (user == null) {
-        throw Exception('로그인된 사용자가 없습니다.');
+        throw Exception('???? ???? ????.');
       }
 
-      // 사용자별 폴더 이름 생성
+      // ???? ?? ?? ??
       final userId = user.id;
 
-      // 날짜 형식 변환 (YYYY-MM-DD)
+      // ?? ?? ?? (YYYY-MM-DD)
       final formattedDate =
           "${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}";
 
-      // 테이블에 데이터 삽입
+      // ???? ??? ??
       final response = await supabase.from('sermon_notes').insert({
-        'user_id': userId, // 작성자의 ID 추가
+        'user_id': userId, // ???? ID ??
         'sermon_date': formattedDate,
-        'weekday': _getWeekdayString(_selectedDate.weekday), // 요일 별도 저장
+        'weekday': _getWeekdayString(_selectedDate.weekday), // ?? ?? ??
         'preacher': _preacherController.text,
         'location': _locationController.text,
         'title': _titleController.text,
         'content': _contentController.text,
         'bible_verses': _selectedBibleVerses,
         'emotion_icon': 'assets/imgs/icon/emotion/$_selectedEmotionIcon',
-        'images': uploadedFilePaths, // 원본 이미지 경로 추가
-        'compressed_images': uploadedCompressedFilePaths, // 압축 이미지 경로 추가
+        'images': uploadedFilePaths, // ?? ??? ?? ??
+        'compressed_images': uploadedCompressedFilePaths, // ?? ??? ?? ??
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('설교 노트가 저장되었습니다.')),
+        const SnackBar(content: Text('?? ??? ???????.')),
       );
 
-      Navigator.pop(context, true); // 작성 성공 시 true 반환
+      Navigator.pop(context, true); // ?? ?? ? true ??
 
-      // 성공 후 초기화
+      // ?? ? ???
       _preacherController.clear();
       _selectedBibleVerses.clear();
       _locationController.clear();
@@ -339,7 +339,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
     }
   }
 
-  // 감정 날씨 아이콘 선택
+  // ?? ?? ??? ??
   Widget _iconSelector(
       String iconName, String hintText, Future<List<IconInfo>> iconsFuture) {
     return FutureBuilder<List<IconInfo>>(
@@ -364,13 +364,13 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                     setState(() {
                       if (iconName == "emotion") {
                         if (_selectedEmotionIcon == iconInfo.fileName) {
-                          _selectedEmotionIcon = null; // 선택 취소
+                          _selectedEmotionIcon = null; // ?? ??
                         } else {
                           _selectedEmotionIcon = iconInfo.fileName;
                         }
                       } else {
                         if (_selectedWeatherIcon == iconInfo.fileName) {
-                          _selectedWeatherIcon = null; // 선택 취소
+                          _selectedWeatherIcon = null; // ?? ??
                         } else {
                           _selectedWeatherIcon = iconInfo.fileName;
                         }
@@ -383,7 +383,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18.0),
                       color:
-                          isSelected ? primary : Colors.white, // 선택된 경우 색상을 변경
+                          isSelected ? primary : Colors.white, // ??? ?? ??? ??
                     ),
                     child: Column(
                       children: [
@@ -431,14 +431,14 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
         .toList();
   }
 
-  // 스토리지에서 이미지를 삭제하는 함수
+  // ?????? ???? ???? ??
   Future<void> _deleteUploadedImages() async {
     for (String filePath in uploadedFilePaths) {
       try {
         await supabase.storage.from('sermon_note_photo').remove([filePath]);
-        debugPrint('원본 이미지 삭제 완료: $filePath');
+        debugPrint('?? ??? ?? ??: $filePath');
       } catch (e) {
-        debugPrint('원본 이미지 삭제 중 오류 발생: $filePath, $e');
+        debugPrint('?? ??? ?? ? ?? ??: $filePath, $e');
       }
     }
     for (String compressedFilePath in uploadedCompressedFilePaths) {
@@ -446,28 +446,28 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
         await supabase.storage
             .from('sermon_note_compressed_photo')
             .remove([compressedFilePath]);
-        debugPrint('압축 이미지 삭제 완료: $compressedFilePath');
+        debugPrint('?? ??? ?? ??: $compressedFilePath');
       } catch (e) {
-        debugPrint('압축 이미지 삭제 중 오류 발생: $compressedFilePath, $e');
+        debugPrint('?? ??? ?? ? ?? ??: $compressedFilePath, $e');
       }
     }
   }
 
-  // 업로드 중인 작업 중지 및 업로드된 이미지만 삭제하는 함수
+  // ??? ?? ?? ?? ? ???? ???? ???? ??
   Future<void> _cancelUploadAndDeleteImages() async {
-    // 업로드가 진행 중이면, 업로드된 이미지만 삭제
+    // ???? ?? ???, ???? ???? ??
     if (_isUploading) {
-      debugPrint('업로드가 진행 중입니다. 일부 업로드된 이미지를 삭제합니다.');
+      debugPrint('???? ?? ????. ?? ???? ???? ?????.');
       await _deleteUploadedImages();
     } else {
-      debugPrint('모든 이미지가 이미 업로드된 상태입니다.');
+      debugPrint('?? ???? ?? ???? ?????.');
     }
   }
 
   @override
   void dispose() {
     if (_currentImages.isNotEmpty) {
-      // '게시' 버튼을 누르지 않고 페이지를 벗어날 경우 업로드를 중단하고 이미지를 삭제
+      // '??' ??? ??? ?? ???? ??? ?? ???? ???? ???? ??
       _cancelUploadAndDeleteImages();
     }
     super.dispose();
@@ -475,7 +475,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
 
   @override
   Widget build(BuildContext context) {
-    // 이미지 표시 부분
+    // ??? ?? ??
     Widget buildImageGrid() {
       return Padding(
         padding: const EdgeInsets.all(0.0),
@@ -527,7 +527,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                           ),
                         ),
 
-                        // 삭제 버튼
+                        // ?? ??
                         Positioned(
                           right: -8,
                           top: -8,
@@ -590,7 +590,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                                 height: 1,
                               ),
                               Text(
-                                '사진',
+                                '??',
                                 style: TextStyle(
                                   color: blueGrey,
                                   fontSize: 12,
@@ -614,7 +614,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
         toolbarHeight: 60,
         backgroundColor: Color(0xffF1F2FF),
         title: const Text(
-          '설교노트',
+          '????',
           style: TextStyle(
             color: Colors.black,
             fontSize: 20,
@@ -647,11 +647,11 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                     borderRadius: BorderRadius.circular(19),
                     color: (_isUploading || _isExtractingText)
                         ? bg_30
-                        : primary, // 비활성화 색상 변경
+                        : primary, // ???? ?? ??
                   ),
                   child: Center(
                     child: Text(
-                      (_isUploading || _isExtractingText) ? '...' : '저장',
+                      (_isUploading || _isExtractingText) ? '...' : '??',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 13,
@@ -666,7 +666,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
         ],
       ),
       body: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(), // 다른 영역을 터치하면 키보드가 닫힘
+        onTap: () => FocusScope.of(context).unfocus(), // ?? ??? ???? ???? ??
         child: Scrollbar(
           thumbVisibility: true,
           thickness: 6.0,
@@ -703,14 +703,14 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                               ),
                               _selectedDate != DateTime.now()
                                   ? Text(
-                                      "${_selectedDate.year}년 ${_selectedDate.month}월 ${_selectedDate.day}일 (${_getWeekdayString(_selectedDate.weekday)})",
+                                      "${_selectedDate.year}? ${_selectedDate.month}? ${_selectedDate.day}? (${_getWeekdayString(_selectedDate.weekday)})",
                                       style: const TextStyle(
                                           fontSize: 15,
                                           color: Colors.black,
                                           fontWeight: FontWeight.w500),
                                     )
                                   : const Text(
-                                      "날짜 선택",
+                                      "?? ??",
                                       style: TextStyle(color: secondary),
                                     ),
                               const SizedBox(width: 4),
@@ -728,13 +728,13 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                   ),
                 ),
                 const SizedBox(height: 2),
-                _iconSelector("emotion", "감정", emotionIconsFuture),
+                _iconSelector("emotion", "??", emotionIconsFuture),
 
                 const Divider(
                   color: bg_30,
                 ),
 
-                // 장소&설교자 입력
+                // ??&??? ??
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -751,7 +751,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                           ],
                           cursorColor: primary,
                           decoration: const InputDecoration(
-                            labelText: '장소',
+                            labelText: '??',
                             labelStyle: TextStyle(color: bg_70),
                             hintStyle: TextStyle(
                               color: bg_70,
@@ -782,7 +782,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                         ],
                         cursorColor: primary,
                         decoration: const InputDecoration(
-                          labelText: '설교자',
+                          labelText: '???',
                           labelStyle: TextStyle(color: bg_70),
                           hintStyle: TextStyle(
                             color: bg_70,
@@ -802,14 +802,14 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                 SizedBox(
                   height: 6,
                 ),
-                // 선택된 성경절 목록
+                // ??? ??? ??
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        '본문 성경절',
+                        '?? ???',
                         style: TextStyle(
                           color: bg_90,
                           fontSize: 12,
@@ -829,14 +829,14 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children:
                           _selectedBibleVerses.asMap().entries.map((entry) {
-                        final index = entry.key + 1; // 1부터 시작하는 번호
+                        final index = entry.key + 1; // 1?? ???? ??
                         final verse = entry.value;
 
                         return Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '$index. ${verse['book']} ${verse['chapter']}장 ${verse['verses']}절',
+                              '$index. ${verse['book']} ${verse['chapter']}? ${verse['verses']}?',
                               style: TextStyle(
                                   fontWeight: FontWeight.w500,
                                   color: Colors.black),
@@ -859,7 +859,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                     ),
                   ),
 
-                // 성경절 선택
+                // ??? ??
 
                 Row(
                   children: [
@@ -876,7 +876,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                         style: TextStyle(
                             color: Colors.black, fontWeight: FontWeight.w500),
                         hint: const Text(
-                          '성경절 선택',
+                          '??? ??',
                           style: TextStyle(
                               color: blueGrey, fontWeight: FontWeight.w500),
                         ),
@@ -899,8 +899,8 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                           filled: true,
                           border: OutlineInputBorder(
                             borderRadius:
-                                BorderRadius.circular(5.0), // 모서리 둥글게 설정
-                            borderSide: BorderSide.none, // 테두리 선 제거
+                                BorderRadius.circular(5.0), // ??? ??? ??
+                            borderSide: BorderSide.none, // ??? ? ??
                           ),
                         ),
                       ),
@@ -921,20 +921,20 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                             filled: true,
                             border: OutlineInputBorder(
                               borderRadius:
-                                  BorderRadius.circular(5.0), // 모서리 둥글게 설정
-                              borderSide: BorderSide.none, // 테두리 선 제거
+                                  BorderRadius.circular(5.0), // ??? ??? ??
+                              borderSide: BorderSide.none, // ??? ? ??
                             ),
                           ),
                           value: _selectedChapter,
                           hint: const Text(
-                            '장',
+                            '?',
                             style: TextStyle(
                                 color: blueGrey, fontWeight: FontWeight.w500),
                           ),
                           items: _generateNumbers(50).map((chapter) {
                             return DropdownMenuItem(
                               value: chapter,
-                              child: Text('$chapter장'),
+                              child: Text('$chapter?'),
                             );
                           }).toList(),
                           onChanged: (value) {
@@ -963,11 +963,11 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                             height: 20,
                           ),
                           value: _selectedStartVerse,
-                          hint: const Text('시작 절'),
+                          hint: const Text('?? ?'),
                           items: _generateNumbers(176).map((verse) {
                             return DropdownMenuItem(
                               value: verse,
-                              child: Text('$verse절'),
+                              child: Text('$verse?'),
                             );
                           }).toList(),
                           onChanged: (value) {
@@ -976,7 +976,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                               _selectedEndVerse = null;
                             });
                             if (value != null) {
-                              FocusScope.of(context).nextFocus(); // 다음 필드로 이동
+                              FocusScope.of(context).nextFocus(); // ?? ??? ??
                             }
                           },
                           dropdownColor: Colors.pink[100],
@@ -985,8 +985,8 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                             filled: true,
                             border: OutlineInputBorder(
                               borderRadius:
-                                  BorderRadius.circular(5.0), // 모서리 둥글게 설정
-                              borderSide: BorderSide.none, // 테두리 선 제거
+                                  BorderRadius.circular(5.0), // ??? ??? ??
+                              borderSide: BorderSide.none, // ??? ? ??
                             ),
                           ),
                         ),
@@ -1001,11 +1001,11 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                             height: 20,
                           ),
                           value: _selectedEndVerse,
-                          hint: const Text('끝 절'),
+                          hint: const Text('? ?'),
                           items: _generateNumbers(176).map((verse) {
                             return DropdownMenuItem(
                               value: verse,
-                              child: Text('$verse절'),
+                              child: Text('$verse?'),
                             );
                           }).toList(),
                           onChanged: (value) {
@@ -1013,7 +1013,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                               _selectedEndVerse = value;
                             });
                             FocusScope.of(context)
-                                .nextFocus(); // 끝 절 선택 후 다음 필드로 이동
+                                .nextFocus(); // ? ? ?? ? ?? ??? ??
                           },
                           dropdownColor: Colors.blue[100],
                           decoration: InputDecoration(
@@ -1021,8 +1021,8 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                             filled: true,
                             border: OutlineInputBorder(
                               borderRadius:
-                                  BorderRadius.circular(5.0), // 모서리 둥글게 설정
-                              borderSide: BorderSide.none, // 테두리 선 제거
+                                  BorderRadius.circular(5.0), // ??? ??? ??
+                              borderSide: BorderSide.none, // ??? ? ??
                             ),
                           ),
                         ),
@@ -1052,7 +1052,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        '설교 제목',
+                        '?? ??',
                         style: TextStyle(
                           color: bg_90,
                           fontSize: 12,
@@ -1081,7 +1081,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                     ],
                     cursorColor: primary,
                     decoration: const InputDecoration(
-                      hintText: '설교 제목을 입력해주세요.',
+                      hintText: '?? ??? ??????.',
                       hintStyle: TextStyle(
                         color: bg_70,
                         fontWeight: FontWeight.w500,
@@ -1103,7 +1103,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        '설교 내용',
+                        '?? ??',
                         style: TextStyle(
                           color: bg_90,
                           fontSize: 12,
@@ -1126,7 +1126,7 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                   child: TextFormField(
                     controller: _contentController,
                     minLines: 2,
-                    maxLines: null, // TextField가 콘텐츠 길이에 따라 확장
+                    maxLines: null, // TextField? ??? ??? ?? ??
                     maxLength: 2000,
                     inputFormatters: [
                       LengthLimitingTextInputFormatter(2000),
@@ -1134,8 +1134,8 @@ class _SermonNoteAddPageState extends State<SermonNoteAddPage> {
                     cursorColor: primary,
                     decoration: InputDecoration(
                       hintText: _isExtractingText
-                          ? '텍스트 추출중..'
-                          : '설교 내용을 적어주세요.', // 상태에 따라 텍스트 변경
+                          ? '??? ???..'
+                          : '?? ??? ?????.', // ??? ?? ??? ??
                       hintStyle: TextStyle(
                         color: _isExtractingText ? primary : bg_70,
                         fontWeight: FontWeight.w500,
