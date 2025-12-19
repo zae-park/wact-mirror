@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 final ThemeData appTheme = ThemeData(
   datePickerTheme: const DatePickerThemeData(),
   popupMenuTheme: const PopupMenuThemeData(color: bg_10),
-  tabBarTheme: const TabBarTheme(
+  tabBarTheme: const TabBarThemeData(
     unselectedLabelColor: Color.fromRGBO(0, 0, 0, 0),
     indicatorColor: Colors.transparent, // 밑줄 없애기
   ),
